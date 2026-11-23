@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>NOPE! | 실상품 자취 스펙 판독</title>
+  <meta name="description" content="예쁜 사진 빼고, 실제 판매 중인 가구의 단점·공구·치수 근거를 판독하는 앱" />
+  <meta name="theme-color" content="#FAF6EC" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="NOPE!" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=nope44" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css" />
+  <link rel="manifest" href="./manifest.json?v=nope44" />
+  <link rel="stylesheet" href="./styles.css?v=nope44" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button id="top-home-btn" class="brand-lockup" type="button" aria-label="메인 화면으로 돌아가기">
+        <span class="brand-logo">NOPE<span class="dot">!</span></span>
+        <span class="brand-sub">자취 스펙 판독</span>
+      </button>
+      <div id="topbar-actions" class="topbar-actions hidden">
+        <button id="topbar-wishlist-btn" class="topbar-chip-btn" type="button" aria-label="내 방 찜 목록 열기">
+          <span class="heart-ico">♡</span>
+          <strong id="topbar-wishlist-count">0</strong>
+        </button>
+        <button id="topbar-auth-btn" class="topbar-chip-btn is-account" type="button">내 방 저장</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <!-- ==================== TAB 1: 홈 ==================== -->
+      <section id="tab-home" class="tab-panel active">
+        <div id="home-stage-cover" class="editorial-gate stage-animate">
+          <div class="gate-top">
+            <div class="mega-nope">NOPE<span class="dot">!</span></div>
+            <h1 id="home-headline" class="gate-headline">내 방에 들이기 전,<br /><span style="color:var(--accent)">딱 한 번만 의심해 보기.</span></h1>
+          </div>
+
+          <div class="gate-actions">
+            <button id="saved-profile-btn" class="saved-profile-btn hidden" type="button"></button>
+            <button id="start-quiz-btn" class="text-cta">내 방 속 <span class="dot">NOPE!</span> 찾기</button>
+          </div>
+        </div>
+
+        <div id="home-stage-hub" class="hidden stage-animate">
+          <div class="step-back-bar">
+            <button id="back-to-cover-btn" class="btn-ghost btn-sm">← 메인</button>
+            <span class="micro-label">QUICK MENU</span>
+          </div>
+
+          <div class="menu-step-list" style="margin-top:0;">
+            <button id="start-quiz-btn-hub" class="menu-step-btn">
+              <div>
+                <span class="menu-step-num">01 / CHECK</span>
+                <div class="menu-step-title">1분 자취 스펙 점검</div>
+                <div class="menu-step-desc">피해야 할 가구 유형 확인</div>
+              </div>
+              <span class="verdict-pill v-nope">진단 →</span>
+            </button>
+
+            <button class="menu-step-btn" data-jump="scanner">
+              <div>
+                <span class="menu-step-num">02 / 82 REAL ITEMS</span>
+                <div class="menu-step-title">실제 판매 가구 검색 · 판독</div>
+                <div class="menu-step-desc">이케아·한샘·리바트·두닷·마켓비·오늘의집</div>
+              </div>
+              <span class="verdict-pill v-nope">판독 →</span>
+            </button>
+
+            <button class="menu-step-btn" data-jump="scale">
+              <div>
+                <span class="menu-step-num">03 / SCALE</span>
+                <div id="home-scale-summary-line" class="menu-step-title">168cm · 책상 70 / 의자 42</div>
+                <div class="menu-step-desc">신체 치수 도면 확인</div>
+              </div>
+              <span class="verdict-pill v-pass">치수 →</span>
+            </button>
+
+            <button class="menu-step-btn" data-jump="routine">
+              <div>
+                <span class="menu-step-num">04 / ROUTINE</span>
+                <div class="menu-step-title">환기 타이머 · 주기 알람 · 체크</div>
+                <div class="menu-step-desc">생활 관리 도구</div>
+              </div>
+              <span class="verdict-pill v-pass">루틴 →</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="quiz-nickname" class="card hidden stage-animate nickname-card">
+          <span class="micro-label" style="display:block;margin-bottom:8px;">ROOM PROFILE SETUP</span>
+          <h2 class="nickname-title">먼저, 방 주인의<br />닉네임을 알려주세요.</h2>
+          <p class="gate-sub" style="margin-bottom:20px;">입력하신 방 크기와 취향에 맞춰 리포트를 만들어 드립니다.</p>
+          <input id="nickname-input" class="nickname-input" type="text" maxlength="12" placeholder="예: 지수, 민호, 루미" autocomplete="off" />
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:18px;">
+            <button id="nickname-next-btn" class="btn-primary btn-full" type="button">방 정보 입력 시작하기 →</button>
+            <button id="nickname-back-btn" class="btn-ghost btn-sm" type="button">← 메인으로</button>
+          </div>
+        </div>
+
+        <div id="quiz-runner" class="card hidden stage-animate">
+          <div class="quiz-progress-wrap">
+            <span id="quiz-step-text" class="step-label">01 / 13</span>
+            <div class="progress-bar"><div id="quiz-progress-fill" class="progress-fill"></div></div>
+          </div>
+          <h3 id="quiz-question-title"></h3>
+          <div id="quiz-options" class="quiz-options"></div>
+          <button id="quiz-back-btn" class="btn-ghost btn-sm">← 이전</button>
+        </div>
+
+        <div id="quiz-analyzing" class="card hidden stage-animate analyzing-card">
+          <div class="nope-pictogram-wrap" aria-hidden="true">
+            <svg width="88" height="88" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Room Blueprint Base -->
+              <rect x="14" y="14" width="60" height="60" rx="6" fill="#FAF6EC" stroke="#23261F" stroke-width="2.4"/>
+              <!-- Interior Furniture & Door Swing CAD Guides -->
+              <rect x="46" y="21" width="21" height="11" rx="2" stroke="#D5CEBA" stroke-width="1.5"/>
+              <path d="M 22 74 L 22 58" stroke="#23261F" stroke-width="2" stroke-linecap="round"/>
+              <path d="M 22 58 A 16 16 0 0 1 38 74" stroke="#8E9183" stroke-width="1.4" stroke-dasharray="2.5 2.5"/>
+              <!-- Dimension Ticks -->
+              <path d="M 14 8 H 74" stroke="#8E9183" stroke-width="1.2"/>
+              <path d="M 14 5.5 V 10.5 M 74 5.5 V 10.5" stroke="#8E9183" stroke-width="1.2"/>
+              <!-- Center NOPE! Exclamation Emblem -->
+              <g class="nope-emblem">
+                <rect x="40.5" y="27" width="7" height="20" rx="3.5" fill="#E6534B"/>
+                <circle cx="44" cy="54.5" r="3.8" fill="#E6534B"/>
+              </g>
+              <!-- Sweeping Room Scan Beam -->
+              <rect class="nope-scan-beam" x="17" y="18" width="54" height="2.4" rx="1.2" fill="#E6534B"/>
+            </svg>
+          </div>
+          <span class="micro-label" style="display:block;margin-bottom:8px;">ROOM ANALYSIS</span>
+          <h2 id="analyzing-title" class="analyzing-title">자취방을 분석중이에요</h2>
+          <p id="analyzing-step-text" class="analyzing-sub">입력하신 평수와 거주 조건을 확인하고 있어요…</p>
+          <div class="progress-bar analyzing-bar">
+            <div id="analyzing-progress-fill" class="progress-fill"></div>
+          </div>
+          <div class="analyzing-checklist" aria-hidden="true">
+            <div id="an-step-1" class="an-step is-active"><span class="an-dot"></span><span>01 · 평수와 동선 조건 확인</span></div>
+            <div id="an-step-2" class="an-step"><span class="an-dot"></span><span>02 · 방 톤과 공간 MBTI 매칭</span></div>
+            <div id="an-step-3" class="an-step"><span class="an-dot"></span><span>03 · 자취생활 팁 · 추천템 정리</span></div>
+          </div>
+        </div>
+
+        <div id="quiz-taste-summary" class="hidden stage-animate"></div>
+
+        <div id="quiz-result" class="hidden stage-animate"></div>
+      </section>
+
+      <!-- ==================== TAB 2: 판독 & 톤 매처 ==================== -->
+      <section id="tab-scanner" class="tab-panel">
+        <div class="scanner-mode-switch" id="scanner-mode-switch">
+          <button class="scan-mode-btn active" data-scan-mode="search">제품 판독</button>
+          <button class="scan-mode-btn" data-scan-mode="matcher">톤·무드 매처</button>
+        </div>
+
+        <div id="scanner-stage-gate" class="editorial-gate stage-animate">
+          <div class="gate-top">
+            <span class="micro-label">PRODUCT SCANNER</span>
+            <h2 class="gate-headline">지금 보시는 상품,<br />사도 괜찮을까요?</h2>
+            <p class="gate-sub">상품명, 오늘의집·쿠팡 링크, 또는 상세 캡처 사진을 넣으면 실사용 스펙을 판독해 드립니다.</p>
+
+            <div class="search-row">
+              <input id="item-search-input" type="text" placeholder="상품명, 브랜드 또는 상품 링크(URL) 붙여넣기" />
+              <button id="item-analyze-btn" class="btn-primary">판독</button>
+            </div>
+
+            <div class="scan-attach-bar">
+              <label for="item-image-input" class="scan-attach-btn">
+                <span>📷 상세 캡처 · 제품 사진 첨부</span>
+              </label>
+              <input id="item-image-input" type="file" accept="image/*" class="hidden" />
+              <span class="scan-paste-tip">Ctrl+V 붙여넣기 가능</span>
+            </div>
+
+            <div id="scanner-image-preview" class="scan-img-preview hidden">
+              <img id="scanner-image-thumb" alt="첨부 상품 이미지 미리보기" />
+              <div class="scan-img-meta">
+                <div class="scan-img-top">
+                  <strong id="scanner-image-name">첨부 이미지</strong>
+                  <button type="button" id="clear-scanner-image-btn" class="scan-img-remove" aria-label="첨부 이미지 삭제">×</button>
+                </div>
+                <input id="item-image-note" type="text" maxlength="80" placeholder="궁금한 점이나 소재 메모 (예: 원룸 타공 필요? 시트지?)" />
+              </div>
+            </div>
+
+            <div id="recent-auto-wrap" class="recent-auto-wrap hidden">
+              <span class="text-tertiary" style="display:block;margin-bottom:6px;font-weight:700;">방금 판독 · 자동 저장된 상품</span>
+              <div id="recent-auto-chips" class="chips-row"></div>
+            </div>
+
+            <div style="margin-top:12px;">
+              <span class="text-tertiary" style="display:block;margin-bottom:8px;font-weight:700;">브랜드 · 카테고리 바로 보기</span>
+              <div id="category-chips" class="chips-row"></div>
+            </div>
+          </div>
+          <div style="height:24px;"></div>
+        </div>
+
+        <div id="scanner-stage-results" class="hidden stage-animate">
+          <div class="step-back-bar">
+            <button id="scanner-reset-btn" class="btn-ghost btn-sm">← 다시 검색</button>
+            <span id="scanner-active-label" class="micro-label">RESULTS</span>
+          </div>
+          <div id="verdict-filter-bar" class="verdict-filter-bar">
+            <button class="vfilter-btn active" data-verdict="ALL">전체</button>
+            <button class="vfilter-btn" data-verdict="NOPE">NOPE!</button>
+            <button class="vfilter-btn" data-verdict="WARN">CHECK</button>
+            <button class="vfilter-btn" data-verdict="PASS">PASS</button>
+          </div>
+          <div id="custom-analysis-output"></div>
+          <div id="items-list" class="cards-stack"></div>
+        </div>
+
+        <div id="scanner-stage-matcher" class="hidden stage-animate">
+          <div class="step-back-bar">
+            <button id="matcher-back-btn" class="btn-ghost btn-sm" type="button">← 뒤로가기</button>
+          </div>
+          <h2 id="matcher-headline" class="matcher-headline" style="margin-bottom:14px;">큰 톤 하나 맞추면<br />작은 방도 정돈됩니다.</h2>
+          <div id="matcher-survey-sync-box" class="matcher-profile-bar" style="margin-bottom:18px;"></div>
+
+          <div class="matcher-block">
+            <div id="matcher-style-row" class="chips-row"></div>
+          </div>
+
+          <div class="matcher-block">
+            <div id="matcher-tone-grid" class="tone-grid"></div>
+          </div>
+
+          <div class="matcher-block">
+            <div id="matcher-cat-row" class="chips-row"></div>
+          </div>
+
+          <div id="matcher-output"></div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 3: 치수 ==================== -->
+      <section id="tab-scale" class="tab-panel">
+        <div id="scale-stage-input" class="editorial-gate stage-animate">
+          <div class="gate-top">
+            <span class="micro-label">HUMAN SCALE</span>
+            <h2 class="gate-headline">치수 안 맞으면<br />예쁜 가구도 <span style="color:var(--accent)">NOPE</span>.</h2>
+            <p class="gate-sub">키와 생활 방식을 정하면 맞춤 도면을 그립니다.</p>
+
+            <div class="slider-card">
+              <div class="slider-header">
+                <span style="font-size:13px;font-weight:800;">나의 키</span>
+                <div class="height-readout"><span id="height-val">168</span><span> cm</span></div>
+              </div>
+              <input id="height-slider" type="range" min="145" max="195" value="168" />
+              <div class="mode-switch" id="scale-mode-switch">
+                <button class="mode-btn active" data-mode="desk">의자·책상형</button>
+                <button class="mode-btn" data-mode="floor">바닥 좌식형</button>
+                <button class="mode-btn" data-mode="bed">침대 멀티형</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="gate-actions">
+            <button id="show-scale-diagram-btn" class="btn-primary btn-full">내 치수 도면 보기 →</button>
+          </div>
+        </div>
+
+        <div id="scale-stage-diagram" class="hidden stage-animate">
+          <div class="step-back-bar">
+            <button id="scale-edit-btn" class="btn-ghost btn-sm">← 다시 맞추기</button>
+            <span id="scale-stage-badge" class="micro-label">168CM</span>
+          </div>
+          <div class="diagram-frame" id="human-scale-svg-wrap"></div>
+          <div class="diagram-caption-box">
+            <span class="diagram-caption-title">TIP!</span>
+            <p class="diagram-caption-text" id="scale-mode-note"></p>
+          </div>
+          <div class="specs-grid" id="scale-specs-grid"></div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 4: 루틴 ==================== -->
+      <section id="tab-routine" class="tab-panel">
+        <div id="routine-stage-menu" class="editorial-gate stage-animate">
+          <div class="gate-top">
+            <span class="micro-label">ROUTINE</span>
+            <h2 class="gate-headline">오늘 필요한 도구,<br />하나만 고르세요.</h2>
+
+            <div class="menu-step-list">
+              <button class="menu-step-btn" data-open-seg="timers">
+                <div>
+                  <span class="menu-step-num">01 / TIMER</span>
+                  <div class="menu-step-title">환기 · 세탁 원클릭 타이머</div>
+                </div>
+                <strong>→</strong>
+              </button>
+              <button class="menu-step-btn" data-open-seg="cycles">
+                <div>
+                  <span class="menu-step-num">02 / CYCLES</span>
+                  <div class="menu-step-title">세탁·배수구·필터 주기 (.ics)</div>
+                </div>
+                <strong>→</strong>
+              </button>
+              <button class="menu-step-btn" data-open-seg="checklist">
+                <div>
+                  <span class="menu-step-num">03 / CHECKLIST</span>
+                  <div class="menu-step-title">집주인 제출용 입주 하자 · 수압 점검</div>
+                </div>
+                <strong>→</strong>
+              </button>
+            </div>
+          </div>
+          <div style="height:24px;"></div>
+        </div>
+
+        <div id="seg-timers" class="hidden stage-animate">
+          <div class="step-back-bar">
+            <button class="btn-ghost btn-sm routine-back-btn">← 목록</button>
+            <span class="micro-label">01 · TIMER</span>
+          </div>
+          <div class="card">
+            <div class="quick-timer-strip" id="preset-timer-buttons"></div>
+            <div class="custom-timer-row">
+              <input id="custom-minutes-input" type="number" min="1" max="180" value="20" aria-label="분 입력" />
+              <span style="font-size:13px;font-weight:700;">분</span>
+              <button id="start-custom-timer-btn" class="btn-secondary">직접 시작</button>
+            </div>
+            <div id="active-timer-box" class="active-timer-box hidden">
+              <div>
+                <div id="active-timer-label" style="font-size:12px;font-weight:700;color:var(--accent);"></div>
+                <div id="active-timer-clock" class="timer-clock">00:00</div>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button id="toggle-timer-btn" class="btn-secondary btn-sm">일시정지</button>
+                <button id="reset-timer-btn" class="btn-secondary btn-sm">종료</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="seg-cycles" class="hidden stage-animate">
+          <div class="step-back-bar">
+            <button class="btn-ghost btn-sm routine-back-btn">← 목록</button>
+            <span class="micro-label">02 · CYCLES</span>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <h3>주기 알람</h3>
+              <button id="export-all-ics-btn" class="btn-primary btn-sm">전체 .ics</button>
+            </div>
+            <div id="cycle-alarms-list"></div>
+          </div>
+        </div>
+
+        <div id="seg-checklist" class="hidden stage-animate">
+          <div class="step-back-bar">
+            <button class="btn-ghost btn-sm routine-back-btn">← 목록</button>
+            <span class="micro-label">03 · DEPOSIT GUARD</span>
+          </div>
+
+          <div class="card">
+            <div class="inspect-header-top">
+              <div>
+                <span class="micro-label">MOVE-IN INSPECTION</span>
+                <h3 style="margin-top:4px;">집주인 제출용 하자·수압 기록장</h3>
+              </div>
+              <button id="inspect-reset-btn" class="btn-ghost btn-sm" type="button">초기화</button>
+            </div>
+            <p class="text-secondary" style="font-size:12.5px;margin-top:4px;line-height:1.5;">
+              입주 직전이나 당일 방 상태를 눌러 기록하면, 아래에 집주인·부동산 전달용 문자가 자동 완성됩니다.
+            </p>
+
+            <div class="inspect-meta-row">
+              <input id="inspect-room-label" type="text" maxlength="40" placeholder="방 호수/메모 (예: OO빌라 302호 · 입주 당일)" aria-label="방 호수 또는 메모" />
+            </div>
+
+            <div class="inspect-stats-bar">
+              <div class="inspect-stat">
+                <span class="text-tertiary">점검 완료</span>
+                <strong id="inspect-progress-text">0 / 8</strong>
+              </div>
+              <div class="inspect-stat">
+                <span class="text-tertiary">이상 없음</span>
+                <strong id="inspect-pass-text" style="color:var(--safe);">0건</strong>
+              </div>
+              <div class="inspect-stat">
+                <span class="text-tertiary">하자 발견</span>
+                <strong id="inspect-issue-text" style="color:var(--accent);">0건</strong>
+              </div>
+            </div>
+            <div class="inspect-progress-track">
+              <div id="inspect-progress-fill" class="inspect-progress-fill" style="width:0%;"></div>
+            </div>
+
+            <div id="inspect-zone-filters" class="inspect-zone-filters"></div>
+            <div id="checklist-container"></div>
+          </div>
+
+          <div class="card">
+            <span class="micro-label">KAKAO · SMS EXPORT</span>
+            <h3 style="margin-top:4px;">집주인 전달용 점검 리포트</h3>
+            <p class="text-secondary" style="font-size:12.5px;margin-top:4px;line-height:1.5;">
+              위에서 기록한 하자·수압 상태가 실시간 반영됩니다. 사진과 함께 카톡·문자로 바로 보내 보증금 분쟁을 막으세요.
+            </p>
+            <pre id="inspect-report-preview" class="inspect-report-preview"></pre>
+            <div class="inspect-export-actions">
+              <button id="copy-inspect-report-btn" type="button" class="btn-primary btn-full">카톡·문자용 텍스트 복사</button>
+              <button id="download-inspect-report-btn" type="button" class="btn-secondary btn-full">내 폰에 기록 파일(.txt) 저장</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="pwa-install-banner" class="pwa-install-banner hidden">
+      <div class="pwa-banner-text">
+        <strong>NOPE! 홈 화면에 앱처럼 추가</strong>
+        <span id="pwa-install-sub">앱스토어 없이 내 방 체크할 때 0.5초 실행</span>
+      </div>
+      <div class="pwa-banner-actions">
+        <button id="pwa-install-action-btn" class="btn-primary btn-sm" type="button">추가</button>
+        <button id="pwa-install-dismiss-btn" class="pwa-dismiss-btn" type="button" aria-label="닫기">×</button>
+      </div>
+    </div>
+
+    <nav class="bottom-nav" aria-label="하단 메뉴">
+      <button class="nav-tab active" data-tab="home" aria-label="홈">
+        <svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+        <span class="nav-tab-lbl">홈</span>
+      </button>
+      <button class="nav-tab" data-tab="scanner" aria-label="판독">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        <span class="nav-tab-lbl">판독</span>
+      </button>
+      <button class="nav-tab" data-tab="scale" aria-label="치수">
+        <svg viewBox="0 0 24 24"><path d="M4 20V4h16"/><path d="M4 9h4M4 14h6M10 20v-4M15 20v-6"/></svg>
+        <span class="nav-tab-lbl">치수</span>
+      </button>
+      <button class="nav-tab" data-tab="routine" aria-label="루틴">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 3h6"/></svg>
+        <span class="nav-tab-lbl">루틴</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Yuka Level 2: Product Detail Bottom Sheet -->
+  <div id="detail-sheet-backdrop" class="sheet-backdrop hidden" role="dialog" aria-modal="true">
+    <div id="detail-sheet-panel" class="sheet-panel"></div>
+  </div>
+
+  <!-- Lazy Auth + Saved Wishlist Sheet -->
+  <div id="account-sheet-backdrop" class="sheet-backdrop hidden" role="dialog" aria-modal="true">
+    <div id="account-sheet-panel" class="sheet-panel"></div>
+  </div>
+
+  <canvas id="share-canvas" width="1080" height="1920" class="hidden"></canvas>
+  <div id="toast" class="toast hidden"></div>
+
+  <script type="module" src="./app.js?v=nope44"></script>
+</body>
+</html>
