@@ -13,18 +13,25 @@ import {
   calcHumanScale,
   QUICK_TIMERS,
   CYCLE_ALARMS,
-  MOVE_IN_CHECKLIST
-} from './data/app-data.js?v=nope44';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope44';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope44';
+  MOVE_IN_CHECKLIST,
+  HIDDEN_PREP_KITS,
+  GAP_STORAGE_ZONES,
+  getItemGapHint,
+  ROOM_BASE_OPTIONS,
+  getRoomBaseRescue
+} from './data/app-data.js?v=nope51';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope51';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope51';
 
 const STORAGE_KEYS = {
   cycles: 'nope_cycles_v2',
   checklist: 'nope_inspection_v3',
   scale: 'nope_scale_v2',
   roomProfile: 'nope_room_profile_v1',
+  roomBase: 'nope_room_base_v1',
   autoItems: 'nope_auto_items_v1',
   wishlist: 'nope_wishlist_v1',
+  defenseIds: 'nope_defense_ids_v1',
   account: 'nope_account_v1',
   pwaDismissed: 'nope_pwa_dismissed_v1'
 };
@@ -39,14 +46,59 @@ const state = {
   matcherStyle: 'ALL',
   matcherTone: 'white-minimal',
   matcherCat: '책상·의자',
+  matcherRoomBase: 'clean-white',
   matcherReturnOrigin: 'search',
+  quickRefineCat: '',
+  quickRefineFeatures: [],
   scaleHeight: 168,
   scaleMode: 'desk',
+  scaleView: 'height',
+  gapZone: 'under-bed',
+  gapSizeId: 'under-12',
   timerInterval: null,
   timerRemainingSec: 0,
   timerLabel: '',
   timerPaused: false
 };
+
+function loadRoomBaseState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.roomBase);
+    if (saved && ROOM_BASE_OPTIONS.some((b) => b.id === saved)) {
+      state.matcherRoomBase = saved;
+    }
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function saveRoomBaseState(baseId) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.roomBase, baseId);
+  } catch {
+    // ignore storage errors
+  }
+}
+
+async function copyTextToClipboard(text, toastMsg = '복사 완료!') {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      throw new Error('Clipboard API unavailable');
+    }
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+  }
+  showToast(toastMsg);
+}
 
 function escapeHtml(str) {
   return String(str)
@@ -87,9 +139,36 @@ function playBeep() {
   }
 }
 
+let activeViewTransition = null;
+let suppressViewTransition = false;
+const pendingViewCallbacks = [];
+
 function runViewTransition(updateFn) {
-  if (typeof document.startViewTransition === 'function') {
-    document.startViewTransition(() => updateFn());
+  if (!suppressViewTransition && typeof document.startViewTransition === 'function') {
+    try {
+      while (pendingViewCallbacks.length > 0) {
+        const prev = pendingViewCallbacks.shift();
+        prev();
+      }
+      if (activeViewTransition && typeof activeViewTransition.skipTransition === 'function') {
+        activeViewTransition.skipTransition();
+      }
+      let ran = false;
+      const runner = () => {
+        if (ran) return;
+        ran = true;
+        const idx = pendingViewCallbacks.indexOf(runner);
+        if (idx >= 0) pendingViewCallbacks.splice(idx, 1);
+        updateFn();
+      };
+      pendingViewCallbacks.push(runner);
+      const vt = document.startViewTransition(runner);
+      activeViewTransition = vt;
+      if (vt && vt.finished) vt.finished.catch(() => {});
+      if (vt && vt.ready) vt.ready.catch(() => {});
+    } catch {
+      updateFn();
+    }
   } else {
     updateFn();
   }
@@ -106,6 +185,9 @@ function switchTab(tabName) {
     const topbarActions = document.getElementById('topbar-actions');
     if (topbarActions) {
       topbarActions.classList.toggle('hidden', tabName !== 'scanner');
+    }
+    if (tabName === 'scanner') {
+      renderScannerProfileNudge();
     }
     window.scrollTo({ top: 0, behavior: 'instant' });
   });
@@ -230,6 +312,11 @@ savedProfileBtn.addEventListener('click', () => {
     density: saved.density || 'balanced',
     mbtiId: saved.mbtiId || '',
     activity: saved.activity || '자취 생활',
+    secondaryRisks: saved.secondaryRisks || [],
+    dynamicAvoid: saved.dynamicAvoid || null,
+    dynamicAlt: saved.dynamicAlt || null,
+    analysisBasis: saved.analysisBasis || [],
+    estimatedSavedWon: saved.estimatedSavedWon || 180000,
     profile,
     dangerScore: saved.dangerScore
   });
@@ -241,6 +328,22 @@ const openHubBtn = document.getElementById('open-home-hub-btn');
 if (openHubBtn) openHubBtn.addEventListener('click', () => showHomeStage('hub'));
 document.getElementById('back-to-cover-btn').addEventListener('click', () => showHomeStage('cover'));
 
+function getFlattenedQuizAnswers() {
+  const flat = [];
+  state.quizAnswers.forEach((entry) => {
+    if (Array.isArray(entry)) flat.push(...entry);
+    else if (entry) flat.push(entry);
+  });
+  return flat;
+}
+
+function getActiveQuizQuestions() {
+  const flat = getFlattenedQuizAnswers();
+  return QUIZ_QUESTIONS.filter((q) => !q.condition || q.condition(flat));
+}
+
+let currentMultiSelected = new Set();
+
 document.getElementById('quiz-back-btn').addEventListener('click', () => {
   if (state.quizIndex === 0) {
     showHomeStage('nickname');
@@ -251,28 +354,130 @@ document.getElementById('quiz-back-btn').addEventListener('click', () => {
   renderQuizStep();
 });
 
+document.getElementById('quiz-next-btn').addEventListener('click', () => {
+  const activeQs = getActiveQuizQuestions();
+  const q = activeQs[state.quizIndex];
+  if (!q || !q.multiSelect) return;
+  const chosen = [...currentMultiSelected].map((idx) => q.options[idx]).filter(Boolean);
+  if (chosen.length === 0) {
+    showToast('해당하는 항목을 1개 이상 선택해 주세요.');
+    return;
+  }
+  state.quizAnswers.push(chosen);
+  const nextActiveQs = getActiveQuizQuestions();
+  if (state.quizIndex + 1 < nextActiveQs.length) {
+    state.quizIndex += 1;
+    renderQuizStep();
+  } else {
+    startRoomAnalysisLoading();
+  }
+});
+
 function renderQuizStep() {
-  const q = QUIZ_QUESTIONS[state.quizIndex];
-  document.getElementById('quiz-step-text').textContent = q.step;
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
+  }
+  const activeQs = getActiveQuizQuestions();
+  const q = activeQs[state.quizIndex];
+  if (!q) {
+    startRoomAnalysisLoading();
+    return;
+  }
+
+  const totalSteps = activeQs.length;
+  const stepLabel = `${String(state.quizIndex + 1).padStart(2, '0')} / ${String(totalSteps).padStart(2, '0')}`;
+  document.getElementById('quiz-step-text').textContent = stepLabel;
   document.getElementById('quiz-progress-fill').style.width =
-    `${((state.quizIndex + 1) / QUIZ_QUESTIONS.length) * 100}%`;
+    `${((state.quizIndex + 1) / Math.max(1, totalSteps)) * 100}%`;
+  const chapterEl = document.getElementById('quiz-chapter-pill');
+  if (chapterEl) chapterEl.textContent = q.chapter || `STEP ${state.quizIndex + 1}`;
   document.getElementById('quiz-question-title').textContent = q.title;
+  const reasonEl = document.getElementById('quiz-reason-hint');
+  if (reasonEl) {
+    if (q.reasonHint) {
+      reasonEl.textContent = `→ ${q.reasonHint}`;
+      reasonEl.classList.remove('hidden');
+    } else {
+      reasonEl.classList.add('hidden');
+    }
+  }
+
+  const hintEl = document.getElementById('quiz-multi-hint');
+  const nextBtn = document.getElementById('quiz-next-btn');
+  currentMultiSelected = new Set();
+
+  if (q.multiSelect) {
+    if (hintEl) {
+      hintEl.textContent = `복수 선택 가능 · 최대 ${q.maxSelect || 3}개 (고른 뒤 '다음 →' 누르기)`;
+      hintEl.classList.remove('hidden');
+    }
+    if (nextBtn) {
+      nextBtn.classList.remove('hidden');
+      nextBtn.disabled = true;
+    }
+  } else {
+    if (hintEl) hintEl.classList.add('hidden');
+    if (nextBtn) nextBtn.classList.add('hidden');
+  }
 
   const optsWrap = document.getElementById('quiz-options');
+  optsWrap.classList.add('no-hover-yet');
   optsWrap.innerHTML = '';
-  q.options.forEach((opt) => {
+
+  const unlockHover = (e) => {
+    if (e.pointerType !== 'touch') {
+      optsWrap.classList.remove('no-hover-yet');
+      optsWrap.removeEventListener('pointermove', unlockHover);
+    }
+  };
+  optsWrap.addEventListener('pointermove', unlockHover);
+
+  q.options.forEach((opt, optIdx) => {
     const btn = document.createElement('button');
-    btn.className = 'quiz-option-btn';
-    btn.textContent = opt.label;
-    btn.addEventListener('click', () => {
-      state.quizAnswers.push(opt);
-      if (state.quizIndex + 1 < QUIZ_QUESTIONS.length) {
-        state.quizIndex += 1;
-        renderQuizStep();
-      } else {
-        startRoomAnalysisLoading();
-      }
-    });
+    btn.type = 'button';
+    btn.className = q.multiSelect ? 'quiz-option-btn is-multi' : 'quiz-option-btn';
+
+    if (q.multiSelect) {
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = opt.label;
+      const checkSpan = document.createElement('span');
+      checkSpan.className = 'quiz-opt-check';
+      checkSpan.textContent = '';
+      btn.appendChild(labelSpan);
+      btn.appendChild(checkSpan);
+
+      btn.addEventListener('click', () => {
+        btn.blur();
+        if (currentMultiSelected.has(optIdx)) {
+          currentMultiSelected.delete(optIdx);
+          btn.classList.remove('is-selected');
+          checkSpan.textContent = '';
+        } else {
+          if (q.maxSelect && currentMultiSelected.size >= q.maxSelect) {
+            showToast(`최대 ${q.maxSelect}개까지 선택할 수 있어요.`);
+            return;
+          }
+          currentMultiSelected.add(optIdx);
+          btn.classList.add('is-selected');
+          checkSpan.textContent = '✓';
+        }
+        if (nextBtn) nextBtn.disabled = currentMultiSelected.size === 0;
+      });
+    } else {
+      btn.textContent = opt.label;
+      btn.addEventListener('click', () => {
+        btn.blur();
+        state.quizAnswers.push(opt);
+        const nextActiveQs = getActiveQuizQuestions();
+        if (state.quizIndex + 1 < nextActiveQs.length) {
+          state.quizIndex += 1;
+          renderQuizStep();
+        } else {
+          startRoomAnalysisLoading();
+        }
+      });
+    }
+
     optsWrap.appendChild(btn);
   });
 }
@@ -281,10 +486,11 @@ function startRoomAnalysisLoading() {
   clearAnalysisTimers();
   showHomeStage('analyzing');
 
+  const flatAnswers = getFlattenedQuizAnswers();
   const nick = state.nickname || '자취러';
-  const pyeongAns = state.quizAnswers.find((a) => a.pyeong);
-  const toneAns = state.quizAnswers.find((a) => a.toneId);
-  const tasteAns = state.quizAnswers.find((a) => a.tasteId);
+  const pyeongAns = flatAnswers.find((a) => a.pyeong);
+  const toneAns = flatAnswers.find((a) => a.toneId);
+  const tasteAns = flatAnswers.find((a) => a.tasteId);
 
   const pyeongLabel = pyeongAns ? pyeongAns.pyeong : '원룸';
   const toneName = toneAns ? getToneLabel(toneAns.toneId) : '화이트 · 리넨';
@@ -306,7 +512,7 @@ function startRoomAnalysisLoading() {
   };
 
   titleEl.textContent = `${nick}님의 자취방을 분석중이에요`;
-  stepEl.textContent = `${nick}님이 입력하신 ${pyeongLabel} 조건과 생활 패턴을 확인하고 있어요…`;
+  stepEl.textContent = `${nick}님이 입력하신 ${pyeongLabel} 조건과 환경 변수를 확인하고 있어요…`;
   fillEl.style.width = '28%';
   setCheckState(0);
 
@@ -327,13 +533,20 @@ function startRoomAnalysisLoading() {
   }, 1980));
 }
 
-function getQuizScoreBounds() {
+function getQuizScoreBounds(activeQs = getActiveQuizQuestions()) {
   let minPossible = 0;
   let maxPossible = 0;
-  QUIZ_QUESTIONS.forEach((q) => {
+  activeQs.forEach((q) => {
     const sums = q.options.map((o) => Object.values(o.scores || {}).reduce((a, b) => a + b, 0));
-    minPossible += Math.min(...sums);
-    maxPossible += Math.max(...sums);
+    if (q.multiSelect) {
+      const sorted = [...sums].sort((a, b) => a - b);
+      minPossible += sorted[0] || 0;
+      const topK = sorted.slice(-(q.maxSelect || 2));
+      maxPossible += topK.reduce((a, b) => a + b, 0);
+    } else {
+      minPossible += Math.min(...sums);
+      maxPossible += Math.max(...sums);
+    }
   });
   return { minPossible, maxPossible };
 }
@@ -361,32 +574,182 @@ function finalizeRoomAnalysis() {
   let toneId = state.matcherTone || 'white-minimal';
   let tasteId = 'plant';
   let density = 'balanced';
-  let activity = '재택·휴식';
+  let contractLabel = '';
+  let contractType = '';
+  let optionLevel = 'none';
+  let budgetTier = 'mid';
+  let toolLevel = '';
+  let diySkill = '';
+  let moveSoon = '';
+  let floorMaterial = 'jangpan';
+  let wallMaterial = 'silk';
+  let floorEnv = 'elev';
+  let lightingPref = 'basic';
+  let materialPref = 'wood';
+  let postureMode = 'desk';
+  let worstFear = '';
+  let hasPet = false;
+  let hasAllergy = false;
+  let isCouple = false;
+  let isDuplex = false;
+  let narrowPath = false;
+  let ceilingLow = false;
+  let hasFullWindow = false;
+  let needsIndoorDrying = false;
+  let isGroundFloor = false;
+  let noElevator = false;
+  let hasMoistureRisk = false;
+  let needsInsulation = false;
+  let frequentMover = false;
+  let smallWasher = false;
+  let visualClutterSensitive = false;
+  let heavyDeskLoad = false;
+  let needsFloorSpace = false;
+  let isTenant = false;
+  let isOwner = false;
+  const activities = [];
+  const targetItems = [];
 
-  state.quizAnswers.forEach((ans) => {
+  const flatAnswers = getFlattenedQuizAnswers();
+  flatAnswers.forEach((ans) => {
     if (ans.pyeong) pyeongLabel = ans.pyeong;
     if (ans.wishId) wishId = ans.wishId;
     if (ans.toneId) toneId = ans.toneId;
     if (ans.tasteId) tasteId = ans.tasteId;
     if (ans.density) density = ans.density;
-    if (ans.activity) activity = ans.activity;
+    if (ans.contractLabel) contractLabel = ans.contractLabel;
+    if (ans.contractType) contractType = ans.contractType;
+    if (ans.optionLevel) optionLevel = ans.optionLevel;
+    if (ans.budgetTier) budgetTier = ans.budgetTier;
+    if (ans.diySkill) {
+      diySkill = ans.diySkill;
+      toolLevel = ans.diySkill === 'pro' ? 'drill' : (ans.diySkill === 'basic' ? 'hex' : 'none');
+    }
+    if (ans.toolLevel) toolLevel = ans.toolLevel;
+    if (ans.moveSoon) moveSoon = ans.moveSoon;
+    if (ans.floorMaterial) floorMaterial = ans.floorMaterial;
+    if (ans.wallMaterial) wallMaterial = ans.wallMaterial;
+    if (ans.floorEnv) floorEnv = ans.floorEnv;
+    if (ans.lightingPref) lightingPref = ans.lightingPref;
+    if (ans.materialPref) materialPref = ans.materialPref;
+    if (ans.postureMode) postureMode = ans.postureMode;
+    if (ans.worstFear) worstFear = ans.worstFear;
+    if (ans.hasPet) hasPet = true;
+    if (ans.hasAllergy) hasAllergy = true;
+    if (ans.isCouple) isCouple = true;
+    if (ans.isDuplex) isDuplex = true;
+    if (ans.narrowPath) narrowPath = true;
+    if (ans.ceilingLow) ceilingLow = true;
+    if (ans.hasFullWindow) hasFullWindow = true;
+    if (ans.needsIndoorDrying) needsIndoorDrying = true;
+    if (ans.isGroundFloor) isGroundFloor = true;
+    if (ans.noElevator) noElevator = true;
+    if (ans.hasMoistureRisk) hasMoistureRisk = true;
+    if (ans.needsInsulation) needsInsulation = true;
+    if (ans.frequentMover) { frequentMover = true; moveSoon = 'high'; }
+    if (ans.smallWasher) smallWasher = true;
+    if (ans.visualClutterSensitive) visualClutterSensitive = true;
+    if (ans.heavyDeskLoad) heavyDeskLoad = true;
+    if (ans.needsFloorSpace) needsFloorSpace = true;
+    if (ans.isTenant) isTenant = true;
+    if (ans.isOwner) isOwner = true;
+    if (ans.activity && !activities.includes(ans.activity)) activities.push(ans.activity);
+    if (ans.targetItem && !targetItems.includes(ans.targetItem)) targetItems.push(ans.targetItem);
     Object.entries(ans.scores || {}).forEach(([k, v]) => {
       totals[k] = (totals[k] || 0) + v;
     });
   });
 
+  const ctx = {
+    pyeongLabel, wishId, toneId, tasteId, density, contractLabel, optionLevel,
+    budgetTier, diySkill, floorMaterial, wallMaterial, floorEnv, lightingPref,
+    materialPref, postureMode, worstFear, hasPet, hasAllergy, isCouple, isDuplex,
+    narrowPath, ceilingLow, hasFullWindow, needsIndoorDrying, isGroundFloor,
+    noElevator, hasMoistureRisk, needsInsulation, frequentMover, smallWasher,
+    visualClutterSensitive, heavyDeskLoad, needsFloorSpace, isTenant, isOwner,
+    activities, targetItems
+  };
+
+  const activity = activities.join(' · ') || '재택·휴식';
   const nickname = state.nickname || '자취러';
   const rawSum = Object.values(totals).reduce((a, b) => a + b, 0);
   const { minPossible, maxPossible } = getQuizScoreBounds();
   const normalized = (rawSum - minPossible) / Math.max(1, maxPossible - minPossible);
   const dangerScore = Math.min(96, Math.max(12, Math.round(normalized * 84 + 12)));
-  const profile = QUIZ_RESULTS.find((r) => r.condition(totals)) || QUIZ_RESULTS[QUIZ_RESULTS.length - 1];
+  const profile = QUIZ_RESULTS.find((r) => r.condition(totals, ctx)) || QUIZ_RESULTS[QUIZ_RESULTS.length - 1];
   const toneName = getToneLabel(toneId);
   const spaceMbti = computeSpaceMbti({ density, toneId, tasteId });
 
+  const secondaryRisks = [];
+  if (hasPet) secondaryRisks.push('반려동물 털·올 뜯김 주의');
+  if (hasAllergy) secondaryRisks.push('비염·먼지 축적 주의');
+  if (noElevator) secondaryRisks.push('계단 운반 · 대형 가구 주의');
+  if (isDuplex) secondaryRisks.push('복층 층고·동선 주의');
+  if (narrowPath) secondaryRisks.push('통로 60cm 미만 협소');
+  if (hasMoistureRisk || needsIndoorDrying) secondaryRisks.push('결로·실내건조 습기 주의');
+  if (wallMaterial === 'silk' && isTenant) secondaryRisks.push('실크벽지 테이프 뜯김 주의');
+  if (floorMaterial === 'jangpan' && isTenant) secondaryRisks.push('장판 열변색·찍힘 주의');
+  if (smallWasher) secondaryRisks.push('9kg 이하 세탁 한계');
+  if (heavyDeskLoad) secondaryRisks.push('모니터암 상판 하중 체크');
+
+  const analysisBasis = [
+    pyeongLabel,
+    contractLabel || (isOwner ? '자가' : '전월세'),
+    wallMaterial === 'silk' ? '실크벽지' : (wallMaterial === 'paper' ? '합지벽지' : ''),
+    floorMaterial === 'jangpan' ? '장판 바닥' : (floorMaterial === 'wood' ? '마루 바닥' : ''),
+    hasPet ? '반려동물' : (hasAllergy ? '비염·알러지' : (isCouple ? '2인 거주' : '')),
+    noElevator ? '엘리베이터 없음' : '',
+    smallWasher ? '9kg 이하 세탁기' : '',
+    heavyDeskLoad ? '모니터암 사용' : '',
+    diySkill === 'none' ? '드라이버 없음' : ''
+  ].filter(Boolean).slice(0, 7);
+
+  const estimatedSavedWon = Math.round(
+    (90000 + (isTenant ? 70000 : 20000) + (hasPet || hasAllergy ? 45000 : 0) + (heavyDeskLoad ? 55000 : 0) + (noElevator ? 40000 : 0) + (targetItems.length * 15000)) / 10000
+  ) * 10000;
+
+  const avoidSet = new Set(profile.avoidItems || []);
+  const altSet = new Set(profile.altItems || []);
+  if (hasPet || hasAllergy) {
+    avoidSet.add('장모 샤기 러그');
+    avoidSet.add('부클레 패브릭 소파');
+    altSet.add('단모 워셔블 러그');
+    altSet.add('이케아 클리판/쇠데르함');
+  }
+  if (isTenant && (wallMaterial === 'silk' || targetItems.includes('wall_window') || totals.depositRisk >= 16)) {
+    avoidSet.add('점착식 시트지 벽지');
+    avoidSet.add('3M 코맨드(실크벽지)');
+    altSet.add('꼭꼬핀 쉬폰 커튼');
+    altSet.add('스텐304 압축 욕실선반');
+  }
+  if (targetItems.includes('hanger')) {
+    avoidSet.add('무타공 압축봉 행거');
+    altSet.add('도어형 옷장');
+  }
+  if (isDuplex || narrowPath || needsFloorSpace || isCouple) {
+    avoidSet.add('스탠드 전신거울');
+    altSet.add('도어후크 거울');
+  }
+  if (noElevator || frequentMover) {
+    avoidSet.add('이케아 말름·브림네스');
+    altSet.add('무인양품 PP 서랍');
+  }
+  if (heavyDeskLoad || (targetItems.includes('desk') && budgetTier === 'low')) {
+    avoidSet.add('허니콤 저가 MDF 책상');
+    altSet.add('두닷 콰트로');
+  }
+
+  const dynamicAvoid = [...avoidSet].slice(0, 5);
+  const dynamicAlt = [...altSet].slice(0, 5);
+
   state.matcherTone = toneId;
+  state.scaleMode = postureMode;
+  saveScaleState();
+  updateScaleInputsUI();
+  renderScaleQuizHint();
   renderToneMatcher();
 
+  const resolvedContractType = contractType || (isOwner ? 'free' : (isTenant ? 'no-nail' : 'free'));
   const savedData = {
     nickname,
     pyeongLabel,
@@ -397,6 +760,45 @@ function finalizeRoomAnalysis() {
     density,
     mbtiId: spaceMbti.id,
     activity,
+    contractLabel,
+    contractType: resolvedContractType,
+    optionLevel,
+    budgetTier,
+    diySkill,
+    toolLevel: toolLevel || (optionLevel === 'full' ? 'hex' : ''),
+    moveSoon: moveSoon || 'mid',
+    floorMaterial,
+    wallMaterial,
+    floorEnv,
+    lightingPref,
+    materialPref,
+    postureMode,
+    worstFear,
+    hasPet,
+    hasAllergy,
+    isCouple,
+    isDuplex,
+    narrowPath,
+    ceilingLow,
+    hasFullWindow,
+    needsIndoorDrying,
+    isGroundFloor,
+    noElevator,
+    hasMoistureRisk,
+    needsInsulation,
+    frequentMover,
+    smallWasher,
+    visualClutterSensitive,
+    heavyDeskLoad,
+    needsFloorSpace,
+    isTenant,
+    isOwner,
+    targetItems,
+    secondaryRisks: secondaryRisks.slice(0, 4),
+    analysisBasis,
+    estimatedSavedWon,
+    dynamicAvoid,
+    dynamicAlt,
     profileId: profile.id,
     badge: profile.badge,
     dangerScore
@@ -408,12 +810,15 @@ function finalizeRoomAnalysis() {
     // ignore quota errors
   }
   updateSavedProfileBadge();
+  renderScannerProfileNudge();
+  renderCycleAlarms();
+  renderChecklist();
 
   renderTasteSummaryStage({ ...savedData, profile });
 }
 
 function renderTasteSummaryStage(data) {
-  const { nickname, pyeongLabel, wishId, toneId, toneName, tasteId, density, mbtiId, activity, profile, dangerScore } = data;
+  const { nickname, pyeongLabel, wishId, toneId, toneName, tasteId, density, mbtiId, activity, secondaryRisks, dynamicAvoid, dynamicAlt, analysisBasis, estimatedSavedWon, profile, dangerScore } = data;
   const toneObj = ROOM_TONES.find((t) => t.id === toneId) || ROOM_TONES[0];
   const tasteObj = TASTE_INSIGHTS[tasteId] || TASTE_INSIGHTS.plant;
   const wishCat = (wishId && WISH_CATEGORIES[wishId]) || WISH_CATEGORIES.spacious;
@@ -436,7 +841,7 @@ function renderTasteSummaryStage(data) {
 
       <div class="palette-diagram-card">
         <div class="taste-swatches-bar">
-          <span class="taste-swatch-segment" style="flex:3;background:${toneObj.swatches[0]};color:#23261F;">60%</span>
+          <span class="taste-swatch-segment" style="flex:3;background:${toneObj.swatches[0]};color:#111311;">60%</span>
           <span class="taste-swatch-segment" style="flex:2;background:${toneObj.swatches[1]};color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,0.35);">30%</span>
           <span class="taste-swatch-segment" style="flex:1;background:${toneObj.swatches[2]};color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,0.35);">10%</span>
         </div>
@@ -461,7 +866,7 @@ function renderTasteSummaryStage(data) {
   document.getElementById('taste-back-cover-btn').addEventListener('click', () => showHomeStage('cover'));
   document.getElementById('taste-retake-btn').addEventListener('click', startQuiz);
   document.getElementById('taste-to-verdict-btn').addEventListener('click', () => {
-    renderQuizResultView(profile, dangerScore, pyeongLabel, toneName, nickname, spaceMbti.code);
+    renderQuizResultView(profile, dangerScore, pyeongLabel, toneName, nickname, spaceMbti.code, secondaryRisks, dynamicAvoid, dynamicAlt, analysisBasis, estimatedSavedWon);
   });
   document.getElementById('taste-to-matcher-btn').addEventListener('click', () => {
     state.matcherReturnOrigin = 'taste';
@@ -470,10 +875,13 @@ function renderTasteSummaryStage(data) {
   });
 }
 
-function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', toneName = '화이트 · 크림', nickname = '자취러', mbtiCode = '') {
+function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', toneName = '화이트 · 크림', nickname = '자취러', mbtiCode = '', secondaryRisks = [], dynamicAvoid = null, dynamicAlt = null, analysisBasis = [], estimatedSavedWon = 180000) {
   showHomeStage('result');
 
   const tips = profile.lifeTips || [];
+  const avoidList = (dynamicAvoid && dynamicAvoid.length) ? dynamicAvoid : (profile.avoidItems || []);
+  const altList = (dynamicAlt && dynamicAlt.length) ? dynamicAlt : (profile.altItems || []);
+  const savedMan = Math.round((estimatedSavedWon || 180000) / 10000);
 
   quizResultEl.innerHTML = `
     <div class="step-back-bar">
@@ -483,9 +891,14 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
     <div class="card">
       <div class="result-score-row">
         <div>
-          <span class="micro-label">${escapeHtml(nickname)}님의 ROOM REPORT</span>
+          <span class="micro-label">${escapeHtml(nickname)}님의 ROOM REPORT · ${escapeHtml(pyeongLabel)}</span>
           <h2>${escapeHtml(profile.badge)}</h2>
           <p class="text-secondary" style="margin-top:4px;">${escapeHtml(profile.tagline)}</p>
+          ${secondaryRisks && secondaryRisks.length ? `
+            <div class="secondary-risk-row">
+              ${secondaryRisks.map((r) => `<span class="secondary-risk-pill">+ ${escapeHtml(r)}</span>`).join('')}
+            </div>
+          ` : ''}
         </div>
         <div style="text-align:right;">
           <span class="text-tertiary" style="display:block;font-weight:700;">위험도</span>
@@ -493,20 +906,34 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
         </div>
       </div>
 
+      <div class="defense-stat-bar">
+        <span>NOPE 피하면 예상 손실 방어</span>
+        <strong>약 ${savedMan}만 원 절약 (교체·보증금)</strong>
+      </div>
+
+      ${analysisBasis && analysisBasis.length ? `
+        <div class="report-basis-box">
+          <span class="report-basis-title">판정 근거 · 입력하신 내 방 30문항 핵심 조건</span>
+          <div class="report-basis-grid">
+            ${analysisBasis.map((b) => `<span class="report-basis-chip">${escapeHtml(b)}</span>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
       <div class="verdict-swap-stack">
         <div class="verdict-swap-box is-nope">
           <div class="verdict-swap-top">
             <span class="verdict-swap-head">✕ NOPE! 내 방엔 피할 품목</span>
             <span class="swap-tap-hint">눌러서 이유 보기 ›</span>
           </div>
-          <div class="tag-row swap-tag-row">${profile.avoidItems.map((i) => `<button type="button" class="tag-avoid swap-chip swap-btn" data-swap-label="${escapeHtml(i)}">${escapeHtml(i)} <span class="swap-arrow">›</span></button>`).join('')}</div>
+          <div class="tag-row swap-tag-row">${avoidList.map((i) => `<button type="button" class="tag-avoid swap-chip swap-btn" data-swap-label="${escapeHtml(i)}">${escapeHtml(i)} <span class="swap-arrow">›</span></button>`).join('')}</div>
         </div>
         <div class="verdict-swap-box is-pass">
           <div class="verdict-swap-top">
             <span class="verdict-swap-head">✓ PASS 대신 추천하는 대안</span>
             <span class="swap-tap-hint">눌러서 이유 보기 ›</span>
           </div>
-          <div class="tag-row swap-tag-row">${profile.altItems.map((i) => `<button type="button" class="tag-alt swap-chip swap-btn" data-swap-label="${escapeHtml(i)}">${escapeHtml(i)} <span class="swap-arrow">›</span></button>`).join('')}</div>
+          <div class="tag-row swap-tag-row">${altList.map((i) => `<button type="button" class="tag-alt swap-chip swap-btn" data-swap-label="${escapeHtml(i)}">${escapeHtml(i)} <span class="swap-arrow">›</span></button>`).join('')}</div>
         </div>
       </div>
 
@@ -538,14 +965,20 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
       ` : ''}
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:8px;">
+    <div class="app-sync-strip">
+      <button id="result-jump-scan-btn" type="button" class="app-sync-btn">🔍 내 방 판독</button>
+      <button id="result-jump-compare-btn" type="button" class="app-sync-btn">⚔️ A vs B 비교</button>
+      <button id="result-jump-scale-btn" type="button" class="app-sync-btn">📐 맞춤 치수</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
       <button id="share-story-btn" class="btn-accent btn-full btn-insta">
         <svg class="insta-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/>
           <circle cx="12" cy="12" r="4.2"/>
           <circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/>
         </svg>
-        <span>스토리 공유</span>
+        <span>스토리 공유 (처방전 저장)</span>
       </button>
       <button id="go-scanner-from-result" class="btn-primary btn-full">내 방 톤 맞춤 가구 보기 →</button>
     </div>
@@ -569,6 +1002,19 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
       const fuzzy = ITEMS_DB.find((it) => it.name.includes(label) || label.includes(it.name));
       if (fuzzy) openDetailSheet(fuzzy);
     });
+  });
+
+  document.getElementById('result-jump-scan-btn').addEventListener('click', () => {
+    switchTab('scanner');
+    setScannerMode('search');
+  });
+  document.getElementById('result-jump-compare-btn').addEventListener('click', () => {
+    switchTab('scanner');
+    setScannerMode('compare');
+  });
+  document.getElementById('result-jump-scale-btn').addEventListener('click', () => {
+    switchTab('scale');
+    renderScaleQuizHint();
   });
 
   document.getElementById('share-story-btn').addEventListener('click', () => {
@@ -619,70 +1065,81 @@ function exportEditorialStoryCard(profile, dangerScore, nickname = '자취러', 
   const W = 1080;
   const H = 1920;
 
-  ctx.fillStyle = '#FAF6EC';
+  ctx.fillStyle = '#F6F7F5';
   ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = '#23261F';
+  ctx.strokeStyle = '#111311';
   ctx.lineWidth = 4;
   ctx.strokeRect(56, 56, W - 112, H - 112);
 
-  ctx.fillStyle = '#23261F';
+  ctx.fillStyle = '#111311';
   ctx.font = '900 132px "Space Grotesk", "SUIT", sans-serif';
   ctx.fillText('NOPE!', 96, 220);
 
-  ctx.fillStyle = '#5B5F52';
+  ctx.fillStyle = '#525651';
   ctx.font = '700 32px "Space Grotesk", "SUIT", sans-serif';
   const moodSub = toneName ? ` · ${toneName}` : '';
-  ctx.fillText(`${nickname}님의 자취 리포트${moodSub}`, 100, 275);
-  ctx.fillStyle = '#23261F';
+  ctx.fillText(`${nickname}님의 자취 처방전${moodSub}`, 100, 275);
+  ctx.fillStyle = '#111311';
   ctx.fillRect(96, 315, W - 192, 3);
 
-  ctx.fillStyle = '#5B5F52';
+  ctx.fillStyle = '#525651';
   ctx.font = '700 34px "SUIT", sans-serif';
   ctx.fillText('자취 리스크 지수', 100, 420);
 
-  ctx.fillStyle = '#E6534B';
+  ctx.fillStyle = '#E53935';
   ctx.font = '900 220px "Space Grotesk", sans-serif';
   ctx.fillText(`${dangerScore}`, 92, 640);
   ctx.font = '800 54px "Space Grotesk", sans-serif';
   ctx.fillText('/ 100', 400, 640);
 
-  ctx.fillStyle = '#23261F';
+  ctx.fillStyle = '#111311';
   ctx.fillRect(96, 720, W - 192, 120);
-  ctx.fillStyle = '#FAF6EC';
+  ctx.fillStyle = '#FFFFFF';
   ctx.font = '800 46px "SUIT", sans-serif';
   ctx.fillText(profile.badge, 128, 796);
 
-  ctx.fillStyle = '#23261F';
+  ctx.fillStyle = '#111311';
   ctx.font = '700 44px "SUIT", sans-serif';
   const nextY = wrapCanvasText(ctx, profile.tagline, 96, 940, W - 192, 64);
 
-  ctx.strokeStyle = '#23261F';
-  ctx.lineWidth = 2;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(96, nextY + 50, W - 192, 390);
+  ctx.strokeStyle = '#111311';
+  ctx.lineWidth = 2.5;
   ctx.strokeRect(96, nextY + 50, W - 192, 390);
-  ctx.fillStyle = '#E6534B';
+  ctx.fillStyle = '#E53935';
   ctx.font = '800 30px "Space Grotesk", "SUIT", sans-serif';
   ctx.fillText('WHY NOPE? · ACTION LIST', 132, nextY + 115);
 
-  ctx.fillStyle = '#23261F';
+  ctx.fillStyle = '#111311';
   ctx.font = '600 33px "SUIT", sans-serif';
   let y = nextY + 185;
   profile.top3.forEach((tip, idx) => {
     y = wrapCanvasText(ctx, `0${idx + 1}. ${tip}`, 132, y, W - 264, 46) + 18;
   });
 
-  ctx.fillStyle = '#23261F';
+  ctx.fillStyle = '#111311';
   ctx.fillRect(96, H - 170, W - 192, 2);
-  ctx.fillStyle = '#5B5F52';
+  ctx.fillStyle = '#525651';
   ctx.font = '700 28px "SUIT", sans-serif';
   ctx.fillText('NOPE! · 내 방에 들이기 전 딱 한 번만 의심해 보기', 96, H - 110);
 
-  const filename = `NOPE-${profile.id}.png`;
+  shareOrDownloadCanvas(
+    canvas,
+    `NOPE-${profile.id}.png`,
+    `NOPE! ${profile.badge}`,
+    `${profile.tagline} (리스크 지수 ${dangerScore}/100)`,
+    '스토리 공유용 이미지(PNG)가 저장되었습니다.'
+  );
+}
+
+function shareOrDownloadCanvas(canvas, filename, title, text, toastMsg) {
   const triggerDownload = () => {
     const link = document.createElement('a');
     link.download = filename;
     link.href = canvas.toDataURL('image/png');
     link.click();
-    showToast('스토리 공유용 이미지(PNG)가 저장되었습니다.');
+    showToast(toastMsg);
   };
 
   if (canvas.toBlob && navigator.share) {
@@ -694,11 +1151,7 @@ function exportEditorialStoryCard(profile, dangerScore, nickname = '자취러', 
       const file = new File([blob], filename, { type: 'image/png' });
       try {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: `NOPE! ${profile.badge}`,
-            text: `${profile.tagline} (리스크 지수 ${dangerScore}/100)`
-          });
+          await navigator.share({ files: [file], title, text });
           return;
         }
       } catch (err) {
@@ -711,9 +1164,231 @@ function exportEditorialStoryCard(profile, dangerScore, nickname = '자취러', 
   }
 }
 
+function buildItemShareUrl(item) {
+  if (!location.protocol.startsWith('http')) return '';
+  const base = `${location.origin}${location.pathname}`;
+  if (item && item.id && ITEMS_DB.some((db) => db.id === item.id)) {
+    return `${base}?item=${encodeURIComponent(item.id)}`;
+  }
+  const q = (item && (item.altSearchKeyword || item.name)) || '';
+  return q ? `${base}?tab=scanner&q=${encodeURIComponent(q)}` : base;
+}
+
+function buildItemShareSummaryText(item) {
+  const vm = verdictMeta(item.verdict);
+  const specs = item.specs || { dust: 2, deposit: 1, trouble: 2 };
+  const reason = item.oneLiner || item.checkLine || item.goodLine || '';
+  const alt = item.altName ? `대신 추천: ${item.altName}` : '';
+  const url = buildItemShareUrl(item);
+  return [
+    `[NOPE! 사기 전 판독] ${item.name} — ${vm.text}`,
+    `먼지 ${specs.dust}/5 · 복구 ${specs.deposit}/5 · 수명 ${specs.trouble}/5`,
+    reason ? `이유: ${reason}` : '',
+    alt,
+    url ? `판독 결과 바로 보기: ${url}` : ''
+  ].filter(Boolean).join('\n');
+}
+
+function exportItemVerdictCard(item) {
+  const canvas = document.getElementById('share-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 1080;
+  const H = 1920;
+  const vm = verdictMeta(item.verdict);
+  const badgeColor = item.verdict === 'NOPE' ? '#E53935' : (item.verdict === 'WARN' ? '#C97A2B' : '#18794E');
+  const specs = item.specs || { dust: 2, deposit: 1, trouble: 2 };
+
+  ctx.fillStyle = '#F6F7F5';
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = '#111311';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(56, 56, W - 112, H - 112);
+
+  ctx.fillStyle = '#111311';
+  ctx.font = '900 116px "Space Grotesk", "SUIT", sans-serif';
+  ctx.fillText('NOPE!', 96, 210);
+
+  ctx.fillStyle = '#525651';
+  ctx.font = '700 32px "SUIT", sans-serif';
+  ctx.fillText(`${item.brand || 'NOPE SCAN'} · ${item.category || '자취 가구'} · ${item.priceTier || ''}`, 100, 268);
+
+  ctx.fillStyle = '#111311';
+  ctx.fillRect(96, 308, W - 192, 3);
+
+  // Verdict stamp pill
+  ctx.fillStyle = badgeColor;
+  ctx.fillRect(96, 360, 340, 88);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '900 42px "Space Grotesk", "SUIT", sans-serif';
+  ctx.fillText(vm.text, 128, 420);
+
+  // Product title
+  ctx.fillStyle = '#111311';
+  ctx.font = '800 54px "SUIT", sans-serif';
+  let nextY = wrapCanvasText(ctx, item.name, 96, 540, W - 192, 72);
+
+  // 3 Spec boxes
+  const boxY = nextY + 34;
+  const boxW = (W - 192 - 36) / 3;
+  [
+    { label: '먼지 부담', val: `${specs.dust} / 5` },
+    { label: '원상복구', val: `${specs.deposit} / 5` },
+    { label: '수명·관리', val: `${specs.trouble} / 5` }
+  ].forEach((sp, idx) => {
+    const bx = 96 + idx * (boxW + 18);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(bx, boxY, boxW, 160);
+    ctx.strokeStyle = '#111311';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bx, boxY, boxW, 160);
+    ctx.fillStyle = '#525651';
+    ctx.font = '700 28px "SUIT", sans-serif';
+    ctx.fillText(sp.label, bx + 28, boxY + 56);
+    ctx.fillStyle = badgeColor;
+    ctx.font = '900 52px "Space Grotesk", sans-serif';
+    ctx.fillText(sp.val, bx + 28, boxY + 128);
+  });
+
+  // WHY box
+  const whyY = boxY + 210;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(96, whyY, W - 192, 340);
+  ctx.fillStyle = badgeColor;
+  ctx.fillRect(96, whyY, 12, 340);
+  ctx.fillStyle = badgeColor;
+  ctx.font = '900 30px "Space Grotesk", "SUIT", sans-serif';
+  ctx.fillText(item.verdict === 'PASS' ? 'WHY PASS?' : (item.verdict === 'WARN' ? 'WHY CHECK?' : 'WHY NOPE?'), 138, whyY + 66);
+
+  ctx.fillStyle = '#111311';
+  ctx.font = '700 38px "SUIT", sans-serif';
+  const reasonText = item.oneLiner || item.checkLine || item.goodLine || '';
+  wrapCanvasText(ctx, reasonText, 138, whyY + 140, W - 270, 56);
+
+  // Alt Recommendation box
+  const altY = whyY + 388;
+  ctx.fillStyle = '#111311';
+  ctx.fillRect(96, altY, W - 192, 240);
+  ctx.fillStyle = '#E53935';
+  ctx.font = '800 28px "SUIT", sans-serif';
+  ctx.fillText(item.verdict === 'PASS' ? '함께 챙기면 좋은 스펙' : '대신 이 스펙을 추천해요', 132, altY + 62);
+  ctx.fillStyle = '#F6F7F5';
+  ctx.font = '800 36px "SUIT", sans-serif';
+  wrapCanvasText(ctx, item.altName || '무타공 · 워셔블 대체 스펙 확인', 132, altY + 128, W - 264, 52);
+
+  ctx.fillStyle = '#111311';
+  ctx.fillRect(96, H - 170, W - 192, 2);
+  ctx.fillStyle = '#525651';
+  ctx.font = '700 28px "SUIT", sans-serif';
+  ctx.fillText('NOPE! · 내 방에 들이기 전 딱 한 번만 의심해 보기', 96, H - 110);
+
+  shareOrDownloadCanvas(
+    canvas,
+    `NOPE-verdict-${item.id || 'item'}.png`,
+    `NOPE! ${item.name} (${vm.text})`,
+    reasonText,
+    '제품 판독 카드 이미지(PNG)가 저장되었습니다.'
+  );
+}
+
+function exportToneRescueCard(toneObj, baseId, rescue) {
+  const canvas = document.getElementById('share-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 1080;
+  const H = 1920;
+
+  ctx.fillStyle = '#F6F7F5';
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = '#111311';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(56, 56, W - 112, H - 112);
+
+  ctx.fillStyle = '#111311';
+  ctx.font = '900 112px "Space Grotesk", "SUIT", sans-serif';
+  ctx.fillText('NOPE!', 96, 206);
+  ctx.fillStyle = '#525651';
+  ctx.font = '700 32px "SUIT", sans-serif';
+  ctx.fillText('원룸 바닥·몰딩 중화 레시피', 100, 262);
+  ctx.fillStyle = '#111311';
+  ctx.fillRect(96, 302, W - 192, 3);
+
+  ctx.fillStyle = '#C97A2B';
+  ctx.fillRect(96, 350, 420, 74);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '800 34px "SUIT", sans-serif';
+  ctx.fillText(`현재 방: ${rescue.baseLabel}`, 124, 399);
+
+  ctx.fillStyle = '#111311';
+  ctx.font = '900 54px "SUIT", sans-serif';
+  ctx.fillText(`목표 무드 · ${toneObj.name}`, 96, 504);
+
+  // 60-30-10 color bar
+  const barY = 548;
+  const totalW = W - 192;
+  const segWidths = [totalW * 0.6, totalW * 0.3, totalW * 0.1];
+  const swatches = toneObj.swatches || ['#F7F4ED', '#E6DFD2', '#2C2523'];
+  let sx = 96;
+  segWidths.forEach((sw, idx) => {
+    ctx.fillStyle = swatches[idx];
+    ctx.fillRect(sx, barY, sw - 8, 96);
+    ctx.strokeStyle = '#111311';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(sx, barY, sw - 8, 96);
+    sx += sw;
+  });
+
+  // Avoid trap box
+  const avoidY = 690;
+  ctx.fillStyle = 'rgba(230, 83, 75, 0.12)';
+  ctx.fillRect(96, avoidY, W - 192, 260);
+  ctx.fillStyle = '#E53935';
+  ctx.fillRect(96, avoidY, 12, 260);
+  ctx.font = '900 30px "SUIT", sans-serif';
+  ctx.fillText('이 방에서 꼭 피할 실수', 138, avoidY + 60);
+  ctx.fillStyle = '#111311';
+  ctx.font = '700 35px "SUIT", sans-serif';
+  wrapCanvasText(ctx, rescue.avoidLine, 138, avoidY + 126, W - 266, 52);
+
+  // Cover formula box
+  const stepY = 995;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(96, stepY, W - 192, 560);
+  ctx.strokeStyle = '#111311';
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(96, stepY, W - 192, 560);
+  ctx.fillStyle = '#18794E';
+  ctx.font = '900 32px "SUIT", sans-serif';
+  ctx.fillText('못질 없는 3분 중화 커버 공식', 134, stepY + 68);
+
+  ctx.fillStyle = '#111311';
+  ctx.font = '600 33px "SUIT", sans-serif';
+  let sy = stepY + 140;
+  rescue.coverSteps.forEach((st, idx) => {
+    sy = wrapCanvasText(ctx, `0${idx + 1}. ${st}`, 134, sy, W - 268, 50) + 34;
+  });
+
+  ctx.fillStyle = '#525651';
+  ctx.font = '700 28px "SUIT", sans-serif';
+  ctx.fillText(`추천 조명: ${toneObj.kelvin || '2700K~3000K 전구색'}`, 134, stepY + 510);
+
+  ctx.fillStyle = '#111311';
+  ctx.fillRect(96, H - 170, W - 192, 2);
+  ctx.fillStyle = '#525651';
+  ctx.font = '700 28px "SUIT", sans-serif';
+  ctx.fillText('NOPE! · 작은 월세방도 큰 톤 하나로 정돈됩니다', 96, H - 110);
+
+  shareOrDownloadCanvas(
+    canvas,
+    `NOPE-rescue-${baseId}-${toneObj.id}.png`,
+    `NOPE! ${rescue.baseLabel} → ${toneObj.name} 중화 레시피`,
+    rescue.headline,
+    '방 바탕 중화 레시피 이미지(PNG)가 저장되었습니다.'
+  );
+}
+
 // ---------------- Tab 2: Yuka-Style Real Product Scanner + Bottom Sheet ----------------
 const scannerGate = document.getElementById('scanner-stage-gate');
 const scannerResults = document.getElementById('scanner-stage-results');
+const scannerCompare = document.getElementById('scanner-stage-compare');
 const scannerMatcher = document.getElementById('scanner-stage-matcher');
 const chipsWrap = document.getElementById('category-chips');
 const searchInput = document.getElementById('item-search-input');
@@ -778,10 +1453,329 @@ function renderCategoryChips() {
   });
 }
 
-// Yuka Level 1 Card (0.5-second scannable: Verdict + Brand + Title + 3 Chips + 1 Line)
+// Yuka Level 1 Card (0.5-second scannable: Verdict + Brand + Title + 3 Chips + 1 Line + Personal Fit)
+function normalizeRoomProfileConstraints(savedProfile) {
+  if (!savedProfile) return null;
+  const contractLabel = savedProfile.contractLabel || '';
+  const contractType = savedProfile.contractType
+    || (/못질 금지/.test(contractLabel) ? 'no-nail' : (/꼭꼬핀/.test(contractLabel) ? 'pin-ok' : 'free'));
+  return {
+    ...savedProfile,
+    contractType,
+    toolLevel: savedProfile.toolLevel || '',
+    moveSoon: savedProfile.moveSoon || ''
+  };
+}
+
+function getItemSearchableText(item) {
+  return [
+    item.name,
+    item.oneLiner,
+    item.goodLine,
+    item.checkLine,
+    item.altName,
+    ...(item.chips || []),
+    ...(item.checks || []),
+    ...(item.cautions || []),
+    ...(item.pros || []),
+    ...(item.pairTips || [])
+  ].filter(Boolean).join(' ');
+}
+
+function getPersonalFitAlerts(item, rawProfile) {
+  const savedProfile = normalizeRoomProfileConstraints(rawProfile);
+  if (!savedProfile) return [];
+
+  const txt = getItemSearchableText(item);
+  const chipTxt = (item.chips || []).join(' ');
+  const alerts = [];
+
+  const hasAssemblySkip = /무조립|완제품|조립 없음/.test(chipTxt) || /기사 방문\s*설치|기사\s*시공\s*옵션/.test(chipTxt);
+  const needsAssembly = /전동드릴|반제품|철판\s*조립|셀프\s*조립|DIY|나사\s*체결|육각렌치/.test(txt) && !hasAssemblySkip;
+
+  if (savedProfile.toolLevel === 'none' && needsAssembly) {
+    alerts.push({
+      tone: 'danger',
+      shortBadge: '내 방 체크: 공구 없이 조립 벅참',
+      detail: '설문에서 드라이버가 없다고 답하셨어요. 반제품 조립 부담이 크니 미니 전동드릴을 준비하거나 기사 설치 제품을 살펴보세요.'
+    });
+  } else if (savedProfile.toolLevel === 'hex' && /전동드릴/.test(txt) && !hasAssemblySkip) {
+    alerts.push({
+      tone: 'warn',
+      shortBadge: '내 방 체크: 전동드릴 있으면 수월',
+      detail: '동봉 육각렌치만으로는 손목 피로가 큰 편이에요. 전동드릴이 있다면 훨씬 편하게 조립할 수 있습니다.'
+    });
+  }
+
+  const isNoNail = savedProfile.contractType === 'no-nail';
+  const isPinOnly = savedProfile.contractType === 'pin-ok';
+  const hasWallOrDepositRisk = (item.specs && item.specs.deposit >= 3)
+    || /타공|못질|벽걸이|코맨드|시트지|점착|실크벽지|벽\s*고정|압축봉/.test(txt);
+
+  if ((isNoNail || isPinOnly) && hasWallOrDepositRisk) {
+    alerts.push({
+      tone: isNoNail ? 'danger' : 'warn',
+      shortBadge: isNoNail ? '내 방 체크: 월세 원상복구 주의' : '내 방 체크: 벽지·타공 여부 확인',
+      detail: isNoNail
+        ? '못질이 안 되는 월세·전세 방이에요. 벽지 뜯김이나 타공 자국이 남지 않는 무타공·비접착 방식인지 꼭 확인하세요.'
+        : '꼭꼬핀 정도만 허용되는 방이에요. 실크벽지 접착 뜯김이나 드릴 타공이 필요한지 먼저 살펴보세요.'
+    });
+  }
+
+  const isCompactRoom = savedProfile.pyeongLabel === '4~5평 이하' || savedProfile.isDuplex || savedProfile.needsFloorSpace;
+  const isBulkyItem = /대형|리클라이너|카우치|3인용|4인용|킹|퀸|스탠드\s*전신거울|벙커|1600|1800|아일랜드|확장형/.test(txt);
+  if (isCompactRoom && isBulkyItem) {
+    alerts.push({
+      tone: 'danger',
+      shortBadge: `내 방 체크: ${savedProfile.pyeongLabel || '좁은 방'} 크기 주의`,
+      detail: '방 크기 대비 부피가 큰 편이에요. 방문·옷장 문 열림 반경과 통로 60cm가 남는지 줄자로 먼저 재보세요.'
+    });
+  }
+
+  if (savedProfile.noElevator && /묵직|원목|대형|기사|서랍장|옷장|소파|매트리스|프레임|책상/.test(txt)
+    && item.category !== '무타공·욕실' && item.category !== '조명·거울') {
+    alerts.push({
+      tone: 'warn',
+      shortBadge: '내 방 체크: 계단 운반·무게 확인',
+      detail: '엘리베이터가 없는 방이에요. 박스 무게와 계단·현관문 통과 폭, 방문 배송 여부를 미리 확인하세요.'
+    });
+  }
+
+  if ((savedProfile.hasPet || savedProfile.hasAllergy)
+    && ((item.specs && item.specs.dust >= 4) || /샤기|장모|부클레|오픈|행거|선반/.test(txt))) {
+    alerts.push({
+      tone: 'warn',
+      shortBadge: '내 방 체크: 털·먼지 관리 주의',
+      detail: '반려동물 털이나 먼지가 쌓이기 쉬운 구조·소재예요. 세탁 가능한 커버나 도어·가림막 추가를 권장해요.'
+    });
+  }
+
+  if (savedProfile.hasMoistureRisk && /매트리스|원목|MDF|시트지|규조토|러그|깔판/.test(txt)) {
+    alerts.push({
+      tone: 'warn',
+      shortBadge: '내 방 체크: 습기·결로 관리 필요',
+      detail: '결로·습기에 민감한 방이에요. 벽면에서 5cm 띄워 배치하고 통풍 깔판이나 제습 관리를 함께 하세요.'
+    });
+  }
+
+  if (savedProfile.moveSoon === 'high'
+    && (/재조립|파손|허니콤|PB|기사\s*시공|대형/.test(txt) || (item.specs && item.specs.trouble >= 4))) {
+    alerts.push({
+      tone: 'warn',
+      shortBadge: '내 방 체크: 1~2년 내 이사 시 이동 체크',
+      detail: '이사가 잦다면 분해·재조립할 때 나사 구멍이 헐거워지거나 처분이 어려운 무게인지 함께 확인하세요.'
+    });
+  }
+
+  if (savedProfile.wallMaterial === 'silk' && /코맨드|시트지|점착|양면테이프/.test(txt)) {
+    alerts.push({
+      tone: 'danger',
+      shortBadge: '실크벽지: 접착 뜯김 위험',
+      detail: '실크벽지는 접착 폼테이프·시트지를 뗄 때 겉 코팅이 통째로 뜯겨 보증금 청구의 주원인이 됩니다.'
+    });
+  }
+
+  if (savedProfile.floorMaterial === 'jangpan' && /샤기|고무|바퀴|변색|눌어붙/.test(txt)) {
+    alerts.push({
+      tone: 'warn',
+      shortBadge: '장판 바닥: 열변색·바퀴 자국 주의',
+      detail: 'PVC 장판 위엔 고무 논슬립 러그나 하드 바퀴가 난방 열·하중으로 변색 자국을 남기기 쉬워 펠트·매트 보강이 필요해요.'
+    });
+  }
+
+  if (savedProfile.smallWasher && /세탁기\s*불가|세탁\s*불가|9~10kg|비분리/.test(txt)) {
+    alerts.push({
+      tone: 'danger',
+      shortBadge: '9kg 이하 세탁기: 통세탁 불가',
+      detail: '집 세탁기에 안 들어가는 부피/소재라 오염 시마다 코인세탁소 비용과 수고가 발생합니다.'
+    });
+  }
+
+  if (savedProfile.heavyDeskLoad && /허니콤|종이\s*벌집|모니터암\s*금지|라그캅텐|린몬/.test(txt)) {
+    alerts.push({
+      tone: 'danger',
+      shortBadge: '모니터암 사용: 상판 함몰 위험',
+      detail: '모니터암 클램프 하중이 한 곳에 몰리면 속 빈 벌집 상판은 그대로 찌그러지거나 뚫릴 수 있습니다.'
+    });
+  }
+
+  if (savedProfile.visualClutterSensitive && /오픈|노출|와이어|메쉬|투명/.test(txt)) {
+    alerts.push({
+      tone: 'warn',
+      shortBadge: '오픈 수납: 시각적 노이즈 주의',
+      detail: '물건이 밖으로 보여 스트레스를 받는 성향에겐 도어형 수납장이나 불투명 리빙박스 조합이 훨씬 맞습니다.'
+    });
+  }
+
+  if (alerts.length === 0 && item.verdict === 'PASS') {
+    alerts.push({
+      tone: 'safe',
+      shortBadge: '✓ 내 방 조건 적합',
+      detail: '입력하신 30문항 방 크기·바닥·벽지·관리 조건에 무리 없이 들이기 좋은 스펙입니다.'
+    });
+  }
+
+  return alerts;
+}
+
+function loadDefenseIds() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(STORAGE_KEYS.defenseIds) || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function recordDefenseInspect(item) {
+  if (!item || item.verdict !== 'NOPE' || !item.id || item.id === 'custom-scan') return;
+  const ids = loadDefenseIds();
+  if (!ids.includes(item.id)) {
+    ids.push(item.id);
+    try {
+      localStorage.setItem(STORAGE_KEYS.defenseIds, JSON.stringify(ids));
+    } catch {
+      // ignore
+    }
+  }
+  renderDefenseCounter();
+}
+
+function renderDefenseCounter() {
+  const bar = document.getElementById('defense-counter-bar');
+  if (!bar) return;
+  const ids = loadDefenseIds();
+  const savedProfile = loadSavedRoomProfile();
+  if (ids.length === 0 && !savedProfile) {
+    bar.classList.add('hidden');
+    return;
+  }
+  const count = ids.length;
+  const estWon = count * 75000 + (savedProfile ? (savedProfile.estimatedSavedWon || 0) : 0);
+  const man = Math.round(estWon / 10000);
+  bar.innerHTML = count > 0
+    ? `<span>지금까지 NOPE 판독 <strong>${count}건</strong> 확인</span><strong>예상 손실 약 ${man}만 원 방어 중</strong>`
+    : `<span>${escapeHtml(savedProfile.nickname || '내')} 방 맞춤 방어 기준 적용 중</span><strong>예상 ${Math.round((savedProfile.estimatedSavedWon || 180000) / 10000)}만 원 절약</strong>`;
+  bar.classList.remove('hidden');
+}
+
+function formatWonRange(minWon, maxWon) {
+  const fmtNum = (won) => {
+    if (won >= 10000) {
+      const man = Math.round((won / 10000) * 10) / 10;
+      return `${Number.isInteger(man) ? man : man.toFixed(1)}`;
+    }
+    return `${Math.round(won / 1000)}`;
+  };
+  if (minWon >= 10000 && maxWon >= 10000) {
+    return `${fmtNum(minWon)}~${fmtNum(maxWon)}만 원`;
+  }
+  if (maxWon < 10000) {
+    return `${fmtNum(minWon)}~${fmtNum(maxWon)}천 원`;
+  }
+  return `${fmtNum(minWon)}천~${fmtNum(maxWon)}만 원`;
+}
+
+function getHiddenPrepInfo(item, rawProfile) {
+  const savedProfile = normalizeRoomProfileConstraints(rawProfile);
+  const txt = getItemSearchableText(item);
+  const picked = [];
+  const addKit = (kit) => {
+    if (kit && !picked.some((p) => p.id === kit.id)) picked.push(kit);
+  };
+
+  if (/전동드릴|반제품|조립|DIY|나사|철제|수평/.test(txt) || savedProfile?.toolLevel === 'none' && /책상|서랍|선반|옷장|캐비닛/.test(txt)) {
+    addKit(HIDDEN_PREP_KITS.assemblyTool);
+  }
+  if (/벽|타공|코맨드|시트지|꼭꼬핀|거울|커튼|블라인드|무타공/.test(txt)) {
+    addKit(HIDDEN_PREP_KITS.wallSafe);
+  }
+  if (/오픈|행거|선반|와이어|메쉬/.test(txt) || (item.specs && item.specs.dust >= 4)) {
+    addKit(HIDDEN_PREP_KITS.dustCover);
+  }
+  if (item.category === '책상·의자' && /책상|데스크|테이블|전선|멀티탭|나뭇결|요철/.test(txt)) {
+    addKit(HIDDEN_PREP_KITS.deskSurface);
+  }
+  if (item.category === '소파·침대·매트' || /패브릭|소파|러그|매트리스|토퍼/.test(txt)) {
+    addKit(HIDDEN_PREP_KITS.fabricCare);
+  }
+  if (item.category === '조명·거울' && /조명|스탠드|램프|무드등|전구/.test(txt)) {
+    addKit(HIDDEN_PREP_KITS.bulbKit);
+  }
+  if (/책상|의자|식탁|침대|서랍|옷장|수납/.test(txt)) {
+    addKit(HIDDEN_PREP_KITS.floorProtect);
+  }
+  if (picked.length < 2) {
+    addKit(HIDDEN_PREP_KITS.measureTape);
+  }
+
+  const kits = picked.slice(0, 2);
+  const minSum = kits.reduce((s, k) => s + (k.minWon || 5000), 0);
+  const maxSum = kits.reduce((s, k) => s + (k.maxWon || 15000), 0);
+  const prepCostText = formatWonRange(minSum, maxSum);
+  const hasPriceNum = /\d/.test(item.priceTier || '');
+  const totalCostLine = hasPriceNum
+    ? `본품 ${item.priceTier} + 준비물 약 ${prepCostText}`
+    : `본품 가격 + 준비물 약 ${prepCostText} 추가 예상`;
+
+  return { kits, prepCostText, totalCostLine };
+}
+
+function renderScannerProfileNudge() {
+  const el = document.getElementById('scanner-profile-nudge');
+  if (!el) return;
+  const saved = normalizeRoomProfileConstraints(loadSavedRoomProfile());
+
+  if (!saved || !saved.pyeongLabel) {
+    el.innerHTML = `
+      <span class="nudge-copy">내 방 평수·공구·월세 조건을 등록하면 안 맞는 가구를 먼저 알려드려요.</span>
+      <button type="button" id="nudge-start-quiz-btn" class="nudge-action-btn">1분 등록 →</button>
+    `;
+    const btn = document.getElementById('nudge-start-quiz-btn');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        switchTab('home');
+        startQuiz();
+      });
+    }
+    return;
+  }
+
+  const toolLabel = saved.toolLevel === 'none'
+    ? '드라이버 없음'
+    : saved.toolLevel === 'drill'
+      ? '전동드릴 보유'
+      : saved.toolLevel === 'hex'
+        ? '육각렌치 가능'
+        : '';
+  const contractShort = saved.contractType === 'no-nail'
+    ? '못질 금지'
+    : saved.contractType === 'pin-ok'
+      ? '꼭꼬핀 가능'
+      : saved.contractType === 'free'
+        ? '타공 자유'
+        : '';
+  const tags = [saved.pyeongLabel, contractShort, toolLabel].filter(Boolean).join(' · ');
+
+  el.innerHTML = `
+    <span class="nudge-copy is-active"><strong>내 방 기준 판독 중</strong> · ${escapeHtml(tags)}</span>
+    <button type="button" id="nudge-edit-quiz-btn" class="nudge-action-btn is-muted">조건 수정</button>
+  `;
+  const editBtn = document.getElementById('nudge-edit-quiz-btn');
+  if (editBtn) {
+    editBtn.addEventListener('click', () => {
+      switchTab('home');
+      startQuiz();
+    });
+  }
+}
+
 function renderYukaCard(item) {
   const v = verdictMeta(item.verdict);
   const cardStateCls = item.verdict === 'NOPE' ? 'v-card-nope' : item.verdict === 'WARN' ? 'v-card-warn' : 'v-card-pass';
+  const savedProfile = loadSavedRoomProfile();
+  const fitAlerts = getPersonalFitAlerts(item, savedProfile);
+  const topAlert = fitAlerts[0];
   return `
     <button class="yuka-card ${cardStateCls}" data-item-id="${escapeHtml(item.id)}">
       <div class="yuka-top">
@@ -793,6 +1787,7 @@ function renderYukaCard(item) {
         ${item.chips.map((c) => `<span class="mini-chip">${escapeHtml(c)}</span>`).join('')}
       </div>
       <p class="yuka-oneliner">${escapeHtml(item.oneLiner)}</p>
+      ${topAlert ? `<div class="yuka-fit-pill is-${topAlert.tone}">${escapeHtml(topAlert.shortBadge)}</div>` : ''}
     </button>
   `;
 }
@@ -844,6 +1839,7 @@ function buildPairingReason(item, pairedItems, primaryTone) {
 
 // Yuka Level 2 Bottom Sheet (Crisp 1-line summary + App Pairing + Coupang/Ohouse Dual Links)
 function openDetailSheet(item) {
+  recordDefenseInspect(item);
   const v = verdictMeta(item.verdict);
   const urls = buildShopUrls(item.altSearchKeyword, item.id);
   const isPass = item.verdict === 'PASS';
@@ -888,6 +1884,10 @@ function openDetailSheet(item) {
   const whyBoxCls = isPass ? 'is-pass' : (isWarn ? 'is-warn' : 'is-nope');
   const whySentence = item.oneLiner || (isPass ? goodLine : checkLine) || goodLine;
   const wished = isWishlistedItem(item.id);
+  const savedProfile = normalizeRoomProfileConstraints(loadSavedRoomProfile());
+  const fitAlerts = getPersonalFitAlerts(item, savedProfile);
+  const prepInfo = getHiddenPrepInfo(item, savedProfile);
+  const gapHint = getItemGapHint(item);
 
   sheetPanel.innerHTML = `
     <div class="sheet-grabber" aria-hidden="true"></div>
@@ -917,6 +1917,31 @@ function openDetailSheet(item) {
       <p class="sheet-why-sentence">${escapeHtml(whySentence)}</p>
     </div>
 
+    ${savedProfile && fitAlerts.length ? `
+      <div class="sheet-fit-box is-${fitAlerts[0].tone}">
+        <div class="sheet-fit-head">
+          <strong>${savedProfile.nickname ? `${escapeHtml(savedProfile.nickname)}님 방 조건 체크` : '내 방 조건 체크'}</strong>
+          <span>${escapeHtml(savedProfile.pyeongLabel || '원룸')}</span>
+        </div>
+        <div class="sheet-fit-list">
+          ${fitAlerts.slice(0, 2).map((al) => `
+            <div class="sheet-fit-row">
+              <span class="fit-dot is-${al.tone}"></span>
+              <div>
+                <strong>${escapeHtml(al.shortBadge.replace(/^내 방 체크:\s*/, ''))}</strong>
+                <p>${escapeHtml(al.detail)}</p>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : `
+      <button type="button" id="sheet-fit-nudge-btn" class="sheet-fit-nudge">
+        <span>내 방 크기·공구·월세 조건 등록하면 맞춤 경고를 띄워드려요</span>
+        <strong>1분 등록 →</strong>
+      </button>
+    `}
+
     <div class="sheet-brief-box">
       <div class="sheet-brief-row">
         <span class="brief-badge is-good">GOOD</span>
@@ -927,6 +1952,13 @@ function openDetailSheet(item) {
         <span>${escapeHtml(checkLine)}</span>
       </div>
     </div>
+
+    ${gapHint ? `
+      <div class="sheet-gap-hint">
+        <span class="sheet-gap-hint-badge">1초 틈새</span>
+        <span>${escapeHtml(gapHint)}</span>
+      </div>
+    ` : ''}
 
     <div class="sheet-pair-section">
       <div class="pair-head-row">
@@ -948,6 +1980,41 @@ function openDetailSheet(item) {
       </div>
     </div>
 
+    <div class="sheet-prep-box">
+      <div class="prep-head-row">
+        <strong class="prep-head-title">숨은 준비물 · 체감 비용</strong>
+        <span class="prep-cost-pill">${escapeHtml(prepInfo.totalCostLine)}</span>
+      </div>
+      <div class="prep-kit-list">
+        ${prepInfo.kits.map((kit) => {
+          const kitUrls = buildShopUrls(kit.keyword);
+          return `
+            <div class="prep-kit-row">
+              <div class="prep-kit-info">
+                <strong>${escapeHtml(kit.title)} <span class="prep-kit-price">${escapeHtml(kit.estCost)}</span></strong>
+                <span>${escapeHtml(kit.reason)}</span>
+              </div>
+              <div class="prep-kit-links">
+                <a href="${kitUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">쿠팡 →</a>
+                <a href="${kitUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">오늘의집 →</a>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="sheet-share-box">
+      <div class="sheet-share-head">
+        <strong>이 판독 결과 공유하기</strong>
+        <span>단톡방 · 스토리</span>
+      </div>
+      <div class="sheet-share-row">
+        <button type="button" id="sheet-copy-share-btn" class="btn-share-chip">카톡 요약·링크 복사</button>
+        <button type="button" id="sheet-story-share-btn" class="btn-share-chip is-story">판독 카드 저장 (스토리용)</button>
+      </div>
+    </div>
+
     <div class="sheet-alt-box ${altBoxCls}">
       <span class="text-tertiary" style="font-weight:700;display:block;margin-bottom:5px;">${altLabel}</span>
       <strong style="font-size:14.5px;display:block;margin-bottom:12px;">${escapeHtml(item.altName)}</strong>
@@ -962,6 +2029,26 @@ function openDetailSheet(item) {
   sheetBackdrop.classList.remove('hidden');
   sheetPanel.scrollTop = 0;
   document.getElementById('close-sheet-btn').addEventListener('click', closeDetailSheet);
+  const copyShareBtn = document.getElementById('sheet-copy-share-btn');
+  if (copyShareBtn) {
+    copyShareBtn.addEventListener('click', () => {
+      copyTextToClipboard(buildItemShareSummaryText(item), '카톡 요약·링크 복사 완료!');
+    });
+  }
+  const storyShareBtn = document.getElementById('sheet-story-share-btn');
+  if (storyShareBtn) {
+    storyShareBtn.addEventListener('click', () => {
+      exportItemVerdictCard(item);
+    });
+  }
+  const fitNudgeBtn = document.getElementById('sheet-fit-nudge-btn');
+  if (fitNudgeBtn) {
+    fitNudgeBtn.addEventListener('click', () => {
+      closeDetailSheet();
+      switchTab('home');
+      startQuiz();
+    });
+  }
   const wishToggleBtn = document.getElementById('sheet-wish-toggle-btn');
   if (wishToggleBtn) {
     wishToggleBtn.addEventListener('click', () => {
@@ -1043,13 +2130,28 @@ function buildSyntheticAnalysis(query) {
 
   // Factor user's own saved room constraints if completed
   if (savedProfile && /월세|원룸|보증금|못질 금지/.test(savedProfile.contractLabel || '')) {
-    if (/타공|벽|블라인드|선반|거울|시트지/.test(compact)) {
+    if (/타공|벽|블라인드|선반|거울|시트지|압축/.test(compact)) {
       deposit = Math.min(5, deposit + 1);
       checks.unshift(`${savedProfile.nickname || '내'} 방 조건(원상복구 필수): 벽지·장판 손상 없는 무타공 설치인지 꼭 확인하세요.`);
     }
   }
+  if (savedProfile && (savedProfile.hasPet || savedProfile.hasAllergy)) {
+    if (/러그|샤기|부클레|패브릭|소파|커튼|오픈|행거/.test(compact)) {
+      dust = Math.min(5, dust + 1);
+      trouble = Math.min(5, trouble + 1);
+      checks.unshift('반려동물·비염 환경: 털/먼지가 엉키지 않는 단모·커버 분리 세탁·도어형 스펙인지 우선 확인하세요.');
+    }
+  }
+  if (savedProfile && savedProfile.noElevator) {
+    if (/서랍|옷장|침대|소파|책상|식탁|매트리스/.test(compact)) {
+      trouble = Math.min(5, trouble + 1);
+      checks.unshift('엘리베이터 없는 계단 운반: 무게(kg)·분할 포장 및 방문 기사 배송 가능 여부를 확인하세요.');
+    }
+  }
 
+  let isGenericFallback = false;
   if (checks.length === 0) {
+    isGenericFallback = true;
     chips.push('실측 60cm 체크', '소재·조립 확인', '리뷰 1점대 확인');
     checks.push(
       '구체적 상품은 아직 DB 등록 전이나, 구매 전 ①문 열림·통로 60cm 실측 ②마감 소재(LPM/원목/스텐304) ③오늘의집·쿠팡 최저평점 사진 리뷰 3가지를 꼭 확인하세요.'
@@ -1081,7 +2183,8 @@ function buildSyntheticAnalysis(query) {
     goodLine,
     checkLine: checks[1] || primaryCheck,
     altName: `"${q}" 실사용 최저평점 리뷰 확인 & 무타공·워셔블 대체 검색`,
-    altSearchKeyword: q
+    altSearchKeyword: q,
+    isGenericFallback
   };
 }
 
@@ -1114,8 +2217,11 @@ function findDirectAndSimilarItems(rawQuery) {
   });
 
   let similar = [];
+  let inferredCat = q ? inferCategoryFromQuery(compactQ) : '';
+  if (q && direct.length > 0 && inferredCat === '자취 가구·소품') {
+    inferredCat = direct[0].category;
+  }
   if (q && direct.length < 3) {
-    const inferredCat = inferCategoryFromQuery(compactQ);
     const directIds = new Set(direct.map((d) => d.id));
     const scoreRank = { PASS: 0, WARN: 1, NOPE: 2 };
     similar = ITEMS_DB
@@ -1128,7 +2234,7 @@ function findDirectAndSimilarItems(rawQuery) {
       .slice(0, 6);
   }
 
-  return { direct, similar, inferredCat: q ? inferCategoryFromQuery(compactQ) : '' };
+  return { direct, similar, inferredCat };
 }
 
 function bindCardClicks(container, dataset) {
@@ -1329,9 +2435,15 @@ function renderAutoCollectedChips(serverEntries = null) {
   });
 }
 
+function hasLocalServerApi() {
+  return location.hostname === 'localhost'
+    || location.hostname === '127.0.0.1'
+    || /^192\.168\.|^172\.(1[6-9]|2\d|3[0-1])\.|^10\./.test(location.hostname);
+}
+
 async function refreshAutoCollectedItems() {
   renderAutoCollectedChips();
-  if (location.protocol.startsWith('http')) {
+  if (location.protocol.startsWith('http') && hasLocalServerApi()) {
     try {
       const res = await fetch('/api/auto-items');
       if (res.ok) {
@@ -1366,6 +2478,137 @@ function extractUrlClientFallback(rawInput) {
   }
 }
 
+const QUICK_REFINE_CATS = [
+  { id: 'desk', label: '책상·의자', query: '책상 의자' },
+  { id: 'storage', label: '수납·행거', query: '행거 수납장 선반' },
+  { id: 'sofa', label: '소파·침대', query: '소파 러그 침대' },
+  { id: 'kitchen', label: '식탁·주방', query: '식탁 주방 수납' },
+  { id: 'lamp', label: '조명·거울', query: '조명 전신거울' },
+  { id: 'nodrill', label: '무타공·욕실', query: '무타공 욕실선반 커튼' }
+];
+
+const QUICK_REFINE_FEATURES = [
+  { id: 'sheet', label: '시트지·합판 같음', query: '시트지 pb' },
+  { id: 'diy', label: '조립해야 함', query: '조립 diy' },
+  { id: 'open', label: '오픈형(문 없음)', query: '오픈' },
+  { id: 'wall', label: '벽에 붙이거나 못질', query: '타공 벽 무타공' },
+  { id: 'fabric', label: '털·천 재질(세탁 궁금)', query: '패브릭 러그' },
+  { id: 'woodsteel', label: '원목·스틸', query: '원목 철제' }
+];
+
+function renderCustomScanResult({ analyzedItem, engineLabel, urlStatusNote, rawInput, effectiveSearchQuery, needsRefineChips, baseFallbackText }) {
+  const shopKeyword = analyzedItem.altSearchKeyword || effectiveSearchQuery || analyzedItem.category;
+  const urls = buildShopUrls(shopKeyword);
+  customOutEl.innerHTML = `
+    <div class="engine-meta-banner">
+      <span>${escapeHtml(engineLabel)}</span>
+      <span class="engine-meta-pill">${analyzedItem.sourceUrl ? 'URL' : (pendingScanImage ? 'IMAGE' : 'LIVE')} · 자동 저장</span>
+    </div>
+    ${needsRefineChips ? `
+      <div class="url-refine-box">
+        <div class="url-refine-title">사진·단축 링크에서 상품 이름을 못 읽었어요. 어떤 제품인지 2초만 골라주세요:</div>
+        <div class="url-refine-step">
+          <span class="url-refine-sub">1단계 · 품목 고르기</span>
+          <div class="chips-row">
+            ${QUICK_REFINE_CATS.map((c) => `<button type="button" class="chip url-refine-chip ${state.quickRefineCat === c.id ? 'active' : ''}" data-refine-cat="${escapeHtml(c.id)}">${escapeHtml(c.label)}</button>`).join('')}
+          </div>
+        </div>
+        <div class="url-refine-step">
+          <span class="url-refine-sub">2단계 · 눈에 보이는 특징 (여러 개 선택 가능)</span>
+          <div class="chips-row">
+            ${QUICK_REFINE_FEATURES.map((f) => `<button type="button" class="chip url-refine-chip ${state.quickRefineFeatures.includes(f.id) ? 'active' : ''}" data-refine-feat="${escapeHtml(f.id)}">${escapeHtml(f.label)}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+    ` : ''}
+    ${renderYukaCard(analyzedItem)}
+    <div class="live-search-bridge">
+      <div class="live-bridge-copy">
+        <span class="micro-label">ZERO DEAD-END PIPELINE</span>
+        <p>${urlStatusNote ? escapeHtml(urlStatusNote) : '방금 판독한 결과가 자동 저장 목록에 적재되었습니다. 아래에서 오늘의집·쿠팡 최저평점 실사 후기를 확인하거나 친구에게 공유하세요.'}</p>
+      </div>
+      <div class="dual-link-row" style="margin-bottom:8px;">
+        <a href="${analyzedItem.sourceUrl || urls.ohouse}" target="_blank" rel="noopener noreferrer" class="btn-ohouse">${analyzedItem.sourceUrl ? '원본 링크 열기 →' : '오늘의집 리뷰 검색 →'}</a>
+        <a href="${urls.coupang}" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="padding:11px 10px;font-size:13px;">쿠팡 실후기 보기 →</a>
+      </div>
+      <div class="sheet-share-row">
+        <button type="button" id="live-copy-share-btn" class="btn-share-chip">카톡 요약·링크 복사</button>
+        <button type="button" id="live-story-share-btn" class="btn-share-chip is-story">판독 카드 저장 (스토리용)</button>
+      </div>
+    </div>
+  `;
+
+  const applyQuickRefine = () => {
+    const catObj = QUICK_REFINE_CATS.find((c) => c.id === state.quickRefineCat);
+    const featTokens = state.quickRefineFeatures
+      .map((fid) => QUICK_REFINE_FEATURES.find((f) => f.id === fid))
+      .filter(Boolean)
+      .map((f) => f.query);
+    const combinedQuery = [catObj ? catObj.query : '', ...featTokens, baseFallbackText]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    const updated = buildSyntheticAnalysis(combinedQuery || '가구');
+    if (analyzedItem.sourceUrl) {
+      updated.sourceUrl = analyzedItem.sourceUrl;
+      updated.brand = analyzedItem.brand;
+    } else if (pendingScanImage) {
+      updated.brand = 'IMAGE SCAN';
+    }
+    const labelParts = [catObj ? catObj.label : '', ...state.quickRefineFeatures.map((fid) => QUICK_REFINE_FEATURES.find((f) => f.id === fid)?.label).filter(Boolean)];
+    if (labelParts.length) {
+      updated.name = `${labelParts.join(' · ')} 스펙 판독`;
+      updated.altSearchKeyword = [catObj ? catObj.label : '', ...featTokens].filter(Boolean).join(' ');
+    }
+    saveLocalAutoItem(updated);
+    refreshAutoCollectedItems();
+    const prevVal = searchInput.value;
+    searchInput.value = updated.altSearchKeyword || updated.category || '';
+    renderItems();
+    searchInput.value = prevVal;
+    renderCustomScanResult({
+      analyzedItem: updated,
+      engineLabel: '선택 보정 실시간 스펙 판독',
+      urlStatusNote,
+      rawInput,
+      effectiveSearchQuery: updated.altSearchKeyword || effectiveSearchQuery,
+      needsRefineChips: true,
+      baseFallbackText
+    });
+  };
+
+  customOutEl.querySelectorAll('[data-refine-cat]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.refineCat;
+      state.quickRefineCat = state.quickRefineCat === id ? '' : id;
+      applyQuickRefine();
+    });
+  });
+  customOutEl.querySelectorAll('[data-refine-feat]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.refineFeat;
+      state.quickRefineFeatures = state.quickRefineFeatures.includes(id)
+        ? state.quickRefineFeatures.filter((x) => x !== id)
+        : [...state.quickRefineFeatures, id];
+      applyQuickRefine();
+    });
+  });
+
+  const liveCopyBtn = document.getElementById('live-copy-share-btn');
+  if (liveCopyBtn) {
+    liveCopyBtn.addEventListener('click', () => {
+      copyTextToClipboard(buildItemShareSummaryText(analyzedItem), '카톡 요약·링크 복사 완료!');
+    });
+  }
+  const liveStoryBtn = document.getElementById('live-story-share-btn');
+  if (liveStoryBtn) {
+    liveStoryBtn.addEventListener('click', () => {
+      exportItemVerdictCard(analyzedItem);
+    });
+  }
+  bindCardClicks(customOutEl, [analyzedItem]);
+}
+
 async function runScannerSearch() {
   const rawInput = searchInput.value.trim();
   const imageNote = itemImageNoteInput ? itemImageNoteInput.value.trim() : '';
@@ -1373,6 +2616,9 @@ async function runScannerSearch() {
     showToast('상품명, 링크(URL), 또는 이미지를 넣어주세요.');
     return;
   }
+
+  state.quickRefineCat = '';
+  state.quickRefineFeatures = [];
 
   const looksLikeUrl = /^https?:\/\//i.test(rawInput);
   const urlInfo = looksLikeUrl ? extractUrlClientFallback(rawInput) : { isUrl: false, url: '', extractedQuery: rawInput };
@@ -1386,7 +2632,7 @@ async function runScannerSearch() {
     b.classList.toggle('active', b.dataset.verdict === 'ALL');
   });
 
-  // Search local curated 200-item DB first when text query exists
+  // Search local curated DB first when text query exists
   const compactQ = effectiveSearchQuery.toLowerCase().replace(/\s+/g, '');
   const hasExact = !urlInfo.isUrl && !pendingScanImage && compactQ.length >= 2 && ITEMS_DB.some((item) => {
     const compactHay = `${item.brand} ${item.name} ${item.category}`.toLowerCase().replace(/\s+/g, '');
@@ -1408,8 +2654,10 @@ async function runScannerSearch() {
   let analyzedItem = null;
   let engineLabel = '브라우저 키워드 실시간 판독';
   let urlStatusNote = '';
+  const fallbackText = `${effectiveSearchQuery} ${imageNote}`.trim() || (pendingScanImage ? pendingScanImage.name : '가구');
 
   try {
+    if (!hasLocalServerApi()) throw new Error('Static deployment fallback');
     const savedProfile = loadSavedRoomProfile();
     const payload = {
       query: urlInfo.isUrl ? '' : rawInput,
@@ -1433,8 +2681,7 @@ async function runScannerSearch() {
       urlStatusNote = '쇼핑몰 보안 정책으로 전체 HTML 접근이 제한되어, URL 상품 단서와 키워드·첨부 이미지 기준으로 판독했습니다.';
     }
   } catch {
-    // Graceful client fallback when running without Python API server
-    const fallbackText = `${effectiveSearchQuery} ${imageNote}`.trim() || (pendingScanImage ? pendingScanImage.name : '가구');
+    // Graceful client fallback when running on static Vercel hosting or offline
     analyzedItem = buildSyntheticAnalysis(fallbackText);
     if (urlInfo.isUrl) {
       analyzedItem.name = `"${urlInfo.host}" 링크 상품 분석`;
@@ -1444,7 +2691,7 @@ async function runScannerSearch() {
       analyzedItem.name = rawInput || imageNote || `첨부 사진 스펙 분석`;
       analyzedItem.brand = 'IMAGE SCAN';
     }
-    engineLabel = '로컬 브라우저 스펙 분석 (오프라인 모드)';
+    engineLabel = '실시간 키워드·스펙 판독';
   } finally {
     if (analyzeBtn) {
       analyzeBtn.disabled = false;
@@ -1465,26 +2712,20 @@ async function runScannerSearch() {
   renderItems();
   searchInput.value = savedSearchVal;
 
-  const shopKeyword = analyzedItem.altSearchKeyword || effectiveSearchQuery || analyzedItem.category;
-  const urls = buildShopUrls(shopKeyword);
-  customOutEl.innerHTML = `
-    <div class="engine-meta-banner">
-      <span>${escapeHtml(engineLabel)}</span>
-      <span class="engine-meta-pill">${analyzedItem.sourceUrl ? 'URL' : (pendingScanImage ? 'IMAGE' : 'LIVE')} · 자동 저장</span>
-    </div>
-    ${renderYukaCard(analyzedItem)}
-    <div class="live-search-bridge">
-      <div class="live-bridge-copy">
-        <span class="micro-label">ZERO DEAD-END PIPELINE</span>
-        <p>${urlStatusNote ? escapeHtml(urlStatusNote) : '방금 판독한 결과가 자동 저장 목록에 적재되었습니다. 아래에서 오늘의집·쿠팡 최저평점 실사 후기도 함께 확인하세요.'}</p>
-      </div>
-      <div class="dual-link-row">
-        <a href="${analyzedItem.sourceUrl || urls.ohouse}" target="_blank" rel="noopener noreferrer" class="btn-ohouse">${analyzedItem.sourceUrl ? '원본 링크 열기 →' : '오늘의집 리뷰 검색 →'}</a>
-        <a href="${urls.coupang}" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="padding:11px 10px;font-size:13px;">쿠팡 실후기 보기 →</a>
-      </div>
-    </div>
-  `;
-  bindCardClicks(customOutEl, [analyzedItem]);
+  const isShortUrl = urlInfo.isUrl && /ozip\.me|link\.coupang\.com|coupa\.ng|bit\.ly|me2\.do|naver\.me|han\.gl/i.test(urlInfo.host);
+  const needsRefineChips = Boolean(
+    analyzedItem && (analyzedItem.isGenericFallback || isShortUrl || (analyzedItem.chips && analyzedItem.chips.includes('실측 60cm 체크')))
+  );
+
+  renderCustomScanResult({
+    analyzedItem,
+    engineLabel,
+    urlStatusNote,
+    rawInput,
+    effectiveSearchQuery,
+    needsRefineChips,
+    baseFallbackText: fallbackText
+  });
   openScannerResults(`SCAN · ${rawInput || analyzedItem.name}`);
 }
 
@@ -1494,10 +2735,129 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 // ---------------- Tab 2-B: Tone & Mood Matcher Sector ----------------
+const matcherBaseRow = document.getElementById('matcher-base-row');
 const matcherStyleRow = document.getElementById('matcher-style-row');
 const matcherToneGrid = document.getElementById('matcher-tone-grid');
 const matcherCatRow = document.getElementById('matcher-cat-row');
 const matcherOutput = document.getElementById('matcher-output');
+
+const COMPARE_PRESETS = [
+  { label: '라그캅텐 vs 두닷 콰트로', a: 'ikea-lagkapten', b: 'dodot-quattro' },
+  { label: '샤기 러그 vs 사이잘룩 러그', a: 'shaggy-rug', b: 'sisal-look-rug' },
+  { label: '우드블라인드 vs 핀 쉬폰커튼', a: 'wood-blind', b: 'pin-sheer-curtain' },
+  { label: '흡착 선반 vs 스텐304 압축', a: 'suction-corner-rack', b: 'ss304-tension-bath-rod' }
+];
+
+let activeCompareA = 'ikea-lagkapten';
+let activeCompareB = 'dodot-quattro';
+
+function renderCompareView() {
+  const chipsEl = document.getElementById('compare-preset-chips');
+  const outEl = document.getElementById('compare-output');
+  if (!chipsEl || !outEl) return;
+
+  chipsEl.innerHTML = COMPARE_PRESETS.map((p) => {
+    const isActive = activeCompareA === p.a && activeCompareB === p.b;
+    return `<button type="button" class="chip" style="${isActive ? 'background:var(--ink);color:#FFFFFF;' : ''}" data-cmp-a="${escapeHtml(p.a)}" data-cmp-b="${escapeHtml(p.b)}">${escapeHtml(p.label)}</button>`;
+  }).join('');
+
+  chipsEl.querySelectorAll('button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      activeCompareA = btn.dataset.cmpA;
+      activeCompareB = btn.dataset.cmpB;
+      renderCompareView();
+    });
+  });
+
+  const itemA = ITEMS_DB.find((it) => it.id === activeCompareA) || ITEMS_DB[0];
+  const itemB = ITEMS_DB.find((it) => it.id === activeCompareB) || ITEMS_DB[1];
+  const savedProfile = loadSavedRoomProfile();
+  const alertsA = getPersonalFitAlerts(itemA, savedProfile);
+  const alertsB = getPersonalFitAlerts(itemB, savedProfile);
+
+  const calcCompareRank = (item, alerts) => {
+    const baseScore = item.verdict === 'PASS' ? 30 : (item.verdict === 'WARN' ? 18 : 4);
+    const specRisk = (item.specs?.dust || 3) + (item.specs?.deposit || 3) + (item.specs?.trouble || 3);
+    const penalty = alerts.filter((a) => a.tone === 'danger').length * 7 + alerts.filter((a) => a.tone === 'warn').length * 3;
+    return baseScore - specRisk - penalty;
+  };
+
+  const scoreA = calcCompareRank(itemA, alertsA);
+  const scoreB = calcCompareRank(itemB, alertsB);
+  const winner = scoreA === scoreB ? null : (scoreA > scoreB ? itemA : itemB);
+  const loser = winner === itemA ? itemB : itemA;
+
+  const optsHtml = (selectedId) => ITEMS_DB.map((it) =>
+    `<option value="${escapeHtml(it.id)}" ${it.id === selectedId ? 'selected' : ''}>[${it.verdict}] ${escapeHtml(it.name)}</option>`
+  ).join('');
+
+  const vA = verdictMeta(itemA.verdict);
+  const vB = verdictMeta(itemB.verdict);
+
+  outEl.innerHTML = `
+    <div class="compare-select-grid">
+      <div class="compare-pick-card">
+        <span class="verdict-pill ${vA.cls}">${vA.text}</span>
+        <select id="compare-select-a" aria-label="제품 A 선택">${optsHtml(itemA.id)}</select>
+        <span style="font-size:11px;color:var(--ink-secondary);font-weight:700;">${escapeHtml(itemA.priceTier)}</span>
+      </div>
+      <div class="compare-vs-badge">VS</div>
+      <div class="compare-pick-card">
+        <span class="verdict-pill ${vB.cls}">${vB.text}</span>
+        <select id="compare-select-b" aria-label="제품 B 선택">${optsHtml(itemB.id)}</select>
+        <span style="font-size:11px;color:var(--ink-secondary);font-weight:700;">${escapeHtml(itemB.priceTier)}</span>
+      </div>
+    </div>
+
+    <div class="compare-matrix-card">
+      <div class="compare-row">
+        <strong class="${itemA.specs.dust <= itemB.specs.dust ? 'compare-win' : 'compare-lose'}">${itemA.specs.dust}/5</strong>
+        <span class="compare-row-label">먼지 부담</span>
+        <strong class="${itemB.specs.dust <= itemA.specs.dust ? 'compare-win' : 'compare-lose'}">${itemB.specs.dust}/5</strong>
+      </div>
+      <div class="compare-row">
+        <strong class="${itemA.specs.deposit <= itemB.specs.deposit ? 'compare-win' : 'compare-lose'}">${itemA.specs.deposit}/5</strong>
+        <span class="compare-row-label">보증금·복구</span>
+        <strong class="${itemB.specs.deposit <= itemA.specs.deposit ? 'compare-win' : 'compare-lose'}">${itemB.specs.deposit}/5</strong>
+      </div>
+      <div class="compare-row">
+        <strong class="${itemA.specs.trouble <= itemB.specs.trouble ? 'compare-win' : 'compare-lose'}">${itemA.specs.trouble}/5</strong>
+        <span class="compare-row-label">고장·관리</span>
+        <strong class="${itemB.specs.trouble <= itemA.specs.trouble ? 'compare-win' : 'compare-lose'}">${itemB.specs.trouble}/5</strong>
+      </div>
+      <div class="compare-row">
+        <span style="font-size:11.5px;font-weight:700;color:${alertsA.some((a) => a.tone === 'danger') ? 'var(--accent)' : 'var(--safe)'};">
+          ${escapeHtml(alertsA[0] ? alertsA[0].shortBadge.replace(/^내 방 체크:\s*/, '') : '특이 경고 없음')}
+        </span>
+        <span class="compare-row-label">내 방 조건</span>
+        <span style="font-size:11.5px;font-weight:700;color:${alertsB.some((a) => a.tone === 'danger') ? 'var(--accent)' : 'var(--safe)'};">
+          ${escapeHtml(alertsB[0] ? alertsB[0].shortBadge.replace(/^내 방 체크:\s*/, '') : '특이 경고 없음')}
+        </span>
+      </div>
+    </div>
+
+    <div class="compare-winner-banner">
+      ${winner
+        ? `<strong>✓ 추천 승자: ${escapeHtml(winner.name)}</strong><br />${escapeHtml(loser.name)} 대비 내 방 조건과 유지관리·내구성 점수가 더 안정적입니다.`
+        : `<strong>⚖️ 두 제품 스펙이 비슷해요</strong><br />예산과 방 톤에 맞춰 상세 근거를 비교해 보세요.`}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+        <button type="button" id="compare-open-a" class="btn-secondary btn-sm">A 상세 보기</button>
+        <button type="button" id="compare-open-b" class="btn-primary btn-sm">B 상세 보기</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('compare-select-a').addEventListener('change', (e) => {
+    activeCompareA = e.target.value;
+    renderCompareView();
+  });
+  document.getElementById('compare-select-b').addEventListener('change', (e) => {
+    activeCompareB = e.target.value;
+    renderCompareView();
+  });
+  document.getElementById('compare-open-a').addEventListener('click', () => openDetailSheet(itemA));
+  document.getElementById('compare-open-b').addEventListener('click', () => openDetailSheet(itemB));
+}
 
 function setScannerMode(mode) {
   state.scannerMode = mode;
@@ -1505,17 +2865,21 @@ function setScannerMode(mode) {
     btn.classList.toggle('active', btn.dataset.scanMode === mode);
   });
   runViewTransition(() => {
+    scannerGate.classList.toggle('hidden', mode !== 'search');
+    scannerResults.classList.add('hidden');
+    if (scannerCompare) scannerCompare.classList.toggle('hidden', mode !== 'compare');
+    scannerMatcher.classList.toggle('hidden', mode !== 'matcher');
     if (mode === 'matcher') {
-      scannerGate.classList.add('hidden');
-      scannerResults.classList.add('hidden');
-      scannerMatcher.classList.remove('hidden');
       renderToneMatcher();
-    } else {
-      scannerMatcher.classList.add('hidden');
-      scannerResults.classList.add('hidden');
-      scannerGate.classList.remove('hidden');
+    } else if (mode === 'compare') {
+      renderCompareView();
     }
   });
+}
+
+const compareBackBtn = document.getElementById('compare-back-btn');
+if (compareBackBtn) {
+  compareBackBtn.addEventListener('click', () => setScannerMode('search'));
 }
 
 document.querySelectorAll('#scanner-mode-switch .scan-mode-btn').forEach((btn) => {
@@ -1577,6 +2941,27 @@ function renderToneMatcher() {
     matcherHeadline.innerHTML = `${escapeHtml(nick)}님의 <span style="color:var(--accent)">'${escapeHtml(savedProfile.toneName)}'</span><br />방에 어울리는 가구예요.`;
   } else {
     matcherHeadline.innerHTML = `큰 톤 하나 맞추면<br />작은 방도 정돈됩니다.`;
+  }
+
+  // 0. Room Base Condition pills (누런 장판 · 체리몰딩 등)
+  if (matcherBaseRow) {
+    matcherBaseRow.innerHTML = '';
+    ROOM_BASE_OPTIONS.forEach((baseOpt) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      if (state.matcherRoomBase === baseOpt.id) {
+        b.style.background = 'var(--ink)';
+        b.style.color = '#FFFFFF';
+      }
+      b.textContent = baseOpt.label;
+      b.addEventListener('click', () => {
+        state.matcherRoomBase = baseOpt.id;
+        saveRoomBaseState(baseOpt.id);
+        renderToneMatcher();
+      });
+      matcherBaseRow.appendChild(b);
+    });
   }
 
   // 1. Style/Mood pills
@@ -1649,6 +3034,10 @@ function renderToneMatcher() {
 
   // 4. Filter harmonious items (prioritize PASS -> WARN + survey wish/pyeong fit)
   const activeTone = ROOM_TONES.find((t) => t.id === state.matcherTone) || ROOM_TONES[0];
+  const baseRescue = getRoomBaseRescue(state.matcherRoomBase, activeTone.id);
+  const rescueProducts = (baseRescue.productIds || [])
+    .map((pid) => ITEMS_DB.find((db) => db.id === pid))
+    .filter(Boolean);
   const scoreRank = { PASS: 0, WARN: 1, NOPE: 2 };
   const sortWithSurvey = (a, b) => {
     const verdictDiff = scoreRank[a.verdict] - scoreRank[b.verdict];
@@ -1744,6 +3133,48 @@ function renderToneMatcher() {
       </div>
     </div>
 
+    <div class="base-rescue-card ${state.matcherRoomBase === 'clean-white' ? 'is-clean' : ''}">
+      <div class="base-rescue-head">
+        <span class="base-rescue-kicker">내 방 바탕 중화 처방 · ${escapeHtml(baseRescue.baseLabel)}</span>
+      </div>
+      <p class="base-rescue-title">${escapeHtml(baseRescue.headline)}</p>
+      <div class="base-rescue-avoid">
+        <strong>피할 실수</strong>${escapeHtml(baseRescue.avoidLine)}
+      </div>
+      <ul class="base-rescue-steps">
+        ${baseRescue.coverSteps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}
+      </ul>
+      ${rescueProducts.length ? `
+        <div class="base-rescue-products">
+          ${rescueProducts.map((rp) => {
+            const rpv = verdictMeta(rp.verdict);
+            return `
+              <button type="button" class="pair-mini-card base-rescue-prod-btn" data-rescue-id="${escapeHtml(rp.id)}">
+                <div><span class="verdict-pill ${rpv.cls}" style="font-size:10px;padding:2px 6px;">${rpv.text}</span></div>
+                <div class="pair-mini-title">${escapeHtml(rp.name)}</div>
+                <div class="pair-mini-meta">${escapeHtml(rp.priceTier)} →</div>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      ` : ''}
+      <div class="base-rescue-links">
+        ${baseRescue.coverKeywords.map((ck) => {
+          const ckUrls = buildShopUrls(ck.keyword);
+          return `
+            <div class="base-rescue-link-row">
+              <span class="base-rescue-link-label">${escapeHtml(ck.label)}</span>
+              <div class="life-tip-links">
+                <a href="${ckUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">쿠팡 →</a>
+                <a href="${ckUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">오늘의집 →</a>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      ${AFFILIATE_CONFIG.coupangEnabled ? `<p class="ftc-affiliate-note">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
+    </div>
+
     <div class="matcher-section-head">
       <strong>${escapeHtml(activeTone.name)} 톤 맞춤 · ${escapeHtml(TARGET_CATEGORIES.find((c) => c.id === state.matcherCat)?.label || state.matcherCat)}</strong>
       <span>눌러서 궁합 보기</span>
@@ -1787,7 +3218,43 @@ function renderToneMatcher() {
         `;
       }).join('')}
     </div>
+
+    <div class="matcher-share-bar">
+      <p class="matcher-share-copy">이 조합과 바탕 중화 공식을 1장 이미지로 저장하거나 카톡으로 공유해 두세요.</p>
+      <div class="sheet-share-row">
+        <button type="button" id="copy-tone-link-btn" class="btn-share-chip">카톡 무드 링크 복사</button>
+        <button type="button" id="share-tone-rescue-btn" class="btn-share-chip is-story">중화 레시피 저장</button>
+      </div>
+    </div>
   `;
+
+  matcherOutput.querySelectorAll('.base-rescue-prod-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = ITEMS_DB.find((it) => it.id === btn.dataset.rescueId);
+      if (target) openDetailSheet(target);
+    });
+  });
+  const shareRescueBtn = document.getElementById('share-tone-rescue-btn');
+  if (shareRescueBtn) {
+    shareRescueBtn.addEventListener('click', () => {
+      exportToneRescueCard(activeTone, state.matcherRoomBase, baseRescue);
+    });
+  }
+  const copyToneLinkBtn = document.getElementById('copy-tone-link-btn');
+  if (copyToneLinkBtn) {
+    copyToneLinkBtn.addEventListener('click', () => {
+      const shareUrl = location.protocol.startsWith('http')
+        ? `${location.origin}${location.pathname}?tab=scanner&mode=matcher&tone=${encodeURIComponent(activeTone.id)}&base=${encodeURIComponent(state.matcherRoomBase)}`
+        : '';
+      const msg = [
+        `[NOPE! 원룸 무드 처방] ${baseRescue.baseLabel} → ${activeTone.name}`,
+        `배색: ${activeTone.ratioRule}`,
+        `핵심: ${baseRescue.coverSteps[0]}`,
+        shareUrl ? `바로 보기: ${shareUrl}` : ''
+      ].filter(Boolean).join('\n');
+      copyTextToClipboard(msg, '무드 레시피·링크 복사 완료!');
+    });
+  }
 
   bindCardClicks(document.getElementById('matcher-primary-list'), primaryMatches);
   bindCardClicks(document.getElementById('matcher-companion-list'), pickedCompanions);
@@ -1827,15 +3294,26 @@ function renderToneMatcher() {
 // ---------------- Tab 3: Human Scale ----------------
 const scaleStageInput = document.getElementById('scale-stage-input');
 const scaleStageDiagram = document.getElementById('scale-stage-diagram');
+const scaleStageGap = document.getElementById('scale-stage-gap');
 const heightSlider = document.getElementById('height-slider');
 const heightValEl = document.getElementById('height-val');
 const svgWrap = document.getElementById('human-scale-svg-wrap');
+let scaleHeightStage = 'input'; // 'input' | 'diagram'
 
 function loadScaleState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.scale) || '{}');
     if (saved.height) state.scaleHeight = saved.height;
     if (saved.mode && HUMAN_SCALE_MODES[saved.mode]) state.scaleMode = saved.mode;
+    if (saved.gapZone && GAP_STORAGE_ZONES.some((z) => z.id === saved.gapZone)) {
+      state.gapZone = saved.gapZone;
+    }
+    const zoneObj = GAP_STORAGE_ZONES.find((z) => z.id === state.gapZone) || GAP_STORAGE_ZONES[0];
+    if (saved.gapSizeId && zoneObj.options.some((o) => o.id === saved.gapSizeId)) {
+      state.gapSizeId = saved.gapSizeId;
+    } else {
+      state.gapSizeId = zoneObj.options[0].id;
+    }
   } catch {
     // defaults
   }
@@ -1844,7 +3322,9 @@ function loadScaleState() {
 function saveScaleState() {
   localStorage.setItem(STORAGE_KEYS.scale, JSON.stringify({
     height: state.scaleHeight,
-    mode: state.scaleMode
+    mode: state.scaleMode,
+    gapZone: state.gapZone,
+    gapSizeId: state.gapSizeId
   }));
 }
 
@@ -1864,7 +3344,7 @@ function updateScaleInputsUI() {
   document.getElementById('home-scale-summary-line').textContent = `${s.heightCm}cm · ${keyMetric}`;
 }
 
-function svgPill(cx, cy, text, bg = '#FFFDF7', fg = '#23261F', border = '#23261F') {
+function svgPill(cx, cy, text, bg = '#FFFFFF', fg = '#111311', border = '#111311') {
   const w = Math.max(46, text.length * 7.2 + 16);
   const h = 18;
   return `
@@ -1875,7 +3355,7 @@ function svgPill(cx, cy, text, bg = '#FFFDF7', fg = '#23261F', border = '#23261F
   `;
 }
 
-function svgCadDim(x, y1, y2, label, color = '#23261F', pillBg = '#FFFDF7', pillFg = '#23261F', labelOffsetX = 0) {
+function svgCadDim(x, y1, y2, label, color = '#111311', pillBg = '#FFFFFF', pillFg = '#111311', labelOffsetX = 0) {
   const midY = (y1 + y2) / 2;
   return `
     <line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${color}" stroke-width="1.4"/>
@@ -1899,9 +3379,9 @@ function renderArchitecturalSvg(s) {
   const ticks = [0, 50, 100, 150, 200].map((cm) => {
     const y = toY(cm);
     return `
-      <line x1="28" y1="${y}" x2="364" y2="${y}" stroke="${cm === 0 ? '#23261F' : '#EAE3CE'}" stroke-width="${cm === 0 ? 2 : 1}"/>
-      <line x1="23" y1="${y}" x2="29" y2="${y}" stroke="#23261F" stroke-width="1.2"/>
-      <text x="20" y="${y + 3.5}" text-anchor="end" fill="#5B5F52" font-size="9" font-weight="700">${cm}</text>
+      <line x1="28" y1="${y}" x2="364" y2="${y}" stroke="${cm === 0 ? '#111311' : '#E2E4DF'}" stroke-width="${cm === 0 ? 2 : 1}"/>
+      <line x1="23" y1="${y}" x2="29" y2="${y}" stroke="#111311" stroke-width="1.2"/>
+      <text x="20" y="${y + 3.5}" text-anchor="end" fill="#525651" font-size="9" font-weight="700">${cm}</text>
     `;
   }).join('');
 
@@ -1922,48 +3402,48 @@ function renderArchitecturalSvg(s) {
 
     sceneSvg = `
       <!-- Subtle Comfort Reach Band -->
-      <rect x="28" y="${monTopY - 8}" width="336" height="${floorY - (monTopY - 8)}" fill="rgba(239, 234, 216, 0.22)"/>
+      <rect x="28" y="${monTopY - 8}" width="336" height="${floorY - (monTopY - 8)}" fill="rgba(235, 236, 232, 0.45)"/>
 
       <!-- Ergonomic Mesh Chair -->
-      <path d="M 88 ${seatY - 48} Q 85 ${seatY - 22} 91 ${seatY + 3} L 136 ${seatY + 3}" fill="none" stroke="#5B5F52" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-      <rect x="93" y="${seatY - 3}" width="44" height="7" rx="3" fill="#EFEAD8" stroke="#23261F" stroke-width="1.5"/>
-      <line x1="115" y1="${seatY + 4}" x2="115" y2="${floorY - 6}" stroke="#23261F" stroke-width="3"/>
-      <path d="M 97 ${floorY - 2} L 115 ${floorY - 7} L 133 ${floorY - 2}" fill="none" stroke="#23261F" stroke-width="2.2" stroke-linecap="round"/>
-      <circle cx="98" cy="${floorY - 2}" r="2.2" fill="#23261F"/>
-      <circle cx="132" cy="${floorY - 2}" r="2.2" fill="#23261F"/>
+      <path d="M 88 ${seatY - 48} Q 85 ${seatY - 22} 91 ${seatY + 3} L 136 ${seatY + 3}" fill="none" stroke="#525651" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="93" y="${seatY - 3}" width="44" height="7" rx="3" fill="#EBECE8" stroke="#111311" stroke-width="1.5"/>
+      <line x1="115" y1="${seatY + 4}" x2="115" y2="${floorY - 6}" stroke="#111311" stroke-width="3"/>
+      <path d="M 97 ${floorY - 2} L 115 ${floorY - 7} L 133 ${floorY - 2}" fill="none" stroke="#111311" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="98" cy="${floorY - 2}" r="2.2" fill="#111311"/>
+      <circle cx="132" cy="${floorY - 2}" r="2.2" fill="#111311"/>
 
       <!-- Architectural Seated Silhouette (Facing Right) -->
       <g>
         <!-- Torso & Legs -->
-        <path d="M 103 ${shoulderY} Q 96 ${hipY - 12} 102 ${hipY} L 138 ${kneeY} Q 144 ${kneeY + 2} 145 ${kneeY + 9} L 146 ${floorY - 4}" fill="none" stroke="#23261F" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 103 ${shoulderY} Q 96 ${hipY - 12} 102 ${hipY} L 138 ${kneeY} Q 144 ${kneeY + 2} 145 ${kneeY + 9} L 146 ${floorY - 4}" fill="none" stroke="#111311" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
         <!-- Shoes -->
-        <path d="M 142 ${floorY - 3} L 157 ${floorY - 3}" stroke="#23261F" stroke-width="5.5" stroke-linecap="round"/>
+        <path d="M 142 ${floorY - 3} L 157 ${floorY - 3}" stroke="#111311" stroke-width="5.5" stroke-linecap="round"/>
         <!-- Head & Neck -->
-        <line x1="106" y1="${headCy + 6}" x2="104" y2="${shoulderY}" stroke="#23261F" stroke-width="6.5" stroke-linecap="round"/>
-        <circle cx="110" cy="${headCy}" r="10.5" fill="#23261F"/>
+        <line x1="106" y1="${headCy + 6}" x2="104" y2="${shoulderY}" stroke="#111311" stroke-width="6.5" stroke-linecap="round"/>
+        <circle cx="110" cy="${headCy}" r="10.5" fill="#111311"/>
         <!-- Ergonomic 90° Arm Posture (Accent Coral) -->
-        <path d="M 105 ${shoulderY + 2} L 122 ${deskY - 4} L 164 ${deskY - 4}" fill="none" stroke="#E6534B" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 105 ${shoulderY + 2} L 122 ${deskY - 4} L 164 ${deskY - 4}" fill="none" stroke="#E53935" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
       </g>
 
       <!-- Ergonomic Desk & Monitor Elevation -->
-      <rect x="150" y="${deskY}" width="108" height="6" rx="1.5" fill="#23261F"/>
-      <rect x="156" y="${deskY + 6}" width="4" height="${floorY - deskY - 6}" fill="#23261F"/>
-      <rect x="248" y="${deskY + 6}" width="4" height="${floorY - deskY - 6}" fill="#23261F"/>
+      <rect x="150" y="${deskY}" width="108" height="6" rx="1.5" fill="#111311"/>
+      <rect x="156" y="${deskY + 6}" width="4" height="${floorY - deskY - 6}" fill="#111311"/>
+      <rect x="248" y="${deskY + 6}" width="4" height="${floorY - deskY - 6}" fill="#111311"/>
       <!-- Monitor & Keyboard -->
-      <rect x="218" y="${monTopY}" width="6" height="34" rx="1.5" fill="#23261F"/>
-      <rect x="214" y="${monTopY + 3}" width="3" height="28" rx="1" fill="#E6534B"/>
-      <line x1="221" y1="${monBottomY}" x2="221" y2="${deskY}" stroke="#23261F" stroke-width="3"/>
-      <line x1="208" y1="${deskY}" x2="233" y2="${deskY}" stroke="#23261F" stroke-width="2.5" stroke-linecap="round"/>
-      <rect x="172" y="${deskY - 3}" width="22" height="3" rx="1" fill="#5B5F52"/>
+      <rect x="218" y="${monTopY}" width="6" height="34" rx="1.5" fill="#111311"/>
+      <rect x="214" y="${monTopY + 3}" width="3" height="28" rx="1" fill="#E53935"/>
+      <line x1="221" y1="${monBottomY}" x2="221" y2="${deskY}" stroke="#111311" stroke-width="3"/>
+      <line x1="208" y1="${deskY}" x2="233" y2="${deskY}" stroke="#111311" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="172" y="${deskY - 3}" width="22" height="3" rx="1" fill="#525651"/>
 
       <!-- Eye Sightline 15° -->
-      <line x1="121" y1="${eyeY}" x2="213" y2="${monTopY + 13}" stroke="#E6534B" stroke-width="1.3" stroke-dasharray="4 3"/>
-      ${svgPill(165, eyeY - 14, '시야각 15°', '#FFFDF7', '#E6534B', '#E6534B')}
+      <line x1="121" y1="${eyeY}" x2="213" y2="${monTopY + 13}" stroke="#E53935" stroke-width="1.3" stroke-dasharray="4 3"/>
+      ${svgPill(165, eyeY - 14, '시야각 15°', '#FFFFFF', '#E53935', '#E53935')}
 
       <!-- Non-overlapping CAD Dimensions -->
-      ${svgCadDim(56, seatY, floorY, `의자 ${s.chairSeat}cm`, '#23261F', '#FFFDF7', '#23261F', 4)}
-      ${svgCadDim(278, deskY, floorY, `책상 ${s.deskHeight}cm`, '#E6534B', '#E6534B', '#FFFFFF', 36)}
-      ${svgCadDim(278, monTopY, deskY, `모니터 ${s.monitorTop}cm`, '#23261F', '#FFFDF7', '#23261F', 36)}
+      ${svgCadDim(56, seatY, floorY, `의자 ${s.chairSeat}cm`, '#111311', '#FFFFFF', '#111311', 4)}
+      ${svgCadDim(278, deskY, floorY, `책상 ${s.deskHeight}cm`, '#E53935', '#E53935', '#FFFFFF', 36)}
+      ${svgCadDim(278, monTopY, deskY, `모니터 ${s.monitorTop}cm`, '#111311', '#FFFFFF', '#111311', 36)}
     `;
   } else if (state.scaleMode === 'floor') {
     const tblY = toY(s.floorTable);
@@ -1975,31 +3455,31 @@ function renderArchitecturalSvg(s) {
     sceneSvg = `
       <!-- Floor Back Cushion -->
       <path d="M 76 ${floorY - 34} Q 74 ${floorY - 4} 84 ${floorY - 4} L 128 ${floorY - 4}" fill="none" stroke="#C49A6C" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-      <rect x="82" y="${floorY - 9}" width="50" height="8" rx="4" fill="#EFEAD8" stroke="#23261F" stroke-width="1.4"/>
+      <rect x="82" y="${floorY - 9}" width="50" height="8" rx="4" fill="#EBECE8" stroke="#111311" stroke-width="1.4"/>
 
       <!-- Architectural Floor-Sitting Silhouette -->
       <g>
-        <path d="M 94 ${headCy + 20} Q 88 ${hipY - 10} 96 ${hipY} L 134 ${floorY - 6}" fill="none" stroke="#23261F" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-        <line x1="97" y1="${headCy + 6}" x2="94" y2="${headCy + 20}" stroke="#23261F" stroke-width="6.5" stroke-linecap="round"/>
-        <circle cx="101" cy="${headCy}" r="10.5" fill="#23261F"/>
-        <path d="M 96 ${headCy + 22} L 116 ${tblY - 4} L 154 ${tblY - 4}" fill="none" stroke="#E6534B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 94 ${headCy + 20} Q 88 ${hipY - 10} 96 ${hipY} L 134 ${floorY - 6}" fill="none" stroke="#111311" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="97" y1="${headCy + 6}" x2="94" y2="${headCy + 20}" stroke="#111311" stroke-width="6.5" stroke-linecap="round"/>
+        <circle cx="101" cy="${headCy}" r="10.5" fill="#111311"/>
+        <path d="M 96 ${headCy + 22} L 116 ${tblY - 4} L 154 ${tblY - 4}" fill="none" stroke="#E53935" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
       </g>
 
       <!-- Low Floor Desk & Elevated Laptop Stand -->
-      <rect x="146" y="${tblY}" width="102" height="5.5" rx="1.5" fill="#23261F"/>
-      <line x1="154" y1="${tblY + 5}" x2="150" y2="${floorY}" stroke="#23261F" stroke-width="2.6" stroke-linecap="round"/>
-      <line x1="240" y1="${tblY + 5}" x2="244" y2="${floorY}" stroke="#23261F" stroke-width="2.6" stroke-linecap="round"/>
+      <rect x="146" y="${tblY}" width="102" height="5.5" rx="1.5" fill="#111311"/>
+      <line x1="154" y1="${tblY + 5}" x2="150" y2="${floorY}" stroke="#111311" stroke-width="2.6" stroke-linecap="round"/>
+      <line x1="240" y1="${tblY + 5}" x2="244" y2="${floorY}" stroke="#111311" stroke-width="2.6" stroke-linecap="round"/>
       <!-- Laptop Riser + Screen -->
-      <path d="M 192 ${tblY} L 208 ${tblY - 10} L 220 ${tblY}" fill="none" stroke="#5B5F52" stroke-width="1.6"/>
-      <path d="M 190 ${tblY - 10} L 214 ${tblY - 10} L 222 ${monTopY + 10}" fill="none" stroke="#23261F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 192 ${tblY} L 208 ${tblY - 10} L 220 ${tblY}" fill="none" stroke="#525651" stroke-width="1.6"/>
+      <path d="M 190 ${tblY - 10} L 214 ${tblY - 10} L 222 ${monTopY + 10}" fill="none" stroke="#111311" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 
       <!-- Neck-safe Sightline -->
-      <line x1="112" y1="${eyeY}" x2="214" y2="${monTopY + 14}" stroke="#E6534B" stroke-width="1.3" stroke-dasharray="4 3"/>
-      ${svgPill(166, headCy - 14, '거북목 방지 시야', '#FFFDF7', '#E6534B', '#E6534B')}
+      <line x1="112" y1="${eyeY}" x2="214" y2="${monTopY + 14}" stroke="#E53935" stroke-width="1.3" stroke-dasharray="4 3"/>
+      ${svgPill(166, headCy - 14, '거북목 방지 시야', '#FFFFFF', '#E53935', '#E53935')}
 
       <!-- Non-overlapping CAD Dimensions -->
-      ${svgCadDim(268, tblY, floorY, `좌식상 ${s.floorTable}cm`, '#E6534B', '#E6534B', '#FFFFFF', 40)}
-      ${svgCadDim(268, monTopY + 8, tblY, `화면 ${s.monitorTop}cm`, '#23261F', '#FFFDF7', '#23261F', 40)}
+      ${svgCadDim(268, tblY, floorY, `좌식상 ${s.floorTable}cm`, '#E53935', '#E53935', '#FFFFFF', 40)}
+      ${svgCadDim(268, monTopY + 8, tblY, `화면 ${s.monitorTop}cm`, '#111311', '#FFFFFF', '#111311', 40)}
     `;
   } else {
     const bedY = toY(s.bedTotal);
@@ -2013,67 +3493,100 @@ function renderArchitecturalSvg(s) {
     const mirrorTopY = toY(28 + s.mirrorMinH);
 
     overheadGuides = `
-      <line x1="64" y1="${hangerY}" x2="288" y2="${hangerY}" stroke="#5B5F52" stroke-width="1.2" stroke-dasharray="4 3"/>
-      ${svgPill(192, hangerY - 11, `행거봉 ${s.hangerBar}cm`, '#FFFDF7', '#23261F', '#8E9183')}
-      <line x1="64" y1="${shelfY}" x2="288" y2="${shelfY}" stroke="#8E9183" stroke-width="1" stroke-dasharray="2 3"/>
-      ${svgPill(192, shelfY - 11, `선반한계 ${s.shelfMax}cm`, '#FAF6EC', '#5B5F52', '#C9C6B8')}
+      <line x1="64" y1="${hangerY}" x2="288" y2="${hangerY}" stroke="#525651" stroke-width="1.2" stroke-dasharray="4 3"/>
+      ${svgPill(192, hangerY - 11, `행거봉 ${s.hangerBar}cm`, '#FFFFFF', '#111311', '#878B84')}
+      <line x1="64" y1="${shelfY}" x2="288" y2="${shelfY}" stroke="#878B84" stroke-width="1" stroke-dasharray="2 3"/>
+      ${svgPill(192, shelfY - 11, `선반한계 ${s.shelfMax}cm`, '#F6F7F5', '#525651', '#C9C6B8')}
     `;
 
     sceneSvg = `
       <!-- Standing Architectural Silhouette (Clean Proportional CAD Figure) -->
       <g>
         <!-- Left & Right Legs -->
-        <path d="M 88 ${hipY} L 83 ${floorY - 4} M 94 ${hipY} L 99 ${floorY - 4}" stroke="#23261F" stroke-width="6.5" stroke-linecap="round"/>
-        <path d="M 79 ${floorY - 2} L 87 ${floorY - 2} M 96 ${floorY - 2} L 104 ${floorY - 2}" stroke="#23261F" stroke-width="4" stroke-linecap="round"/>
+        <path d="M 88 ${hipY} L 83 ${floorY - 4} M 94 ${hipY} L 99 ${floorY - 4}" stroke="#111311" stroke-width="6.5" stroke-linecap="round"/>
+        <path d="M 79 ${floorY - 2} L 87 ${floorY - 2} M 96 ${floorY - 2} L 104 ${floorY - 2}" stroke="#111311" stroke-width="4" stroke-linecap="round"/>
         <!-- Torso (Tapered Coat/Body Silhouette) -->
-        <path d="M 80 ${shoulderY} Q 91 ${shoulderY - 4} 102 ${shoulderY} L 98 ${hipY + 2} L 84 ${hipY + 2} Z" fill="#23261F"/>
+        <path d="M 80 ${shoulderY} Q 91 ${shoulderY - 4} 102 ${shoulderY} L 98 ${hipY + 2} L 84 ${hipY + 2} Z" fill="#111311"/>
         <!-- Relaxed Arm -->
-        <path d="M 101 ${shoulderY + 2} Q 108 ${shoulderY + 20} 105 ${hipY + 12}" fill="none" stroke="#23261F" stroke-width="4.5" stroke-linecap="round"/>
+        <path d="M 101 ${shoulderY + 2} Q 108 ${shoulderY + 20} 105 ${hipY + 12}" fill="none" stroke="#111311" stroke-width="4.5" stroke-linecap="round"/>
         <!-- Neck & Head -->
-        <rect x="88" y="${headCy + 6}" width="6" height="9" fill="#23261F"/>
-        <circle cx="91" cy="${headCy}" r="${headR}" fill="#23261F"/>
+        <rect x="88" y="${headCy + 6}" width="6" height="9" fill="#111311"/>
+        <circle cx="91" cy="${headCy}" r="${headR}" fill="#111311"/>
       </g>
 
       <!-- Key Height Callout Left of Standing Figure -->
-      ${svgCadDim(54, headTopY, floorY, `키 ${s.heightCm}cm`, '#23261F', '#23261F', '#FFFFFF', 4)}
+      ${svgCadDim(54, headTopY, floorY, `키 ${s.heightCm}cm`, '#111311', '#111311', '#FFFFFF', 4)}
 
       <!-- Architectural Bed Elevation -->
       <g>
         <!-- Headboard -->
-        <rect x="116" y="${bedY - 26}" width="7" height="${floorY - (bedY - 26)}" rx="2" fill="#23261F"/>
+        <rect x="116" y="${bedY - 26}" width="7" height="${floorY - (bedY - 26)}" rx="2" fill="#111311"/>
         <!-- Bed Frame & Legs -->
-        <rect x="122" y="${frameTopY}" width="96" height="8" rx="1.5" fill="#23261F"/>
-        <rect x="212" y="${frameTopY + 6}" width="5" height="${underBedH}" fill="#23261F"/>
+        <rect x="122" y="${frameTopY}" width="96" height="8" rx="1.5" fill="#111311"/>
+        <rect x="212" y="${frameTopY + 6}" width="5" height="${underBedH}" fill="#111311"/>
         <!-- Mattress + Blanket Fold + Pillow -->
-        <rect x="123" y="${bedY}" width="95" height="19" rx="3" fill="#EFEAD8" stroke="#E6534B" stroke-width="1.8"/>
-        <path d="M 150 ${bedY} H 215 A 3 3 0 0 1 218 ${bedY + 3} V ${bedY + 19} H 150 Z" fill="#FFFDF7" stroke="#23261F" stroke-width="1.2"/>
-        <rect x="127" y="${bedY - 9}" width="20" height="9" rx="4" fill="#FFFDF7" stroke="#23261F" stroke-width="1.4"/>
+        <rect x="123" y="${bedY}" width="95" height="19" rx="3" fill="#EBECE8" stroke="#E53935" stroke-width="1.8"/>
+        <path d="M 150 ${bedY} H 215 A 3 3 0 0 1 218 ${bedY + 3} V ${bedY + 19} H 150 Z" fill="#FFFFFF" stroke="#111311" stroke-width="1.2"/>
+        <rect x="127" y="${bedY - 9}" width="20" height="9" rx="4" fill="#FFFFFF" stroke="#111311" stroke-width="1.4"/>
       </g>
 
       <!-- Bed Height Dimension (Clear between bed and mirror) -->
-      ${svgCadDim(228, bedY, floorY, `총높이 ${s.bedTotal}cm`, '#E6534B', '#E6534B', '#FFFFFF', 34)}
+      ${svgCadDim(228, bedY, floorY, `총높이 ${s.bedTotal}cm`, '#E53935', '#E53935', '#FFFFFF', 34)}
 
       <!-- Detailed Wall Mirror Elevation (Far Right, Zero Overlap) -->
       <g>
-        <rect x="310" y="${mirrorTopY}" width="28" height="${mirrorBottomY - mirrorTopY}" rx="4" fill="#23261F"/>
-        <rect x="314" y="${mirrorTopY + 4}" width="20" height="${mirrorBottomY - mirrorTopY - 8}" rx="2" fill="#EAE5D3"/>
+        <rect x="310" y="${mirrorTopY}" width="28" height="${mirrorBottomY - mirrorTopY}" rx="4" fill="#111311"/>
+        <rect x="314" y="${mirrorTopY + 4}" width="20" height="${mirrorBottomY - mirrorTopY - 8}" rx="2" fill="#E6E8E4"/>
         <!-- Mirror Glass Reflection Diagonals -->
         <line x1="317" y1="${mirrorTopY + 24}" x2="331" y2="${mirrorTopY + 10}" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
         <line x1="317" y1="${mirrorTopY + 34}" x2="331" y2="${mirrorTopY + 20}" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round"/>
-        <circle cx="324" cy="${mirrorTopY - 4}" r="2" fill="#23261F"/>
+        <circle cx="324" cy="${mirrorTopY - 4}" r="2" fill="#111311"/>
       </g>
-      ${svgPill(324, mirrorTopY - 18, `거울 ${s.mirrorMinH}cm+`, '#FFFDF7', '#23261F', '#23261F')}
+      ${svgPill(324, mirrorTopY - 18, `거울 ${s.mirrorMinH}cm+`, '#FFFFFF', '#111311', '#111311')}
     `;
   }
 
   svgWrap.innerHTML = `
     <svg viewBox="0 0 380 278" role="img" aria-label="휴먼스케일 도해">
-      <rect x="0" y="0" width="380" height="278" rx="8" fill="#FFFDF7"/>
+      <rect x="0" y="0" width="380" height="278" rx="8" fill="#FFFFFF"/>
       ${ticks}
-      <text x="364" y="${floorY + 16}" text-anchor="end" fill="#23261F" font-size="9.5" font-weight="800">FL ±0 cm</text>
+      <text x="364" y="${floorY + 16}" text-anchor="end" fill="#111311" font-size="9.5" font-weight="800">FL ±0 cm</text>
       ${overheadGuides}
       ${sceneSvg}
     </svg>
+  `;
+}
+
+function renderScaleQuizHint() {
+  const hintBox = document.getElementById('scale-quiz-hint');
+  if (!hintBox) return;
+  const saved = loadSavedRoomProfile();
+  if (!saved || !saved.pyeongLabel) {
+    hintBox.classList.add('hidden');
+    return;
+  }
+  const notes = [];
+  if (saved.pyeongLabel === '4~5평 이하' || saved.isDuplex || saved.narrowPath) {
+    notes.push(`${saved.pyeongLabel}: 통로 60cm 이상·문 열림 반경 여유를 우선 확인하세요.`);
+  }
+  if (saved.heavyDeskLoad) {
+    notes.push('모니터암 사용 조건: 상판 두께 18T+ 풀판 여부와 의자 팔걸이 간섭 높이를 체크하세요.');
+  }
+  if (saved.needsFloorSpace) {
+    notes.push('홈트 바닥 여백 필요: 바닥형 거울·스탠드 대신 도어후크·클립 조명을 추천해요.');
+  }
+  if (notes.length === 0) {
+    notes.push(`설문 기반 추천 자세(${HUMAN_SCALE_MODES[state.scaleMode]?.label || '책상형'})로 자동 맞춰두었어요.`);
+  }
+  hintBox.className = `room-fit-banner ${notes.length > 1 ? 'is-danger' : 'is-safe'}`;
+  hintBox.innerHTML = `
+    <div class="room-fit-head">
+      <span>${escapeHtml(saved.nickname || '내')} 방 설문 연동 치수 가이드</span>
+      <span>${escapeHtml(saved.pyeongLabel)}</span>
+    </div>
+    <ul class="room-fit-list">
+      ${notes.map((n) => `<li>${escapeHtml(n)}</li>`).join('')}
+    </ul>
   `;
 }
 
@@ -2084,6 +3597,7 @@ function renderHumanScaleDiagram() {
   document.getElementById('scale-mode-note').textContent = modeInfo.note;
 
   renderArchitecturalSvg(s);
+  renderScaleQuizHint();
 
   const specs = [
     { label: state.scaleMode === 'floor' ? '좌식 테이블' : '책상 높이', val: `${state.scaleMode === 'floor' ? s.floorTable : s.deskHeight} cm` },
@@ -2113,6 +3627,7 @@ document.querySelectorAll('#scale-mode-switch .mode-btn').forEach((btn) => {
 });
 
 document.getElementById('show-scale-diagram-btn').addEventListener('click', () => {
+  scaleHeightStage = 'diagram';
   runViewTransition(() => {
     renderHumanScaleDiagram();
     scaleStageInput.classList.add('hidden');
@@ -2122,11 +3637,213 @@ document.getElementById('show-scale-diagram-btn').addEventListener('click', () =
 });
 
 document.getElementById('scale-edit-btn').addEventListener('click', () => {
+  scaleHeightStage = 'input';
   runViewTransition(() => {
     scaleStageDiagram.classList.add('hidden');
     scaleStageInput.classList.remove('hidden');
   });
 });
+
+function setScaleView(view) {
+  state.scaleView = view === 'gap' ? 'gap' : 'height';
+  document.querySelectorAll('#scale-view-switch .scan-mode-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.scaleView === state.scaleView);
+  });
+  runViewTransition(() => {
+    if (state.scaleView === 'gap') {
+      scaleStageInput.classList.add('hidden');
+      scaleStageDiagram.classList.add('hidden');
+      if (scaleStageGap) scaleStageGap.classList.remove('hidden');
+      renderGapStorageFinder();
+    } else {
+      if (scaleStageGap) scaleStageGap.classList.add('hidden');
+      scaleStageInput.classList.toggle('hidden', scaleHeightStage === 'diagram');
+      scaleStageDiagram.classList.toggle('hidden', scaleHeightStage !== 'diagram');
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  });
+}
+
+document.querySelectorAll('#scale-view-switch .scan-mode-btn').forEach((btn) => {
+  btn.addEventListener('click', () => setScaleView(btn.dataset.scaleView));
+});
+
+function renderGapStorageFinder() {
+  const zoneRow = document.getElementById('gap-zone-row');
+  const sizeRow = document.getElementById('gap-size-row');
+  const outEl = document.getElementById('gap-result-output');
+  if (!zoneRow || !sizeRow || !outEl) return;
+
+  const activeZone = GAP_STORAGE_ZONES.find((z) => z.id === state.gapZone) || GAP_STORAGE_ZONES[0];
+  let activeOpt = activeZone.options.find((o) => o.id === state.gapSizeId);
+  if (!activeOpt) {
+    activeOpt = activeZone.options[0];
+    state.gapSizeId = activeOpt.id;
+  }
+
+  zoneRow.innerHTML = '';
+  GAP_STORAGE_ZONES.forEach((zone) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    if (zone.id === activeZone.id) {
+      b.style.background = 'var(--ink)';
+      b.style.color = '#FFFFFF';
+    }
+    b.textContent = zone.label;
+    b.addEventListener('click', () => {
+      state.gapZone = zone.id;
+      state.gapSizeId = zone.options[0].id;
+      saveScaleState();
+      renderGapStorageFinder();
+    });
+    zoneRow.appendChild(b);
+  });
+
+  sizeRow.innerHTML = '';
+  activeZone.options.forEach((opt) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = `gap-size-btn ${opt.id === activeOpt.id ? 'active' : ''}`;
+    b.innerHTML = `<strong>${escapeHtml(opt.label)}</strong><span>${escapeHtml(opt.sub)}</span>`;
+    b.addEventListener('click', () => {
+      state.gapSizeId = opt.id;
+      saveScaleState();
+      renderGapStorageFinder();
+    });
+    sizeRow.appendChild(b);
+  });
+
+  const matchedItems = (activeOpt.itemIds || [])
+    .map((id) => ITEMS_DB.find((it) => it.id === id))
+    .filter(Boolean);
+  const shopUrls = buildShopUrls(activeOpt.shopKeyword);
+
+  outEl.innerHTML = `
+    <div class="gap-measure-tip">
+      <strong>줄자 없이 1초 재는 법 · ${escapeHtml(activeZone.label)}</strong>
+      <span>${escapeHtml(activeZone.measureTip)}</span>
+    </div>
+
+    <div class="gap-verdict-card">
+      <div class="gap-verdict-row">
+        <span class="gap-verdict-badge is-nope">✕ 막힘</span>
+        <span>${escapeHtml(activeOpt.avoidText)}</span>
+      </div>
+      <div class="gap-verdict-row">
+        <span class="gap-verdict-badge is-pass">✓ 통과</span>
+        <span>${escapeHtml(activeOpt.passText)}</span>
+      </div>
+    </div>
+
+    ${matchedItems.length ? `
+      <div class="matcher-section-head">
+        <strong>이 틈새에 맞는 검증 상품</strong>
+        <span>눌러서 1초 체크</span>
+      </div>
+      <div class="cards-stack" id="gap-matched-cards">
+        ${matchedItems.map(renderYukaCard).join('')}
+      </div>
+    ` : ''}
+
+    <div class="gap-shop-box">
+      <span class="micro-label">GAP FIT ITEM</span>
+      <strong class="gap-shop-title">${escapeHtml(activeOpt.shopLabel)}</strong>
+      <div class="dual-link-row">
+        <a href="${shopUrls.coupang}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="padding:11px 10px;font-size:13px;">쿠팡 보기 →</a>
+        <a href="${shopUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="btn-ohouse">오늘의집 보기 →</a>
+      </div>
+      ${shopUrls.hasCoupangAffiliate ? `<p class="ftc-affiliate-note">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
+    </div>
+
+    <button id="share-gap-card-btn" type="button" class="btn-accent btn-full" style="margin-top:12px;">
+      우리 방 빈틈 기준 카드 저장 · 공유
+    </button>
+  `;
+
+  const cardsWrap = document.getElementById('gap-matched-cards');
+  if (cardsWrap) bindCardClicks(cardsWrap, matchedItems);
+
+  const shareBtn = document.getElementById('share-gap-card-btn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', () => exportGapCheatsheetCard(activeZone, activeOpt));
+  }
+}
+
+function exportGapCheatsheetCard(activeZone, activeOpt) {
+  const canvas = document.getElementById('share-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = 1080;
+  const H = 1920;
+  const savedProfile = loadSavedRoomProfile();
+  const nick = (savedProfile && savedProfile.nickname) || '자취러';
+
+  ctx.fillStyle = '#F6F7F5';
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = '#111311';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(56, 56, W - 112, H - 112);
+
+  ctx.fillStyle = '#111311';
+  ctx.font = '900 108px "Space Grotesk", "SUIT", sans-serif';
+  ctx.fillText('NOPE!', 96, 200);
+
+  ctx.fillStyle = '#E53935';
+  ctx.font = '800 32px "SUIT", sans-serif';
+  ctx.fillText('DEAD SPACE STORAGE CHEAT SHEET', 96, 255);
+
+  ctx.fillStyle = '#111311';
+  ctx.font = '800 48px "SUIT", sans-serif';
+  ctx.fillText(`${nick}님의 작은 방 빈틈 기준표`, 96, 330);
+  ctx.fillRect(96, 365, W - 192, 3);
+
+  // Highlighted selected condition
+  ctx.fillStyle = '#111311';
+  ctx.fillRect(96, 405, W - 192, 235);
+  ctx.fillStyle = '#E53935';
+  ctx.font = '800 28px "SUIT", sans-serif';
+  ctx.fillText(`선택한 빈틈 · ${activeZone.label} (${activeOpt.label})`, 132, 462);
+  ctx.fillStyle = '#F6F7F5';
+  ctx.font = '700 34px "SUIT", sans-serif';
+  wrapCanvasText(ctx, activeOpt.passText, 132, 522, W - 264, 48);
+
+  // 4-zone quick checklist
+  const cheatRows = [
+    { title: '01 · 침대·소파 밑', rule: '12cm 이하: 지퍼 부직포/압축팩 · 15cm+: 슬림 바퀴 리빙박스' },
+    { title: '02 · 냉장고·책상 옆', rule: '12cm 이하: 자석 선반 · 15~20cm: 초슬림 틈새 서랍/카트' },
+    { title: '03 · 방문 뒤·윗틈', rule: '500원 동전(2mm) 들어가면 도어후크 OK · 빡빡하면 벽기댐 거울' },
+    { title: '04 · 벽 콘센트·전선 틈', rule: '180도 ㄱ자 납작 플러그 멀티탭으로 벽 띄움 5cm 줄이기' }
+  ];
+
+  let currY = 695;
+  cheatRows.forEach((row) => {
+    ctx.strokeStyle = '#111311';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(96, currY, W - 192, 225);
+    ctx.fillStyle = '#E53935';
+    ctx.font = '800 30px "SUIT", sans-serif';
+    ctx.fillText(row.title, 132, currY + 60);
+    ctx.fillStyle = '#111311';
+    ctx.font = '600 32px "SUIT", sans-serif';
+    wrapCanvasText(ctx, row.rule, 132, currY + 118, W - 264, 46);
+    currY += 255;
+  });
+
+  ctx.fillStyle = '#111311';
+  ctx.fillRect(96, H - 170, W - 192, 2);
+  ctx.fillStyle = '#525651';
+  ctx.font = '700 28px "SUIT", sans-serif';
+  ctx.fillText('NOPE! · 바닥 0cm 쓰고 수납 늘리는 원룸 빈틈 공식', 96, H - 110);
+
+  shareOrDownloadCanvas(
+    canvas,
+    `NOPE-gap-${activeZone.id}.png`,
+    'NOPE! 원룸 빈틈 수납 기준표',
+    `${activeZone.label} (${activeOpt.label}) 실측 기준`,
+    '빈틈 수납 기준 카드(PNG)가 저장되었습니다.'
+  );
+}
 
 // ---------------- Tab 4: Routine ----------------
 const routineMenu = document.getElementById('routine-stage-menu');
@@ -2294,11 +4011,23 @@ function buildIcsFile(alarms) {
 function renderCycleAlarms() {
   const wrap = document.getElementById('cycle-alarms-list');
   const saved = loadCycleState();
+  const savedProfile = loadSavedRoomProfile();
   const today = new Date();
 
+  const isRecommendedAlarm = (id) => {
+    if (!savedProfile) return false;
+    if ((savedProfile.hasPet || savedProfile.hasAllergy || savedProfile.smallWasher) && (id === 'cyc-fabric' || id === 'cyc-bedding')) return true;
+    if ((savedProfile.hasMoistureRisk || savedProfile.needsIndoorDrying) && (id === 'cyc-drain' || id === 'cyc-washer')) return true;
+    if (savedProfile.hasAllergy && id === 'cyc-filter') return true;
+    return false;
+  };
+
+  const orderedAlarms = [...CYCLE_ALARMS].sort((a, b) => Number(isRecommendedAlarm(b.id)) - Number(isRecommendedAlarm(a.id)));
+
   wrap.innerHTML = '';
-  CYCLE_ALARMS.forEach((alarm) => {
+  orderedAlarms.forEach((alarm) => {
     const lastStr = saved[alarm.id];
+    const isReco = isRecommendedAlarm(alarm.id);
     let dueBadgeText = `${alarm.everyDays}일 주기`;
     let isOverdue = false;
 
@@ -2318,7 +4047,7 @@ function renderCycleAlarms() {
     row.className = 'cycle-item';
     row.innerHTML = `
       <div class="cycle-top">
-        <strong style="font-size:14px;">${escapeHtml(alarm.title)}</strong>
+        <strong style="font-size:14px;">${escapeHtml(alarm.title)}${isReco ? `<span class="routine-reco-pill">내 방 추천</span>` : ''}</strong>
         <span class="due-badge ${isOverdue ? 'overdue' : ''}">${dueBadgeText}</span>
       </div>
       <p class="text-secondary" style="font-size:12.5px;margin-top:2px;">${escapeHtml(alarm.tip)}</p>
@@ -2613,25 +4342,8 @@ if (inspectResetBtn) {
 
 const copyReportBtn = document.getElementById('copy-inspect-report-btn');
 if (copyReportBtn) {
-  copyReportBtn.addEventListener('click', async () => {
-    const text = buildInspectionReportText();
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        throw new Error('Clipboard API unavailable');
-      }
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.left = '-9999px';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-    }
-    showToast('복사 완료! 카톡·문자에 바로 붙여넣으세요');
+  copyReportBtn.addEventListener('click', () => {
+    copyTextToClipboard(buildInspectionReportText(), '복사 완료! 카톡·문자에 바로 붙여넣으세요');
   });
 }
 
@@ -2652,51 +4364,65 @@ if (downloadReportBtn) {
 }
 
 function handleDeepLinks() {
-  const params = new URLSearchParams(location.search);
-  const utm = params.get('utm_source') || params.get('ref') || '';
-  if (utm) {
-    try {
-      sessionStorage.setItem('nope_utm_source', utm.slice(0, 40));
-    } catch {
-      // ignore sessionStorage block
+  suppressViewTransition = true;
+  try {
+    const params = new URLSearchParams(location.search);
+    const utm = params.get('utm_source') || params.get('ref') || '';
+    if (utm) {
+      try {
+        sessionStorage.setItem('nope_utm_source', utm.slice(0, 40));
+      } catch {
+        // ignore sessionStorage block
+      }
     }
-  }
 
-  const itemId = params.get('item');
-  if (itemId) {
-    const target = ITEMS_DB.find((it) => it.id === itemId);
-    if (target) {
+    const itemId = params.get('item');
+    if (itemId) {
+      const target = ITEMS_DB.find((it) => it.id === itemId);
+      if (target) {
+        switchTab('scanner');
+        state.selectedFilter = { label: target.category, type: 'cat', value: target.category };
+        renderItems();
+        openScannerResults(target.category);
+        openDetailSheet(target);
+        return;
+      }
+    }
+
+    const tab = params.get('tab');
+    const q = params.get('q');
+    const mode = params.get('mode');
+    const tone = params.get('tone');
+    const base = params.get('base');
+    const seg = params.get('seg');
+
+    if (tab === 'scanner') {
       switchTab('scanner');
-      state.selectedFilter = { label: target.category, type: 'cat', value: target.category };
-      renderItems();
-      openScannerResults(target.category);
-      openDetailSheet(target);
-      return;
+      if (mode === 'matcher') {
+        if (tone) state.matcherTone = tone;
+        if (base && ROOM_BASE_OPTIONS.some((b) => b.id === base)) {
+          state.matcherRoomBase = base;
+          saveRoomBaseState(base);
+        }
+        setScannerMode('matcher');
+      } else if (q) {
+        searchInput.value = q;
+        runScannerSearch();
+      }
+    } else if (tab === 'scale') {
+      switchTab('scale');
+      const view = params.get('view');
+      if (view === 'gap') {
+        setScaleView('gap');
+      }
+    } else if (tab === 'routine') {
+      switchTab('routine');
+      if (seg && routinePanels[seg]) {
+        openRoutineSegment(seg);
+      }
     }
-  }
-
-  const tab = params.get('tab');
-  const q = params.get('q');
-  const mode = params.get('mode');
-  const tone = params.get('tone');
-  const seg = params.get('seg');
-
-  if (tab === 'scanner') {
-    switchTab('scanner');
-    if (mode === 'matcher') {
-      if (tone) state.matcherTone = tone;
-      setScannerMode('matcher');
-    } else if (q) {
-      searchInput.value = q;
-      runScannerSearch();
-    }
-  } else if (tab === 'scale') {
-    switchTab('scale');
-  } else if (tab === 'routine') {
-    switchTab('routine');
-    if (seg && routinePanels[seg]) {
-      openRoutineSegment(seg);
-    }
+  } finally {
+    suppressViewTransition = false;
   }
 }
 
@@ -3121,11 +4847,16 @@ if (savedInitProfile && savedInitProfile.toneId) {
   state.matcherTone = savedInitProfile.toneId;
 }
 updateSavedProfileBadge();
+renderScannerProfileNudge();
+renderDefenseCounter();
 updateWishlistBadge();
 updateAuthBadge();
 recoverSupabaseSessionFromHash();
+loadRoomBaseState();
 loadScaleState();
 updateScaleInputsUI();
+renderScaleQuizHint();
+renderGapStorageFinder();
 renderCategoryChips();
 renderToneMatcher();
 renderPresetTimers();
@@ -3145,6 +4876,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope44').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope51').catch(() => {});
   }
 }

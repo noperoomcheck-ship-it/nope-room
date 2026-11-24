@@ -1,7 +1,20 @@
-// NOPE! v7 — 200종 실상품 DB 연결 + 1분 점검 + 휴먼스케일 + 루틴 데이터
-import { ITEMS_DB } from './products-db.js?v=nope44';
-import { STYLE_MOODS, ROOM_TONES, TARGET_CATEGORIES } from './mood-palettes.js?v=nope44';
-export { ITEMS_DB, STYLE_MOODS, ROOM_TONES, TARGET_CATEGORIES };
+// NOPE! v9 — 212종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
+import { ITEMS_DB } from './products-db.js?v=nope51';
+import {
+  STYLE_MOODS,
+  ROOM_TONES,
+  TARGET_CATEGORIES,
+  ROOM_BASE_OPTIONS,
+  getRoomBaseRescue
+} from './mood-palettes.js?v=nope51';
+export {
+  ITEMS_DB,
+  STYLE_MOODS,
+  ROOM_TONES,
+  TARGET_CATEGORIES,
+  ROOM_BASE_OPTIONS,
+  getRoomBaseRescue
+};
 
 export const ITEM_SWAP_REASONS = {
   '하드 규조토 매트': { dbId: 'hard-diatomite' },
@@ -21,6 +34,13 @@ export const ITEM_SWAP_REASONS = {
   '스탠드 전신거울': { dbId: 'full-stand-mirror' },
   '1인용 리클라이너': { dbId: 'recliner-1p' },
   '허니콤 저가 MDF 책상': { dbId: 'ikea-lagkapten' },
+  '무타공 압축봉 행거': { dbId: 'comet-tension-rod' },
+  '점착식 시트지 벽지': { dbId: 'adhesive-wallpaper-sheet' },
+  '흡착 욕실 선반': { dbId: 'suction-corner-rack' },
+  '부클레 패브릭 소파': { dbId: 'mongbijou-boucle' },
+  '스텐304 압축 욕실선반': { dbId: 'ss304-tension-bath-rod' },
+  '사이잘룩 단모 러그': { dbId: 'sisal-look-rug' },
+  '꼭꼬핀 쉬폰 커튼': { dbId: 'pin-sheer-curtain' },
   '오픈 선반': {
     id: 'swap-open-shelf',
     brand: 'NOPE GUIDE',
@@ -248,31 +268,234 @@ export const SPACE_MBTI_TYPES = [
 ];
 
 export const QUIZ_QUESTIONS = [
+  // ==================== STEP 1. 공간 · 구조 · 치수 (1~6) ====================
   {
     id: 'q1',
-    step: '01 / 13',
+    chapter: 'STEP 1 · 공간·구조',
     title: '대략적인 방 평수와 구조는 어느 정도인가요?',
+    reasonHint: '소파·대형 거울·책상 깊이 허용 기준을 잡는 첫 번째 지표예요.',
     options: [
-      { label: '아담한 미니 원룸 (약 4~5평 이하 · 동선 최우선)', pyeong: '4~5평 이하', scores: { spaceStress: 16, dustRisk: 4 } },
-      { label: '보통 크기 원룸 (약 6~7평 · 침대+책상 기본)', pyeong: '6~7평', scores: { spaceStress: 9, dustRisk: 2 } },
-      { label: '여유 있는 원룸·분리형 (약 8~10평 · 소파 가능)', pyeong: '8~10평', scores: { spaceStress: 4 } },
-      { label: '1.5룸 · 투룸 이상 (약 11평+ · 공간 분리 여유)', pyeong: '11평 이상', scores: { spaceStress: 1 } }
+      { label: '아담한 미니 원룸 (4~5평 이하 · 동선 최우선)', pyeong: '4~5평 이하', scores: { spaceStress: 14, dustRisk: 3 } },
+      { label: '보통 크기 원룸 (6~7평 · 침대+책상 기본)', pyeong: '6~7평', scores: { spaceStress: 8, dustRisk: 2 } },
+      { label: '복층 원룸 (층고·사다리 계단 동선 고려)', pyeong: '복층 원룸', isDuplex: true, scores: { spaceStress: 14, assemblyRisk: 6, dustRisk: 4 } },
+      { label: '여유 있는 원룸·분리형 (8~10평 · 소파 가능)', pyeong: '8~10평', scores: { spaceStress: 3 } },
+      { label: '1.5룸 · 투룸 이상 (11평+ · 공간 분리 여유)', pyeong: '11평 이상', scores: { spaceStress: 1 } }
     ]
   },
   {
     id: 'q2',
-    step: '02 / 13',
-    title: '계약 형태와 벽면 타공(못질) 허용 범위는?',
+    chapter: 'STEP 1 · 공간·구조',
+    title: '현관문·방문 앞과 침대 사이 통로 폭은 어떤가요?',
+    reasonHint: '보행 폭 60cm가 안 나오면 스탠드 거울·의자 다리가 바로 NOPE!가 됩니다.',
     options: [
-      { label: '월세·전세 원룸 (못질 금지 · 원상복구 필수)', scores: { depositRisk: 14, spaceStress: 6, dustRisk: 2 } },
-      { label: '투룸·빌라 (꼭꼬핀 정도는 가능)', scores: { depositRisk: 7, spaceStress: 3, dustRisk: 2 } },
-      { label: '자가 또는 타공 자유로운 환경', scores: { depositRisk: 1, spaceStress: 1, dustRisk: 1 } }
+      { label: '문 열면 바로 침대·책상 (통로 60cm 미만)', narrowPath: true, scores: { spaceStress: 12 } },
+      { label: '사람 한 명 지나다니기 무난함 (60~80cm)', scores: { spaceStress: 5 } },
+      { label: '가구 놓아도 통로가 넉넉함 (80cm 이상)', scores: { spaceStress: 1 } }
     ]
   },
   {
     id: 'q3',
-    step: '03 / 13',
-    title: '내 방을 꾸밀 때 가장 바라는 희망사항은?',
+    chapter: 'STEP 1 · 공간·구조',
+    title: '방의 천장 높이와 창문 크기는 어떤 편인가요?',
+    reasonHint: '압축봉 행거·블라인드·커튼 길이와 결로 관리 난이도가 달라져요.',
+    options: [
+      { label: '천장이 낮거나 창문이 작아 답답한 편', ceilingLow: true, scores: { smellRisk: 6, spaceStress: 4 } },
+      { label: '일반 원룸 표준 천장고 · 보통 창문', scores: { spaceStress: 2 } },
+      { label: '층고 높음 또는 베란다·큰 통창 있음', hasFullWindow: true, scores: { depositRisk: 3, dustRisk: 2 } }
+    ]
+  },
+  {
+    id: 'q4',
+    chapter: 'STEP 1 · 공간·구조',
+    title: '세탁기와 빨래 건조 공간은 어디에 있나요?',
+    reasonHint: '실내 건조가 잦으면 패브릭·러그·수납장 습기 곰팡이 위험이 올라갑니다.',
+    options: [
+      { label: '방 안/화장실 앞 세탁기 · 베란다 없음 (실내 건조)', needsIndoorDrying: true, scores: { smellRisk: 9, fabricRisk: 7, spaceStress: 5 } },
+      { label: '별도 베란다/다용도실 분리됨', scores: { smellRisk: 2 } },
+      { label: '건조기 보유 또는 공용 세탁실 이용', scores: { smellRisk: 1 } }
+    ]
+  },
+  {
+    id: 'q5',
+    chapter: 'STEP 1 · 공간·구조',
+    title: '현재 방에 기본 옵션 가구가 얼마나 있나요?',
+    reasonHint: '무옵션이면 대형 가구 조립·운반 리스크까지, 풀옵션이면 소품·수납 위주로 판독해요.',
+    options: [
+      { label: '무옵션 (침대·책상·옷장 직접 사야 함)', optionLevel: 'none', scores: { assemblyRisk: 7, spaceStress: 4 } },
+      { label: '반옵션 (옷장·에어컨 등 일부만 있음)', optionLevel: 'partial', scores: { assemblyRisk: 3, spaceStress: 2 } },
+      { label: '풀옵션 (큰 가구 다 있고 소품·선반 위주)', optionLevel: 'full', scores: { dustRisk: 2, depositRisk: 2 } }
+    ]
+  },
+  {
+    id: 'q6',
+    chapter: 'STEP 1 · 공간·구조',
+    title: '방 바닥재 재질은 무엇인가요?',
+    reasonHint: '장판은 고무·바퀴 변색이, 마루는 물기·스크래치가 보증금 공제 1순위예요.',
+    options: [
+      { label: 'PVC 장판 (난방 열 변색·가구 찍힘 주의)', floorMaterial: 'jangpan', scores: { depositRisk: 6, fabricRisk: 4 } },
+      { label: '강마루·온돌마루 (물기·의자 바퀴 긁힘 주의)', floorMaterial: 'wood', scores: { depositRisk: 6, assemblyRisk: 2 } },
+      { label: '타일 · 데코타일 (차가움·줄눈 먼지)', floorMaterial: 'tile', scores: { dustRisk: 3 } }
+    ]
+  },
+
+  // ==================== STEP 2. 계약 · 건물 · 환경 (7~12) ====================
+  {
+    id: 'q7',
+    chapter: 'STEP 2 · 환경·계약',
+    title: '계약 형태와 벽면 타공(못질) 허용 범위는?',
+    reasonHint: '전월세 못질 금지는 블라인드·벽선반·시트지 판정을 NOPE!로 바꾸는 기준입니다.',
+    options: [
+      { label: '월세·전세 (못질·접착 시트지 절대 불가)', contractLabel: '월세·전세 (못질 금지)', isTenant: true, scores: { depositRisk: 14, spaceStress: 4 } },
+      { label: '투룸·빌라 (꼭꼬핀 정도만 허용)', contractLabel: '투룸·빌라 (꼭꼬핀 가능)', isTenant: true, scores: { depositRisk: 7, spaceStress: 2 } },
+      { label: '자가 또는 타공 자유로운 환경', contractLabel: '자가 (타공 자유)', isOwner: true, scores: { depositRisk: 1 } }
+    ]
+  },
+  {
+    id: 'q8',
+    chapter: 'STEP 2 · 환경·계약',
+    title: '내 방 벽지 마감은 어떤 재질인가요?',
+    reasonHint: '실크벽지에 3M 코맨드·폼테이프를 붙이면 퇴실 때 벽지가 통째로 뜯겨요.',
+    options: [
+      { label: '실크벽지 (매끈·도톰한 비닐 질감 · 테이프 뜯김 위험)', wallMaterial: 'silk', scores: { depositRisk: 8 } },
+      { label: '합지벽지 (얇은 종이 질감 · 습기·오염 취약)', wallMaterial: 'paper', scores: { depositRisk: 5, smellRisk: 4 } },
+      { label: '페인트 도장 · 콘크리트 · 잘 모름', wallMaterial: 'paint', scores: { depositRisk: 2 } }
+    ]
+  },
+  {
+    id: 'q9',
+    chapter: 'STEP 2 · 환경·계약',
+    title: '층수와 엘리베이터 유무는 어떤가요?',
+    reasonHint: '엘리베이터 없는 계단집엔 40kg 조립 서랍장·원목 가구를 걸러내야 합니다.',
+    options: [
+      { label: '반지하 · 1층 (습기·외풍·시선 차단 중요)', floorEnv: 'damp', isGroundFloor: true, hasMoistureRisk: true, scores: { smellRisk: 10, fabricRisk: 6 } },
+      { label: '2~4층 빌라 · 엘리베이터 없음 (계단 운반)', floorEnv: 'stairs', noElevator: true, scores: { assemblyRisk: 9, depositRisk: 3 } },
+      { label: '엘리베이터 있는 중·고층', floorEnv: 'elev', scores: { smellRisk: 2 } }
+    ]
+  },
+  {
+    id: 'q10',
+    chapter: 'STEP 2 · 환경·계약',
+    title: '평소 방의 채광과 맞통풍 환기 상태는?',
+    reasonHint: '환기가 안 되는 방은 패브릭·하드 규조토·접이식 매트리스에 곰팡이가 생겨요.',
+    options: [
+      { label: '북향·골목 막힘 · 창이 작아 꿉꿉함', hasMoistureRisk: true, scores: { smellRisk: 12, fabricRisk: 8 } },
+      { label: '보통이나 겨울·미세먼지 땐 창을 잘 안 엶', scores: { smellRisk: 6, fabricRisk: 4 } },
+      { label: '남향·동향 햇빛 좋고 맞통풍 잘 됨', scores: { smellRisk: 1, fabricRisk: 1 } }
+    ]
+  },
+  {
+    id: 'q11',
+    chapter: 'STEP 2 · 환경·계약',
+    title: '외부 소음이나 창문 우풍(단열)은 어떤 편인가요?',
+    reasonHint: '외풍·소음이 크면 블라인드 대신 두꺼운 형상기억 암막커튼+문풍지가 필수예요.',
+    options: [
+      { label: '대로변 소음 또는 겨울 창문 우풍이 심함', needsInsulation: true, scores: { fabricRisk: 3, smellRisk: 3 } },
+      { label: '보통 수준', scores: { smellRisk: 1 } },
+      { label: '이중창이고 조용·따뜻한 편', scores: {} }
+    ]
+  },
+  {
+    id: 'q12',
+    chapter: 'STEP 2 · 환경·계약',
+    title: '향후 이 방에서 얼마나 거주할 계획인가요?',
+    reasonHint: '1~2년 내 이사 예정이면 분해 시 망가지는 PB/수납침대는 NOPE!입니다.',
+    condition: (ans) => !ans.some((a) => a.isOwner),
+    options: [
+      { label: '1년 내외 단기 거주 · 자주 이사 예정', frequentMover: true, scores: { depositRisk: 8, assemblyRisk: 6, spaceStress: 4 } },
+      { label: '2년 계약 기준 거주 예정', scores: { depositRisk: 4, assemblyRisk: 3 } },
+      { label: '3년 이상 장기 거주 계획', scores: { depositRisk: 1, assemblyRisk: 1 } }
+    ]
+  },
+
+  // ==================== STEP 3. 생활 · 관리 · 신체 (13~19) ====================
+  {
+    id: 'q13',
+    chapter: 'STEP 3 · 생활·관리',
+    title: '함께 사는 가족·반려동물·알러지 조건이 있나요?',
+    reasonHint: '반려동물·비염이 있으면 털 긴 러그·부클레·오픈 행거는 즉시 피할 품목이 됩니다.',
+    options: [
+      { label: '혼자 거주 · 반려동물/비염 없음', livingFlag: 'solo', scores: { dustRisk: 1 } },
+      { label: '고양이 · 강아지 반려동물과 함께 삼', livingFlag: 'pet', hasPet: true, scores: { dustRisk: 14, fabricRisk: 14, smellRisk: 6 } },
+      { label: '비염 · 먼지 알러지가 있어 먼지에 예민함', livingFlag: 'allergy', hasAllergy: true, scores: { dustRisk: 16, fabricRisk: 8 } },
+      { label: '2인 거주 (짐·옷·보행 동선 2배 고려)', livingFlag: 'couple', isCouple: true, scores: { spaceStress: 12, dustRisk: 5 } }
+    ]
+  },
+  {
+    id: 'q14',
+    chapter: 'STEP 3 · 생활·관리',
+    title: '방 안에서 주로 하는 생활 패턴을 모두 골라주세요',
+    reasonHint: '복수 선택한 패턴에 맞춰 책상 강도·패브릭 방수·바닥 여백 가중치를 계산해요.',
+    multiSelect: true,
+    maxSelect: 3,
+    options: [
+      { label: '재택근무 · 공부 · 게임 (책상·의자 중요)', activity: '재택·집중 작업', scores: { assemblyRisk: 4, spaceStress: 3 } },
+      { label: '휴식 · 수면 · OTT 시청 (침대·소파 중요)', activity: '휴식·수면', scores: { fabricRisk: 5, smellRisk: 3 } },
+      { label: '배달음식 · 홈카페 · 요리 (냄새·얼룩 관리)', activity: '홈카페·배달·요리', scores: { fabricRisk: 9, smellRisk: 10 } },
+      { label: '홈트 · 스트레칭 (넓은 바닥 여백 필수)', activity: '홈트·바닥 생활', needsFloorSpace: true, scores: { spaceStress: 10, dustRisk: 3 } }
+    ]
+  },
+  {
+    id: 'q15',
+    chapter: 'STEP 3 · 생활·관리',
+    title: '방 안에서 배달음식이나 요리를 얼마나 자주 먹나요?',
+    reasonHint: '주방 미분리 원룸에서 잦은 조리는 세탁 불가 패브릭 소파·부클레에 치명적이에요.',
+    options: [
+      { label: '거의 매일 방 안에서 식사·배달음식 해결', scores: { fabricRisk: 12, smellRisk: 12 } },
+      { label: '주 2~3회 간단 식사·커피 위주', scores: { fabricRisk: 5, smellRisk: 5 } },
+      { label: '거의 안 먹거나 주방이 문으로 분리됨', scores: { fabricRisk: 1, smellRisk: 1 } }
+    ]
+  },
+  {
+    id: 'q16',
+    chapter: 'STEP 3 · 생활·관리',
+    title: '평소 청소기·물걸레질은 얼마나 자주 하시나요?',
+    reasonHint: '주 1회 이하라면 오픈 선반·우드 블라인드·샤기 러그는 2주 만에 먼지 지옥이 돼요.',
+    options: [
+      { label: '주 1회 이하 또는 생각날 때 몰아서 청소', scores: { dustRisk: 14, fabricRisk: 6 } },
+      { label: '주 2~3회 꾸준히 청소기 돌림', scores: { dustRisk: 6, fabricRisk: 3 } },
+      { label: '로봇청소기 또는 거의 매일 관리', scores: { dustRisk: 1, fabricRisk: 1 } }
+    ]
+  },
+  {
+    id: 'q17',
+    chapter: 'STEP 3 · 생활·관리',
+    title: '대형 러그나 이불 빨래할 세탁기 여건은 어떤가요?',
+    reasonHint: '9kg 이하 원룸 세탁기면 두꺼운 러그·커버는 집에서 빨 수 없어 코인세탁소행이에요.',
+    options: [
+      { label: '9kg 이하 소형 세탁기 (두꺼운 러그·이불 불가)', smallWasher: true, scores: { fabricRisk: 8, dustRisk: 4 } },
+      { label: '12kg 이상 대형 세탁기 또는 건조기 보유', scores: { fabricRisk: 2 } },
+      { label: '집 근처 코인세탁소 자주 이용하는 편', scores: { fabricRisk: 3 } }
+    ]
+  },
+  {
+    id: 'q18',
+    chapter: 'STEP 3 · 생활·관리',
+    title: '선반·행거가 오픈돼서 물건이 보이면 스트레스를 받나요?',
+    reasonHint: '시각적 피로가 크면 오픈 행거 대신 도어형 수납장·불투명 박스만 추천합니다.',
+    options: [
+      { label: '매우 거슬림 · 무조건 문 달린 수납으로 가리고 싶음', visualClutterSensitive: true, scores: { dustRisk: 6, spaceStress: 4 } },
+      { label: '정리만 돼 있으면 괜찮은 편', scores: { dustRisk: 2 } },
+      { label: '옷·소품이 예쁘게 진열된 오픈 인테리어 선호', scores: { dustRisk: 3 } }
+    ]
+  },
+  {
+    id: 'q19',
+    chapter: 'STEP 3 · 생활·관리',
+    title: '평소 방에서 가장 오래 취하는 자세는 무엇인가요?',
+    reasonHint: '치수 탭의 휴먼스케일 도면(책상 vs 좌식 vs 침대형)과 자동 연동됩니다.',
+    options: [
+      { label: '의자 + 책상 위주 입식 생활', postureMode: 'desk', scores: { assemblyRisk: 2 } },
+      { label: '바닥 좌식 테이블 + 쿠션 생활 선호', postureMode: 'floor', scores: { spaceStress: 3 } },
+      { label: '침대·저상 소파 위 멀티 생활', postureMode: 'bed', scores: { fabricRisk: 3 } }
+    ]
+  },
+
+  // ==================== STEP 4. 취향 · 색감 · 조명 (20~25) ====================
+  {
+    id: 'q20',
+    chapter: 'STEP 4 · 취향·무드',
+    title: '내 방을 꾸밀 때 가장 바라는 1순위 목표는?',
+    reasonHint: '톤 매처 추천 순위와 방 배색 비율 가중치를 결정해요.',
     options: [
       { label: '평수보다 방이 훤히 넓어 보이고 탁 트였으면 좋겠어요', wishId: 'spacious', scores: { spaceStress: 2 } },
       { label: '작은 방이지만 수납 공간만큼은 최대한 많았으면 좋겠어요', wishId: 'storage', scores: { spaceStress: 4, dustRisk: 2 } },
@@ -281,9 +504,10 @@ export const QUIZ_QUESTIONS = [
     ]
   },
   {
-    id: 'q4',
-    step: '04 / 13',
+    id: 'q21',
+    chapter: 'STEP 4 · 취향·무드',
     title: '맞추고 싶은 내 방의 메인 색감 · 무드는?',
+    reasonHint: '선택한 톤에 맞는 PASS 가구만 톤 매처에서 자동 필터링해 드려요.',
     options: [
       { label: '화이트 · 크림 (밝고 훤히 넓어 보이는 방)', toneId: 'white-minimal', scores: { dustRisk: 2 } },
       { label: '오크 · 베이지 우드 (따뜻하고 포근한 나무 느낌)', toneId: 'oak-natural', scores: { dustRisk: 3 } },
@@ -294,9 +518,21 @@ export const QUIZ_QUESTIONS = [
     ]
   },
   {
-    id: 'q5',
-    step: '05 / 13',
+    id: 'q22',
+    chapter: 'STEP 4 · 취향·무드',
+    title: '가장 마음에 끌리는 가구·소품 소재는 무엇인가요?',
+    reasonHint: '소재별 변형·먼지·열기 내구성 기준과 연결됩니다.',
+    options: [
+      { label: '시원하고 깔끔한 스틸 · 유리 · 매트 화이트', materialPref: 'steel', scores: { assemblyRisk: 3 } },
+      { label: '따뜻하고 포근한 원목 · 오크 · 라탄', materialPref: 'wood', scores: { dustRisk: 3 } },
+      { label: '폭신한 패브릭 · 면 · 코튼 질감', materialPref: 'fabric', scores: { fabricRisk: 5, dustRisk: 4 } }
+    ]
+  },
+  {
+    id: 'q23',
+    chapter: 'STEP 4 · 취향·무드',
     title: '방 분위기를 살릴 때 가장 기분 좋은 포인트는?',
+    reasonHint: '공간 MBTI 성격 유형과 추천 소품을 매칭해 드려요.',
     options: [
       { label: '초록 식물 · 흙 화분 (생기 있는 자연 느낌)', tasteId: 'plant', scores: { spaceStress: 2 } },
       { label: '은은한 단스탠드 · 만졌을 때 포근한 소재감', tasteId: 'object', scores: { spaceStress: 2 } },
@@ -305,255 +541,289 @@ export const QUIZ_QUESTIONS = [
     ]
   },
   {
-    id: 'q6',
-    step: '06 / 13',
-    title: '방 안에서 가장 많은 시간을 보내는 활동은?',
+    id: 'q24',
+    chapter: 'STEP 4 · 취향·무드',
+    title: '저녁 시간 방 안 조명 사용 스타일은 어떤가요?',
+    reasonHint: '눈 시린 아크릴 네온사인 vs 확산광 스탠드/집게등 추천이 나뉩니다.',
     options: [
-      { label: '재택근무 · 공부 중심 (책상·의자 중요)', activity: '재택·집중 작업', scores: { assemblyRisk: 3, spaceStress: 4 } },
-      { label: '휴식 · 수면 · 영상 시청 중심 (침대·소파 중요)', activity: '휴식·수면', scores: { fabricRisk: 6, smellRisk: 4 } },
-      { label: '홈카페 · 요리 · 취미 병행 (테이블·선반 중요)', activity: '홈카페·취미', scores: { dustRisk: 5, smellRisk: 6 } }
+      { label: '천장 형광등 끄고 따뜻한 간접등·스탠드만 켜둠', lightingPref: 'mood', scores: { spaceStress: 2 } },
+      { label: '작업할 땐 환하게, 잘 때만 끔', lightingPref: 'bright', scores: {} },
+      { label: '큰 신경 안 쓰고 기본 형광등 사용', lightingPref: 'basic', scores: {} }
     ]
   },
   {
-    id: 'q7',
-    step: '07 / 13',
-    title: '가장 먼저 들이고 싶은 1순위 가구·소품은?',
+    id: 'q25',
+    chapter: 'STEP 4 · 취향·무드',
+    title: '가지고 있는 옷·책·소지품 양은 어느 정도인가요?',
+    reasonHint: '짐이 많은데 오픈 행거·미니 수납을 고르면 1개월 안에 방이 무너져요.',
     options: [
-      { label: '오픈 행거 · 철제 오픈 선반', scores: { dustRisk: 14, spaceStress: 5 } },
-      { label: '패브릭/부클레 소파 · 장모 러그', scores: { dustRisk: 8, fabricRisk: 15 } },
-      { label: '우드 블라인드 · 스탠드 거울 · 단스탠드', scores: { dustRisk: 6, depositRisk: 8, spaceStress: 6 } },
-      { label: '도어형 수납장 · 심플 책상', scores: { dustRisk: 2, fabricRisk: 2 } }
-    ]
-  },
-  {
-    id: 'q8',
-    step: '08 / 13',
-    title: '내 방 짐 양과 물건 채우는 성향은 어떤가요?',
-    options: [
-      { label: '좋아하는 옷·소품을 많이 모으는 맥시멀 성향', density: 'maximal', scores: { spaceStress: 12, dustRisk: 7 } },
+      { label: '겨울 외투·옷·소품이 매우 많은 맥시멀 성향', density: 'maximal', scores: { spaceStress: 11, dustRisk: 7 } },
       { label: '필요한 것 위주로 적당히 두고 사는 균형 성향', density: 'balanced', scores: { spaceStress: 5, dustRisk: 3 } },
       { label: '물건을 최소화하고 텅 비워두는 미니멀 성향', density: 'minimal', scores: { spaceStress: 1, dustRisk: 1 } }
     ]
   },
+
+  // ==================== STEP 5. 구매 계획 · 예산 · 공구 (26~30) ====================
   {
-    id: 'q9',
-    step: '09 / 13',
-    title: '평소 청소기·물걸레질 주기는 어느 정도인가요?',
+    id: 'q26',
+    chapter: 'STEP 5 · 구매·예산',
+    title: '지금 새로 사거나 교체하려는 품목을 모두 골라주세요',
+    reasonHint: '고르신 품목군에 해당하는 실제 함정(NOPE)과 대안(PASS)만 콕 집어 드려요.',
+    multiSelect: true,
+    maxSelect: 4,
     options: [
-      { label: '주 1회 이하 또는 몰아서 청소', scores: { dustRisk: 15, fabricRisk: 7 } },
-      { label: '주 2~3회 꾸준히 관리', scores: { dustRisk: 6, fabricRisk: 3 } },
-      { label: '거의 매일 틈틈이 청소', scores: { dustRisk: 1, fabricRisk: 1 } }
+      { label: '책상 · 컴퓨터 의자 · 모니터암', targetItem: 'desk', scores: { assemblyRisk: 5, spaceStress: 3 } },
+      { label: '행거 · 압축봉 · 오픈 선반', targetItem: 'hanger', scores: { dustRisk: 10, spaceStress: 4 } },
+      { label: '러그 · 패브릭 소파 · 매트리스', targetItem: 'fabric', scores: { dustRisk: 6, fabricRisk: 10 } },
+      { label: '블라인드 · 커튼 · 시트지 벽지', targetItem: 'wall_window', scores: { depositRisk: 10, dustRisk: 5 } },
+      { label: '도어형 옷장 · 서랍장 · 수납함', targetItem: 'storage', scores: { assemblyRisk: 5, depositRisk: 2 } },
+      { label: '전신거울 · 단스탠드 · 욕실 선반/발매트', targetItem: 'mirror_bath', scores: { spaceStress: 5, depositRisk: 4 } }
     ]
   },
   {
-    id: 'q10',
-    step: '10 / 13',
-    title: '방 안에서 배달음식·요리 빈도는?',
+    id: 'q27',
+    chapter: 'STEP 5 · 구매·예산',
+    title: '책상에 무거운 모니터암이나 본체를 올릴 계획인가요?',
+    reasonHint: '종이 벌집 심재 책상(라그캅텐 등) 함몰 위험을 가르는 결정적 질문이에요.',
+    condition: (ans) => ans.some((a) => a.targetItem === 'desk') || ans.some((a) => a.postureMode === 'desk'),
     options: [
-      { label: '주방 미분리 원룸에서 자주 먹음', scores: { fabricRisk: 13, smellRisk: 14 } },
-      { label: '간단한 식사·커피 위주', scores: { fabricRisk: 6, smellRisk: 6 } },
-      { label: '주방 분리형 + 즉시 환기', scores: { fabricRisk: 1, smellRisk: 2 } }
+      { label: '네, 모니터암·듀얼모니터·본체 올려서 씀', heavyDeskLoad: true, scores: { assemblyRisk: 8 } },
+      { label: '가벼운 노트북·필기·화장대 용도만 씀', scores: { assemblyRisk: 2 } },
+      { label: '책상 없이 생활하거나 이미 튼튼한 책상 있음', scores: {} }
     ]
   },
   {
-    id: 'q11',
-    step: '11 / 13',
-    title: '방의 채광과 창문 환기 환경은?',
+    id: 'q28',
+    chapter: 'STEP 5 · 구매·예산',
+    title: '품목 1개당 생각 중인 현실 예산대는?',
+    reasonHint: '5만 원 이하 초저가 구간엔 시트지 들뜸·얇은 철제·흡착 낙하 함정이 집중돼 있어요.',
     options: [
-      { label: '저층·북향·작은 창 (습하고 답답함)', scores: { smellRisk: 14, fabricRisk: 9 } },
-      { label: '보통이나 겨울엔 창문을 잘 안 엶', scores: { smellRisk: 7, fabricRisk: 5 } },
-      { label: '햇빛 좋고 맞통풍 환기 가능', scores: { smellRisk: 1, fabricRisk: 1 } }
+      { label: '5만 원 이하 초가성비 위주 (부담 없는 가격)', budgetTier: 'low', scores: { assemblyRisk: 7, depositRisk: 4 } },
+      { label: '5~15만 원대 실속형 (가성비+내구 균형)', budgetTier: 'mid', scores: { assemblyRisk: 3 } },
+      { label: '15만 원 이상 오래 쓸 튼튼한 스펙 우선', budgetTier: 'high', scores: { assemblyRisk: 1 } }
     ]
   },
   {
-    id: 'q12',
-    step: '12 / 13',
-    title: 'DIY 가구 조립과 공구 보유 상태는?',
+    id: 'q29',
+    chapter: 'STEP 5 · 구매·예산',
+    title: 'DIY 셀프 조립과 공구 보유 상태는 어떤가요?',
+    reasonHint: '드라이버가 없으면 이케아 알렉스·헬메르·마켓비 철제 조립에서 바로 포기하게 돼요.',
+    condition: (ans) => !(ans.some((a) => a.optionLevel === 'full') && !ans.some((a) => a.targetItem === 'desk' || a.targetItem === 'storage')),
     options: [
-      { label: '드라이버 없음 · 조립 막막함', scores: { assemblyRisk: 15, depositRisk: 3 } },
-      { label: '동봉 육각렌치 정도는 가능', scores: { assemblyRisk: 7 } },
-      { label: '전동드릴 보유 · 조립 능숙', scores: { assemblyRisk: 1 } }
+      { label: '드라이버 없음 · 완제품 또는 기사 설치 희망', diySkill: 'none', scores: { assemblyRisk: 14, depositRisk: 2 } },
+      { label: '동봉된 육각렌치·작은 드라이버 정도 가능', diySkill: 'basic', scores: { assemblyRisk: 6 } },
+      { label: '전동드릴 보유 · 복잡한 조립도 문제없음', diySkill: 'pro', scores: { assemblyRisk: 1 } }
     ]
   },
   {
-    id: 'q13',
-    step: '13 / 13',
-    title: '향후 1~2년 내 이사 갈 가능성은?',
+    id: 'q30',
+    chapter: 'STEP 5 · 구매·예산',
+    title: '가구 사고 나서 가장 피하고 싶은 최악의 상황은?',
+    reasonHint: '점수가 비슷한 경우 최종 처방전 타입과 최우선 경고 1순위를 결정합니다.',
     options: [
-      { label: '높음 (1~2년 계약 · 자주 이동)', scores: { depositRisk: 9, assemblyRisk: 5, spaceStress: 4 } },
-      { label: '보통 (2년 이상 거주 예정)', scores: { depositRisk: 4, assemblyRisk: 3 } },
-      { label: '낮음 (장기 거주 계획)', scores: { depositRisk: 1, assemblyRisk: 1 } }
+      { label: '퇴실 때 벽지·장판 손상으로 보증금 깎이는 것', worstFear: 'deposit', scores: { depositRisk: 8 } },
+      { label: '먼지 쌓이고 세탁 안 돼서 청소 지옥 겪는 것', worstFear: 'dust', scores: { dustRisk: 8, fabricRisk: 5 } },
+      { label: '조립하다 포기하거나 금방 흔들리고 부서지는 것', worstFear: 'trouble', scores: { assemblyRisk: 8 } },
+      { label: '방이 꽉 막혀서 문도 잘 안 열리고 답답해지는 것', worstFear: 'space', scores: { spaceStress: 8 } }
     ]
   }
 ];
 
 export const QUIZ_RESULTS = [
   {
-    id: 'dust-collector',
+    id: 'pet-allergy-shield',
     code: 'TYPE 01',
-    condition: (s) => s.dustRisk >= 26 && s.fabricRisk < 24,
+    condition: (s, ctx) => (ctx.hasPet || ctx.hasAllergy) && (s.dustRisk >= 20 || s.fabricRisk >= 16),
+    badge: '반려동물·비염 털먼지 방어형',
+    tagline: '일반 감성 패브릭·러그를 들이면 털·진드기 지옥에 바로 빠지는 민감 공간',
+    top3: ['장모 샤기·부클레 절대 금지', '단모 워셔블·도어형 수납 통일', '주 1회 침구·러그 탈취 루틴'],
+    avoidItems: ['장모 샤기 러그', '부클레 패브릭 소파', '오픈 파이프 행거'],
+    altItems: ['단모 워셔블 러그', '이케아 클리판/쇠데르함', '도어형 옷장'],
+    lifeTips: [
+      { title: '털 안 박히는 단모·방수 직조만 고르기', desc: '부클레나 장모 러그 대신 청소기가 바로 지나가는 단모 폴리·생활방수 커버를 고르면 청소 시간이 1/3로 줄어요.', itemLabel: '워셔블 단모 러그', itemKeyword: '워셔블 단모 러그' },
+      { title: '오픈 행거 대신 도어형/커버 씌우기', desc: '반려동물 털과 미세먼지는 노출된 옷감에 먼저 달라붙어요. 계절 옷만이라도 지퍼 커버나 도어 수납으로 막아주세요.', itemLabel: '지퍼 의류 커버 · 정전기 밀대', itemKeyword: '지퍼형 의류 커버' }
+    ]
+  },
+  {
+    id: 'deposit-silk-wall',
+    code: 'TYPE 02',
+    condition: (s, ctx) => (ctx.isTenant && ctx.wallMaterial === 'silk' && s.depositRisk >= 18) || (ctx.worstFear === 'deposit' && s.depositRisk >= 22),
+    badge: '월세·실크벽지 보증금 사수형',
+    tagline: '못질·시트지·코맨드 테이프 한 번 잘못 붙였다가 퇴실 수리비 폭탄 맞기 쉬운 타입',
+    top3: ['실크벽지 위 접착 테이프 금지(꼭꼬핀만)', '시트지·우드블라인드 절대 제외', '입주 당일 하자 기록 카톡 전송'],
+    avoidItems: ['점착식 시트지 벽지', '3M 코맨드(실크벽지)', '우드 블라인드'],
+    altItems: ['꼭꼬핀 쉬폰 커튼', '무인양품 PP 서랍', '스텐304 압축 욕실선반'],
+    lifeTips: [
+      { title: '실크벽지엔 테이프 말고 꼭꼬핀', desc: '폼테이프나 점착 시트지는 실크벽지 코팅을 함께 뜯어내 도배비 공제 1순위예요. 작은 포스터·커튼은 꼭꼬핀이 가장 안전합니다.', itemLabel: '꼭꼬핀 · 벽지 보수 스티커', itemKeyword: '꼭꼬핀 벽걸이' },
+      { title: '입주 당일 하자 사진 + 카톡 기록 남기기', desc: '루틴 탭의 입주 점검표를 작성해 집주인에게 첫날 문자로 남겨두면 기존 흠집으로 억울하게 공제당할 일을 막을 수 있어요.', itemLabel: '가구 다리 펠트 보호 패드', itemKeyword: '가구 다리 보호 패드' }
+    ]
+  },
+  {
+    id: 'humid-ground-mold',
+    code: 'TYPE 03',
+    condition: (s, ctx) => (ctx.hasMoistureRisk || ctx.isGroundFloor || ctx.needsIndoorDrying) && s.smellRisk >= 18,
+    badge: '결로·습기 곰팡이 차단형',
+    tagline: '환기 약하고 습한 환경이라 바닥 매트·패브릭·합판 가구 관리가 까다로운 타입',
+    top3: ['바닥 직결 접이식 매트·하드 규조토 제외', '통풍 깔판 + 서큘레이터 환기', '욕실 흡착 대신 스텐304 압축선반'],
+    avoidItems: ['하드 규조토 매트', '흡착 욕실 선반', '장모 샤기 러그'],
+    altItems: ['소프트 규조토', '스텐304 압축 욕실선반', '사이잘룩 단모 러그'],
+    lifeTips: [
+      { title: '실내 빨래 건조 땐 창문+선풍기 15분', desc: '습기가 벽과 매트리스 밑에 고이지 않도록 샤워·빨래 직후 15분 환기 타이머를 돌리는 게 곰팡이 방어에 가장 효과적이에요.', itemLabel: '탁상 서큘레이터 · 제습제', itemKeyword: '저소음 탁상 서큘레이터' },
+      { title: '돌 규조토 대신 세탁 가능한 소프트 매트', desc: '습한 욕실에선 하드 규조토가 금방 막히고 깨지기 쉬워요. 빨아 쓰는 소프트 규조토와 녹 안 스는 스텐304 선반이 안전합니다.', itemLabel: '워셔블 소프트 규조토 매트', itemKeyword: '소프트 규조토 발매트' }
+    ]
+  },
+  {
+    id: 'duplex-micro-path',
+    code: 'TYPE 04',
+    condition: (s, ctx) => (ctx.isDuplex || ctx.narrowPath || ctx.needsFloorSpace) && s.spaceStress >= 24,
+    badge: '초미니·복층 동선 사수형',
+    tagline: '바닥 면적 몇 십 cm만 낭비해도 문 열림·사다리·보행 동선이 바로 막히는 타입',
+    top3: ['바닥 다리 있는 스탠드 거울·조명 제외', '보행 폭 60cm·문 열림 반경 실측', '도어후크·클립형 공중 수납 활용'],
+    avoidItems: ['스탠드 전신거울', '1인용 리클라이너', '오픈 선반'],
+    altItems: ['도어후크 거울', '클립형 조명', '불투명 리빙박스'],
+    lifeTips: [
+      { title: '바닥에 내려놓지 말고 문·책상에 걸기', desc: '전신거울은 문 뒤에 거는 도어후크형, 조명은 책상 집게형을 고르면 바닥 면적 0cm로 같은 방이 훨씬 넓어 보여요.', itemLabel: '도어후크 전신거울 · 집게 조명', itemKeyword: '도어후크 전신거울' },
+      { title: '주문 전 줄자로 통로 60cm 먼저 재기', desc: '복층이나 5평 이하에선 깊이 5cm 차이가 동선을 좌우해요. 치수 탭의 도면 치수와 실제 줄자 측정을 먼저 맞춰보세요.', itemLabel: '미니 줄자 · 틈새 서랍', itemKeyword: '틈새 리빙박스 서랍' }
+    ]
+  },
+  {
+    id: 'stair-heavy-ban',
+    code: 'TYPE 05',
+    condition: (s, ctx) => (ctx.noElevator || ctx.frequentMover) && (s.assemblyRisk >= 18 || s.depositRisk >= 16),
+    badge: '계단 운반·이사 빈번 경량형',
+    tagline: '40kg대 대형 합판 서랍장이나 분해 불가 침대를 들였다가 이사 때 감당 안 되는 타입',
+    top3: ['40kg+ 말름·브림네스 수납침대 제외', '모듈형 PP 서랍·완제품 우선', '재조립 시 헐거워지는 저가 PB 피하기'],
+    avoidItems: ['이케아 말름·브림네스', '이케아 헬메르·알렉스·에케트', '허니콤 저가 MDF 책상'],
+    altItems: ['무인양품 PP 서랍', '한샘 샘책장(기사 시공)', '두닷 콰트로'],
+    lifeTips: [
+      { title: '이사 갈 때 그대로 들고 가는 모듈 수납', desc: '무거운 원목·PB 서랍장은 분해하면 나사 구멍이 부서져 버리고 가는 경우가 많아요. 가벼운 PP 모듈 서랍이 이사비도 아껴줍니다.', itemLabel: '반투명·화이트 PP 모듈 서랍', itemKeyword: '모듈형 PP 서랍장' },
+      { title: '엘리베이터 없는 집은 기사 설치 확인', desc: '무게 있는 책장·옷장은 계단 양중 비용이나 방문 시공 여부를 구매 상세페이지에서 반드시 먼저 체크하세요.', itemLabel: '미니 충전 전동드라이버', itemKeyword: '미니 충전식 전동드라이버' }
+    ]
+  },
+  {
+    id: 'desk-honeycomb-ban',
+    code: 'TYPE 06',
+    condition: (s, ctx) => ctx.heavyDeskLoad && (ctx.budgetTier === 'low' || s.assemblyRisk >= 14),
+    badge: '재택·모니터암 상판 강도 중시형',
+    tagline: '예쁘고 싼 책상에 모니터암을 달았다가 상판이 푹 꺼지고 흔들리기 쉬운 타입',
+    top3: ['속 빈 종이 벌집 심재 책상 절대 금지', 'E0 풀판 18T+ & 스틸 프레임 선택', '내 키 맞는 의자·책상 높이 맞춤'],
+    avoidItems: ['허니콤 저가 MDF 책상', '저가 전자레인지 선반', '마켓비 MKB 캐비닛'],
+    altItems: ['두닷 콰트로', '클립형 조명', '무인양품 PP 서랍'],
+    lifeTips: [
+      { title: '상판 심재가 풀판(PB/MDF 18T+)인지 확인', desc: '저가 입문 책상은 겉만 시트지고 속이 골판지 벌집인 경우가 많아 모니터암 클램프에 그대로 뚫려요. 스틸 하부 보강대를 꼭 보세요.', itemLabel: '모니터암 보강 플레이트', itemKeyword: '모니터암 보강 플레이트' },
+      { title: '팔꿈치 90도 휴먼스케일 맞추기', desc: '치수 탭에 내 키를 입력하면 거북목·승모근 통증을 줄이는 적정 의자·책상·모니터 상단 높이가 바로 계산됩니다.', itemLabel: '멀티탭 케이블 정리 트레이', itemKeyword: '책상 하부 멀티탭 트레이' }
+    ]
+  },
+  {
+    id: 'dust-collector',
+    code: 'TYPE 07',
+    condition: (s, ctx) => s.dustRisk >= 26 && s.fabricRisk < 24,
     badge: '먼지 콜렉터형',
-    tagline: '예쁜 오픈 가구 골랐다가 먼지·정리 스트레스를 껴안기 쉬운 타입',
-    top3: ['오픈 행거 → 커버/도어형 교체', '장모 러그·오픈 선반 제외', '주 1회 10분 환기 알람 설정'],
+    tagline: '예쁜 오픈 행거·선반을 골랐다가 먼지·정리 스트레스를 껴안기 쉬운 타입',
+    top3: ['오픈 행거 → 커버·도어형 교체', '우드 블라인드·장모 러그 제외', '주 1회 10분 환기·청소 알람'],
     avoidItems: ['오픈 파이프 행거', '우드 블라인드', '오픈 선반'],
     altItems: ['도어형 옷장', '단모 워셔블 러그', '불투명 리빙박스'],
     lifeTips: [
-      {
-        title: '계절 옷만 커버 씌우기',
-        desc: '행거를 이미 샀다면 당장 안 입는 외투·니트만 지퍼형 의류 커버에 넣어도 방 먼지가 절반으로 줄어요.',
-        itemLabel: '부직포 지퍼 의류 커버',
-        itemKeyword: '지퍼형 의류 커버 행거'
-      },
-      {
-        title: '자기 전 1분 정전기 청소포',
-        desc: '매일 청소기 돌리기 힘들 땐 물걸레보다 정전기 청소포로 모서리만 쓱 훑는 편이 먼지 뭉침을 막기 좋아요.',
-        itemLabel: '정전기 청소포 · 밀대 세트',
-        itemKeyword: '정전기 청소포 밀대'
-      }
+      { title: '계절 옷만 지퍼 커버로 가려도 절반 해결', desc: '행거를 이미 두고 있다면 당장 안 입는 니트·외투만 커버를 씌워도 방 먼지와 어수선함이 확 줄어요.', itemLabel: '부직포 지퍼 의류 커버', itemKeyword: '지퍼형 의류 커버 행거' },
+      { title: '자기 전 1분 정전기 청소포 훑기', desc: '청소기 돌리기 부담스러운 날엔 정전기 밀대로 바닥 모서리만 쓱 밀어줘도 먼지 뭉침을 막을 수 있어요.', itemLabel: '정전기 청소포 · 밀대 세트', itemKeyword: '정전기 청소포 밀대' }
     ]
   },
   {
     id: 'fabric-sponge',
-    code: 'TYPE 02',
-    condition: (s) => s.fabricRisk >= 26 || s.smellRisk >= 22,
-    badge: '냄새·습기 저장고형',
-    tagline: '국물·습기 한 번 스며들면 세탁·냄새 관리가 확 어려워지는 타입',
-    top3: ['커버 분리 불가 소파 금지', '생활방수·PU 소재 선택', '조리 후 15분 환기 필수'],
-    avoidItems: ['비분리형 패브릭 소파', '장모 샤기 러그'],
-    altItems: ['이케아 클리판/쇠데르함', '단모 폴리 러그'],
+    code: 'TYPE 08',
+    condition: (s, ctx) => s.fabricRisk >= 26 || s.smellRisk >= 24 || (ctx.smallWasher && s.fabricRisk >= 18),
+    badge: '냄새·세탁 불가 기피형',
+    tagline: '조리 냄새나 음료가 한 번 스며들면 작은 세탁기로는 복구 불가능해지는 타입',
+    top3: ['커버 분리 불가 소파·대형 러그 금지', '집 세탁기 들어가는 단모·방수 원단', '식사 후 15분 환기 타이머'],
+    avoidItems: ['비분리형 패브릭 소파', '장모 샤기 러그', '부클레 패브릭 소파'],
+    altItems: ['이케아 클리판/쇠데르함', '단모 폴리 러그', '단모 워셔블 러그'],
     lifeTips: [
-      {
-        title: '국물 쏟았을 때 비비기 금지',
-        desc: '마른 키친타월로 먼저 꾹 눌러 물기를 뺀 뒤, 베이킹소다·패브릭 얼룩 제거제를 뿌리고 톡톡 두드려 빼세요.',
-        itemLabel: '베이킹소다 · 얼룩제거제',
-        itemKeyword: '패브릭 얼룩제거제 베이킹소다'
-      },
-      {
-        title: '배달음식·요리 뒤 선풍기 창밖 틀기',
-        desc: '창문만 열어두는 것보다 선풍기를 창밖 방향으로 10분만 틀어두면 꿉꿉한 음식 냄새와 습기가 훨씬 빨리 빠져요.',
-        itemLabel: '저소음 탁상 서큘레이터',
-        itemKeyword: '저소음 탁상 서큘레이터'
-      }
+      { title: '세탁기 9kg 기준 맞춘 경량 패브릭', desc: '소형 세탁기에는 두꺼운 러그가 안 들어가 코인세탁소 비용이 계속 들어요. 물티슈로 닦이는 사이잘룩이나 얇은 단모 러그를 고르세요.', itemLabel: '패브릭 탈취·얼룩제거제', itemKeyword: '패브릭 얼룩제거제' },
+      { title: '음식 먹고 10분 서큘레이터 창밖 환기', desc: '원룸에선 문만 여는 것보다 선풍기를 창밖으로 틀어 공기를 밀어내는 편이 냄새·유증기 배출이 훨씬 빨라요.', itemLabel: '저소음 탁상 서큘레이터', itemKeyword: '저소음 탁상 서큘레이터' }
     ]
   },
   {
-    id: 'deposit-danger',
-    code: 'TYPE 03',
-    condition: (s) => s.depositRisk >= 22,
-    badge: '보증금 경보형',
-    tagline: '벽지 테이프나 대형 가구 때문에 퇴실할 때 원상복구 비용 걱정되는 타입',
-    top3: ['벽지 위 폼테이프 금지(꼭꼬핀만)', '벽 타공·대형 수납장 피하기', '입주 당일 하자 사진 백업'],
-    avoidItems: ['3M 코맨드(실크벽지)', '이케아 말름·브림네스'],
-    altItems: ['무인양품 PP 서랍', '한샘 샘책장(기사 시공)'],
+    id: 'visual-minimal',
+    code: 'TYPE 09',
+    condition: (s, ctx) => ctx.visualClutterSensitive && s.dustRisk >= 16,
+    badge: '시각 노이즈 차단 미니멀형',
+    tagline: '수납이 오픈되어 물건 색깔이 보이기 시작하면 바로 방이 어지럽고 피곤해지는 타입',
+    top3: ['오픈 행거·투명 서랍 제외', '화이트/단색 불투명 리빙박스 통일', '전선·멀티탭 박스 숨기기'],
+    avoidItems: ['오픈 선반', '오픈 파이프 행거', '무타공 압축봉 행거'],
+    altItems: ['도어형 옷장', '불투명 리빙박스', '무인양품 PP 서랍'],
     lifeTips: [
-      {
-        title: '벽지 테이프 뗄 땐 드라이기 10초',
-        desc: '이미 벽지에 붙인 양면테이프를 억지로 떼면 찢어지기 쉬워요. 드라이기 바람으로 녹여 떼고 잔여 접착제는 제거제로 닦아내세요.',
-        itemLabel: '꼭꼬핀 · 스티커 접착제거제',
-        itemKeyword: '꼭꼬핀 스티커 제거제'
-      },
-      {
-        title: '입주 첫날 하자 보호 · 찍힘 방지',
-        desc: '의자 바퀴나 가구 다리 아래 보호 패드를 깔고, 욕실·창틀 물때 방지 실리콘 보수제로 미리 관리하면 보증금 분쟁을 줄일 수 있어요.',
-        itemLabel: '가구 바닥 보호 패드 · 펠트',
-        itemKeyword: '가구 다리 보호 패드 펠트'
-      }
+      { title: '같은 색 불투명 박스로 시선 정돈', desc: '물건이 많아도 겉으로 안 보이는 불투명 수납함 2~4개로 통일하면 방 전체가 호텔처럼 단정해 보여요.', itemLabel: '화이트 불투명 뚜껑 리빙박스', itemKeyword: '불투명 뚜껑 리빙박스' },
+      { title: '전선·멀티탭만 가려도 시각 피로 절반 감소', desc: '바닥에 얽힌 충전선만 멀티탭 정리함으로 덮어줘도 좁은 방 인테리어 완성도가 올라갑니다.', itemLabel: '케이블 멀티탭 정리함', itemKeyword: '멀티탭 전선 정리함' }
     ]
   },
   {
     id: 'assembly-panic',
-    code: 'TYPE 04',
-    condition: (s) => s.assemblyRisk >= 18,
-    badge: '조립 지옥 회피형',
-    tagline: '배송 온 조립 가구 뜯었다가 공구·무게 때문에 시작부터 지치는 타입',
-    top3: ['반제품·철판 조립 가구 거르기', '기사 방문 설치·완제품 우선', '구매 전 동봉 공구 확인'],
-    avoidItems: ['이케아 헬메르·알렉스·에케트', '마켓비 MKB 캐비닛'],
-    altItems: ['무인양품 PP 서랍', '리바트 로넌·한샘 샘책장'],
+    code: 'TYPE 10',
+    condition: (s, ctx) => s.assemblyRisk >= 22 || ctx.diySkill === 'none',
+    badge: '무공구·완제품 우선형',
+    tagline: '반제품 조립 가구 뜯었다가 드라이버·철판 나사 때문에 시작부터 지치는 타입',
+    top3: ['철판·부품 많은 DIY 가구 거르기', '완제품·기사 방문설치 우선 선택', '필요시 USB 미니 전동드라이버 구비'],
+    avoidItems: ['이케아 헬메르·알렉스·에케트', '마켓비 MKB 캐비닛', '허니콤 저가 MDF 책상'],
+    altItems: ['무인양품 PP 서랍', '리바트 로넌·한샘 샘책장', '두닷 콰트로'],
     lifeTips: [
-      {
-        title: '나사는 처음부터 꽉 조이지 않기',
-        desc: '조립 가구가 흔들릴 땐 70%만 느슨하게 조여 세운 뒤 수평을 맞추고, 미니 전동드라이버로 마지막에 꽉 조여야 뒤틀리지 않아요.',
-        itemLabel: 'USB 충전 미니 전동드라이버',
-        itemKeyword: '미니 충전식 전동드라이버'
-      },
-      {
-        title: '수평 패드·미끄럼방지 매트 활용',
-        desc: '자취방 장판이 미세하게 기울어져 있다면 조립 가구 다리 밑에 수평 조절 패드나 펠트 스티커를 대주면 소음과 흔들림이 싹 사라져요.',
-        itemLabel: '가구 수평 패드 · 펠트 스티커',
-        itemKeyword: '가구 수평 조절 패드'
-      }
+      { title: '완제품 서랍 & 기사 시공 책장 고르기', desc: '공구 없이 바로 쓰는 PP 서랍이나 방문설치 옵션이 있는 국내 브랜드 제품이 조립 스트레스와 흔들림을 동시에 막아줘요.', itemLabel: 'USB 충전 미니 전동드라이버', itemKeyword: '미니 충전식 전동드라이버' },
+      { title: '나사 체결 시 70% 먼저 가조립', desc: '어쩔 수 없이 조립할 땐 처음부터 꽉 조이지 말고 전체 균형을 맞춘 뒤 마지막에 조여야 뒤틀리지 않아요.', itemLabel: '가구 수평 조절 펠트 패드', itemKeyword: '가구 수평 조절 패드' }
     ]
   },
   {
-    id: 'space-blackhole',
-    code: 'TYPE 05',
-    condition: (s) => s.spaceStress >= 22,
-    badge: '동선 파괴 주의형',
-    tagline: '하나둘 채우다 보면 문 여닫기나 걷는 동선부터 좁아지기 쉬운 타입',
-    top3: ['바닥형 조명·거울 줄이기', '최소 보행 폭 60cm 확보', '리클라이너·대형 침대 피하기'],
-    avoidItems: ['스탠드 전신거울', '1인용 리클라이너'],
-    altItems: ['도어후크 거울', '클립형 조명'],
+    id: 'maximal-storage-pro',
+    code: 'TYPE 11',
+    condition: (s, ctx) => ctx.density === 'maximal' && (ctx.wishId === 'storage' || s.spaceStress >= 18),
+    badge: '맥시멀 짐 수납 최적화형',
+    tagline: '옷·취향 소품이 많은데 수납 깊이와 하중을 못 맞춰 방이 금방 넘치기 쉬운 타입',
+    top3: ['약한 압축봉 대신 바닥 지지형 수납', '수직 공간+불투명 박스 모듈화', '계절 옷 압축팩 분리 보관'],
+    avoidItems: ['무타공 압축봉 행거', '오픈 파이프 행거', '1인용 리클라이너'],
+    altItems: ['도어형 옷장', '불투명 리빙박스', '무인양품 PP 서랍'],
     lifeTips: [
-      {
-        title: '바닥이 보일수록 방이 커 보임',
-        desc: '거울·조명·휴지통을 바닥에 두기보다 문에 거는 도어후크 거울이나 책상 집게형 램프를 쓰면 같은 평수도 훨씬 넓어 보여요.',
-        itemLabel: '도어후크 거울 · 집게 조명',
-        itemKeyword: '도어후크 전신거울'
-      },
-      {
-        title: '가구 놓기 전 보행 폭 60cm 체크',
-        desc: '침대와 책상·벽 사이 통로가 60cm보다 좁아지면 불편해져요. 가구 주문 전 미니 줄자로 실제 가로·깊이를 먼저 재보세요.',
-        itemLabel: '미니 줄자 · 틈새 리빙박스',
-        itemKeyword: '틈새 리빙박스 서랍'
-      }
+      { title: '압축봉에 겨울 외투 10벌 걸지 않기', desc: '짐이 많은 분이 압축봉 행거를 쓰면 스프링이 못 버텨 새벽에 무너지기 쉬워요. 바닥 지지형 행거·도어 옷장이 안전합니다.', itemLabel: '대용량 의류 압축팩 · 리빙박스', itemKeyword: '대용량 불투명 리빙박스' },
+      { title: '자주 쓰는 것 30%만 손 닿는 높이에', desc: '수납공간을 상·하단으로 나눠 비시즌 옷은 침대 하부·상단 박스로 올려야 매일 쓰는 동선이 유지돼요.', itemLabel: '침대 밑 슬림 리빙박스', itemKeyword: '침대밑 수납박스' }
     ]
   },
   {
-    id: 'balanced-cautious',
-    code: 'TYPE 06',
-    condition: (s) => (s.dustRisk + s.fabricRisk + s.depositRisk + s.spaceStress) >= 40,
-    badge: '감성-현실 경계형',
-    tagline: '대체로 무난하지만 한두 번 충동구매한 가구에 후회하기 쉬운 타입',
-    top3: ['후회 아이템 1개만 먼저 걸러내기', '휴먼스케일 치수 확인 후 결제', '세탁·환기 루틴 캘린더 등록'],
-    avoidItems: ['하드 규조토 매트', '저가 전자레인지 선반'],
-    altItems: ['소프트 규조토', '두닷 콰트로'],
+    id: 'warm-lighting-curator',
+    code: 'TYPE 12',
+    condition: (s, ctx) => ctx.lightingPref === 'mood' && (ctx.wishId === 'moodlight' || ctx.tasteId === 'object'),
+    badge: '간접조명·질감 큐레이터형',
+    tagline: '눈 시린 저가 네온등·공간 차지하는 큰 스탠드 대신 빛과 촉감 균형이 중요한 타입',
+    top3: ['눈 부신 LED 네온·싸구려 아크릴 제외', '2700~3000K 전구색 집게·단스탠드', '침대/책상 옆 최소 면적 배치'],
+    avoidItems: ['스탠드 전신거울', '비분리형 패브릭 소파'],
+    altItems: ['클립형 조명', '도어후크 거울', '이케아 클리판/쇠데르함'],
     lifeTips: [
-      {
-        title: '지저분한 전선·멀티탭만 가려도 깔끔',
-        desc: '새 가구를 사기 전 책상 위·바닥 전선부터 깔끔한 멀티탭 정리함으로 숨겨주면 방 인테리어 완성도가 훨씬 올라가요.',
-        itemLabel: '케이블 멀티탭 정리함',
-        itemKeyword: '멀티탭 전선 정리함'
-      },
-      {
-        title: '발매트·욕실 바닥 뽀송하게 관리',
-        desc: '돌처럼 딱딱한 규조토 대신 세탁기 돌릴 수 있는 소프트 규조토 매트로 바꾸면 물기 흡수와 위생 둘 다 챙길 수 있어요.',
-        itemLabel: '워셔블 소프트 규조토 매트',
-        itemKeyword: '소프트 규조토 발매트'
-      }
+      { title: '3000K 이하 전구색 + 유리/패브릭 갓', desc: '광원이 그대로 노출된 저가 조명은 눈이 시려 결국 안 켜게 돼요. 빛이 은은히 퍼지는 불투명 유리·집게형 조명이 실사용 만족도가 높아요.', itemLabel: '2700K 전구색 LED 전구 · 단스탠드', itemKeyword: '3000K 단스탠드 무드등' },
+      { title: '무드 조명 둘 자리도 콘센트 먼저 확인', desc: '조명 선이 발에 걸리지 않도록 콘센트 위치와 동선을 맞추고 충전식 클립 조명을 섞으면 훨씬 깔끔해요.', itemLabel: '무선 충전식 집게 LED 조명', itemKeyword: '집게형 LED 스탠드 3000K' }
+    ]
+  },
+  {
+    id: 'budget-spec-hunter',
+    code: 'TYPE 13',
+    condition: (s, ctx) => ctx.budgetTier === 'low' && (s.dustRisk + s.depositRisk + s.assemblyRisk >= 32),
+    badge: '5만원 이하 저가 함정 회피형',
+    tagline: '초가성비 가격만 보고 샀다가 시트지 들뜸·흡착 추락·불량 마감으로 돈 두 번 쓰기 쉬운 타입',
+    top3: ['1만원 미만 흡착·허니콤 저가템 거르기', '작은 소품만 저가, 핵심 가구는 스펙 확인', '최저평점 사진 리뷰 먼저 읽기'],
+    avoidItems: ['흡착 욕실 선반', '허니콤 저가 MDF 책상', '하드 규조토 매트'],
+    altItems: ['스텐304 압축 욕실선반', '소프트 규조토', '무인양품 PP 서랍'],
+    lifeTips: [
+      { title: '욕실·수납처럼 무게 걸리는 품목엔 초저가 피하기', desc: '흡착 선반이나 얇은 플라스틱 선반은 몇 달 만에 떨어져 깨지곤 해요. 만 원 더 써도 SUS304·튼튼한 스틸을 고르는 게 돈을 아끼는 길입니다.', itemLabel: 'SUS304 무타공 압축 선반', itemKeyword: '스텐304 욕실 압축선반' },
+      { title: '결제 전 별점 1~2점 사진 리뷰 3개만 보기', desc: '예쁜 홍보 사진보다 한 달 뒤 들뜸·녹·흔들림이 찍힌 1점 리뷰를 확인하면 실패 확률이 절반 이하로 떨어져요.', itemLabel: '워셔블 소프트 규조토 매트', itemKeyword: '소프트 규조토 발매트' }
     ]
   },
   {
     id: 'survival-pro',
-    code: 'TYPE 07',
+    code: 'TYPE 14',
     condition: () => true,
-    badge: '스펙 방어 만렙형',
-    tagline: '예쁜 감성도 챙기면서 관리·청소 기준까지 꼼꼼히 거르는 실속파 타입',
-    top3: ['내 키 맞는 핵심 가구만 투자', '세탁·환기 .ics 알람 등록', '구매 전 실상품 판독기 체크'],
-    avoidItems: ['허니콤 저가 MDF 책상'],
-    altItems: ['두닷 콰트로', '무인양품 PP 서랍'],
+    badge: '스펙 방어 만렙 실속형',
+    tagline: '예쁜 감성도 챙기면서 관리·치수·보증금 기준까지 꼼꼼히 거르는 균형파 타입',
+    top3: ['내 키 맞는 핵심 가구 스펙 고정', '사기 전 A vs B 비교 & 판독기 체크', '주기 알람 .ics 캘린더 연동'],
+    avoidItems: ['허니콤 저가 MDF 책상', '하드 규조토 매트'],
+    altItems: ['두닷 콰트로', '무인양품 PP 서랍', '소프트 규조토'],
     lifeTips: [
-      {
-        title: '매트리스·의자 오염 원천 차단',
-        desc: '오래 쓰는 좋은 매트리스일수록 방수 매트리스 커버를 씌워두면 땀·커피 얼룩 걱정 없이 새것처럼 오래 쓸 수 있어요.',
-        itemLabel: '순면 생활방수 매트리스 커버',
-        itemKeyword: '생활방수 매트리스 커버'
-      },
-      {
-        title: '주기적인 필터·배수구 관리',
-        desc: '에어컨·공기청정기 필터와 싱크대 배수구를 한 달에 한 번만 세정제로 비워줘도 자취방 공기 질이 달라져요.',
-        itemLabel: '배수구·에어컨 클리너',
-        itemKeyword: '배수구 발포 클리너'
-      }
+      { title: '새 매트리스·의자는 방수 커버로 수명 연장', desc: '좋은 가구일수록 방수 커버·다리 펠트 같은 작은 보호 장비만 추가해 줘도 3~4년 뒤 중고 방어와 보증금 보호에 유리해요.', itemLabel: '생활방수 매트리스 커버', itemKeyword: '생활방수 매트리스 커버' },
+      { title: '월 1회 필터·배수구 루틴 등록하기', desc: '루틴 탭의 .ics 파일을 캘린더에 넣어두면 청소 시기를 놓쳐 악취·먼지가 쌓이는 일을 깔끔하게 막을 수 있어요.', itemLabel: '배수구 발포 클리너', itemKeyword: '배수구 발포 클리너' }
     ]
   }
 ];
@@ -676,3 +946,243 @@ export const MOVE_IN_CHECKLIST = [
     quickTags: ['현관 고무패킹 틈·외풍', '안전고리·걸쇠 헐거움', '도어락 버튼·배터리 경고']
   }
 ];
+
+export const GAP_STORAGE_ZONES = [
+  {
+    id: 'under-bed',
+    label: '침대·소파 밑',
+    headline: '바닥 자리 0cm 쓰는 가장 큰 수납 빈틈',
+    measureTip: '줄자가 없다면 500ml 생수병을 세워(약 21cm) 들어가면 여유 틈, 눕혀서(약 6.5cm) 두 개 높이면 13cm 전후예요.',
+    options: [
+      {
+        id: 'under-12',
+        label: '12cm 이하 (낮은 틈)',
+        sub: '손바닥 세로보다 낮음',
+        avoidText: '바퀴 달린 플라스틱 리빙박스(보통 18~22cm)와 철제 바스켓은 걸려서 안 들어가요.',
+        passText: '10cm 안팎 지퍼형 부직포 보관함이나 진공 압축팩에 계절 이불·니트를 납작하게 넣어 쓰세요.',
+        itemIds: ['vacuum-storage-bags', 'divided-underwear-box'],
+        shopLabel: '10cm 침대 밑 납작 부직포 정리함',
+        shopKeyword: '침대밑 슬림 부직포 이불정리함 10cm'
+      },
+      {
+        id: 'under-18',
+        label: '13~18cm (보통 틈)',
+        sub: '생수병 눕힌 2개 높이',
+        avoidText: '뚜껑이 위로 솟은 높은 리빙박스(20cm 이상)나 두꺼운 수납 서랍은 걸려요.',
+        passText: '높이 15~16cm대 슬림 바퀴형 침대 밑 수납박스와 압축팩을 함께 쓰면 꺼내기도 편해요.',
+        itemIds: ['underbed-sealed-box', 'vacuum-storage-bags'],
+        shopLabel: '높이 15cm 슬림 침대밑 리빙박스',
+        shopKeyword: '침대밑 수납박스 높이 15cm 바퀴'
+      },
+      {
+        id: 'under-19plus',
+        label: '19cm 이상 (여유 틈)',
+        sub: '500ml 생수병이 서거나 넉넉함',
+        avoidText: '오픈형 천 바구니만 넣으면 바닥 먼지가 그대로 쌓여 3개월 뒤 꺼내기 싫어져요.',
+        passText: '밀폐 뚜껑이 있는 바퀴형 침대 밑 박스나 낮은 PP 서랍을 쓰면 먼지 없이 옷·이불을 넉넉히 넣어요.',
+        itemIds: ['underbed-sealed-box', 'muji-pp-drawer', 'opaque-living-box-set'],
+        shopLabel: '뚜껑 밀폐 바퀴형 침대밑 수납함',
+        shopKeyword: '침대밑 밀폐 리빙박스 바퀴'
+      }
+    ]
+  },
+  {
+    id: 'side-gap',
+    label: '냉장고·책상 옆',
+    headline: '15cm만 남아도 세로 수납이 한 줄 생겨요',
+    measureTip: '성인 손 한 뼘이 약 19~20cm예요. 손 한 뼘이 꽉 끼면 18cm 이하, 손바닥 세로가 빡빡하면 12~15cm 틈새예요.',
+    options: [
+      {
+        id: 'side-12',
+        label: '12cm 이하 (초슬림 틈)',
+        sub: '손바닥 폭 정도로 아주 좁음',
+        avoidText: '시중 일반 틈새 트롤리(대부분 15~22cm)는 들어가지 않아요.',
+        passText: '가전 옆면에 붙이는 자석 선반·랩걸이나, 폭 10~12cm 초슬림 슬라이딩 선반만 고르세요.',
+        itemIds: ['entry-magnetic-keytray', 'daiso-kkokkopin'],
+        shopLabel: '냉장고 옆 자석 선반 · 10cm 초슬림 수납',
+        shopKeyword: '냉장고 옆 자석 선반 10cm 틈새'
+      },
+      {
+        id: 'side-18',
+        label: '13~18cm (슬림 틈)',
+        sub: '어른 손 한 뼘보다 살짝 좁음',
+        avoidText: '이케아 라스크호그 같은 넓은 카트(35×45cm)는 툭 튀어나와 동선을 막아요.',
+        passText: '폭 13~16cm 슬림 틈새 서랍장이나 욕실·주방 좁은 카트를 끼워 세제·생수·양념을 세로로 모으세요.',
+        itemIds: ['slim-15cm-gap-drawer', 'ikea-vesken-shelf'],
+        shopLabel: '15cm 초슬림 틈새 트롤리·서랍',
+        shopKeyword: '15cm 틈새 수납장 트롤리'
+      },
+      {
+        id: 'side-25',
+        label: '19~28cm (여유 틈)',
+        sub: '손 한 뼘이 넉넉히 들어감',
+        avoidText: '속이 훤히 비치는 망형 선반만 두면 잡동사니가 그대로 보여 방이 어수선해져요.',
+        passText: '이동식 3단 트롤리나 앞이 막힌 PP 서랍·불투명 리빙박스를 세우면 책상·주방 보조 수납이 확 늘어요.',
+        itemIds: ['ikea-raskog', 'mesh-3tier-trolley', 'muji-pp-drawer'],
+        shopLabel: '슬림 이동식 3단 카트 · PP 서랍',
+        shopKeyword: '틈새 이동식 트롤리 25cm 수납'
+      }
+    ]
+  },
+  {
+    id: 'behind-door',
+    label: '방문 뒤 · 윗틈',
+    headline: '걸기만 해도 거울·겉옷 자리가 생겨요',
+    measureTip: '방문 위쪽 틈에 500원 동전(두께 약 2mm)이 스치듯 들어가면 도어후크 가능, 종이 1장만 겨우 들어가면 걸이형은 막혀요.',
+    options: [
+      {
+        id: 'door-gap-ok',
+        label: '윗틈 2mm+ (동전 들어감)',
+        sub: '문 위틈 여유 있고 두께 4.5cm 이하',
+        avoidText: '고리 두께만 두꺼운 저가 철제 후크는 도배지·문틀 페인트를 긁어 원상복구 시 손해 봐요.',
+        passText: '뒤쪽에 보호 패드가 붙은 도어후크 전신거울이나 문걸이 수납걸이를 쓰면 바닥 자리 0cm로 끝나요.',
+        itemIds: ['door-hook-mirror', 'door-hook-foodbin', 'no-drill-door-stopper'],
+        shopLabel: '패드 부착 무타공 도어후크 거울·행거',
+        shopKeyword: '무타공 도어후크 전신거울 보호패드'
+      },
+      {
+        id: 'door-gap-tight',
+        label: '윗틈 빡빡함 (동전 안 들어감)',
+        sub: '문이 문틀에 딱 붙어 닫힘',
+        avoidText: '도어후크 거울·행거를 억지로 끼우면 방문이 아예 안 닫히거나 경첩이 틀어져요.',
+        passText: '문 걸이 대신 바닥 차지 적은 슬림 벽기댐 거울, 꼭꼬핀, 현관문 자석 수납함으로 돌리세요.',
+        itemIds: ['ikea-nissedal-mirror', 'daiso-kkokkopin', 'entry-magnetic-keytray'],
+        shopLabel: '초슬림 벽기댐 거울 · 꼭꼬핀 후크',
+        shopKeyword: '슬림 전신거울 40cm 벽기댐 꼭꼬핀'
+      }
+    ]
+  },
+  {
+    id: 'wall-outlet',
+    label: '벽 콘센트 · 전선 틈',
+    headline: '플러그 5cm만 줄여도 방 통로가 넓어져요',
+    measureTip: '책상이나 침대 뒤 벽 콘센트에 플러그를 꽂았을 때 가구가 벽에서 손가락 세 마디(6cm+) 이상 뜨는지 봐주세요.',
+    options: [
+      {
+        id: 'outlet-stickout',
+        label: '일자 플러그가 툭 튀어나옴',
+        sub: '콘센트 때문에 가구가 벽에서 뜸',
+        avoidText: '일반 일자형 멀티탭을 억지로 눌러 가구를 밀면 전선이 꺾여 합선·화재 위험이 생겨요.',
+        passText: '180도 회전하는 납작 ㄱ자 플러그 멀티탭과 책상 하부 전선 트레이로 바꾸면 벽에 바짝 붙어요.',
+        itemIds: ['desk-under-tray', 'cable-organizer-box'],
+        shopLabel: '180도 회전 ㄱ자 납작 플러그 멀티탭',
+        shopKeyword: '납작 플러그 회전형 멀티탭 ㄱ자'
+      },
+      {
+        id: 'outlet-tangle',
+        label: '멀티탭·충전선이 바닥에 엉킴',
+        sub: '청소기 돌릴 때마다 선이 걸림',
+        avoidText: '뚜껑 없는 오픈 바구니에 멀티탭을 담아두면 먼지가 쌓여 위험하고 보기에도 지저분해요.',
+        passText: '통풍 구멍이 있는 난연 멀티탭 정리함이나 책상 아래 무타공 클램프 트레이로 공중에 띄우세요.',
+        itemIds: ['cable-organizer-box', 'desk-under-tray'],
+        shopLabel: '난연 멀티탭 정리함 · 클램프 트레이',
+        shopKeyword: '난연 멀티탭 전선 정리함 무타공'
+      }
+    ]
+  }
+];
+
+export const ITEM_GAP_HINTS = {
+  'door-hook-mirror': '방문 위쪽 틈 2mm 이상(500원 동전 두께)과 문 두께 4.5cm 이하인지 먼저 확인하세요.',
+  'ikea-nissedal-mirror': '바닥에 기댈 땐 미끄럼 방지 패드를 대고, 가로 40cm 벽 폭이 비는지 확인하세요.',
+  'full-stand-mirror': '거울 다리 벌림 폭이 앞뒤로 35~45cm 필요해 4~5평 원룸 통로를 좁힐 수 있어요.',
+  'underbed-sealed-box': '내 침대 프레임 밑 실제 높이(보통 15~20cm)가 박스 전체 높이보다 1cm 이상 높은지 재세요.',
+  'vacuum-storage-bags': '청소기 노즐이 안 맞는 미니 청소기만 있다면 전동 펌프 포함 세트로 고르세요.',
+  'slim-15cm-gap-drawer': '냉장고·세탁기 옆 틈 폭이 최소 16~20cm 이상인지 손 한 뼘(약 19cm)으로 대보세요.',
+  'ikea-vesken-shelf': '선반 폭(약 23cm)과 깊이(36cm)가 욕실·세탁기 옆 틈에 딱 걸리지 않는지 확인하세요.',
+  'ikea-raskog': '가로 35×깊이 45cm라 좁은 틈새용이 아닌 책상·침대 옆 코너 자리에 맞아요.',
+  'mesh-3tier-trolley': '바퀴 포함한 가로 폭(약 25~40cm)과 문 여닫이 반경이 겹치지 않는지 확인하세요.',
+  'muji-pp-drawer': '옷장 안이나 침대 옆에 넣을 땐 서랍을 앞으로 쭉 뺄 앞쪽 공간 40cm를 비워두세요.',
+  'opaque-living-box-set': '앞열림 문짝이 꺾여 열릴 앞쪽 여유와 선반 깊이(보통 35~40cm)를 먼저 재세요.',
+  'cable-organizer-box': '가지고 계신 4~6구 멀티탭 길이(약 25~32cm)와 어댑터 높이가 박스에 들어가는지 보세요.',
+  'desk-under-tray': '책상 상판 두께(1.5~3cm)와 뒤쪽 테두리 프레임 간섭 없이 클램프가 물리는지 확인하세요.',
+  'door-hook-foodbin': '싱크대 문짝 두께 2cm 이하·상단 틈 2mm 이상이어야 문이 빡빡하지 않게 닫혀요.',
+  'entry-magnetic-keytray': '현관문이 자석이 붙는 철재 문인지 냉장고 자석으로 1초만 먼저 대보세요.',
+  'daiso-kkokkopin': '콘크리트 벽엔 안 들어가고 들뜬 실크벽지·합지벽지에만 꽂히니 벽을 눌러보세요.'
+};
+
+export function getItemGapHint(item) {
+  if (!item) return '';
+  if (item.id && ITEM_GAP_HINTS[item.id]) return ITEM_GAP_HINTS[item.id];
+  const txt = `${item.name || ''} ${item.category || ''}`;
+  if (/도어후크|문걸이/.test(txt)) return ITEM_GAP_HINTS['door-hook-mirror'];
+  if (/침대\s*밑|언더베드/.test(txt)) return ITEM_GAP_HINTS['underbed-sealed-box'];
+  if (/틈새|슬림.*서랍|트롤리/.test(txt)) return ITEM_GAP_HINTS['slim-15cm-gap-drawer'];
+  if (/멀티탭|전선/.test(txt)) return ITEM_GAP_HINTS['cable-organizer-box'];
+  return '';
+}
+
+export const HIDDEN_PREP_KITS = {
+  assemblyTool: {
+    id: 'assemblyTool',
+    title: 'USB 미니 전동드릴 · 수평 조절 패드',
+    estCost: '약 1.5~2.5만 원',
+    minWon: 15000,
+    maxWon: 25000,
+    reason: '반제품 나사 체결 손목 피로 & 장판 흔들림 방지',
+    keyword: '미니 충전식 전동드릴 가구 수평 패드'
+  },
+  floorProtect: {
+    id: 'floorProtect',
+    title: '다리 펠트 보호패드 · 의자 매트',
+    estCost: '약 4천~1.5만 원',
+    minWon: 4000,
+    maxWon: 15000,
+    reason: '월세 장판·마루 찍힘 방지 (퇴실 보증금 방어)',
+    keyword: '가구 다리 보호 패드 펠트 스티커'
+  },
+  deskSurface: {
+    id: 'deskSurface',
+    title: 'PVC 데스크매트 · 멀티탭 정리함',
+    estCost: '약 1~2만 원',
+    minWon: 10000,
+    maxWon: 20000,
+    reason: '상판 요철 필기 보완 · 바닥 전선 먼지 차단',
+    keyword: '책상 데스크매트 멀티탭 전선 정리함'
+  },
+  dustCover: {
+    id: 'dustCover',
+    title: '지퍼형 의류 커버 · 불투명 리빙박스',
+    estCost: '약 1~2만 원',
+    minWon: 10000,
+    maxWon: 20000,
+    reason: '오픈 구조 먼지 뭉침 & 시각적 어지러움 차단',
+    keyword: '지퍼형 의류 커버 불투명 리빙박스'
+  },
+  fabricCare: {
+    id: 'fabricCare',
+    title: '생활방수 커버 · 논슬립 패드',
+    estCost: '약 1~2만 원',
+    minWon: 10000,
+    maxWon: 20000,
+    reason: '국물·음료 얼룩과 매트리스·러그 밀림 방지',
+    keyword: '생활방수 매트리스 커버 러그 논슬립 패드'
+  },
+  wallSafe: {
+    id: 'wallSafe',
+    title: '꼭꼬핀 · 스티커 접착제거제',
+    estCost: '약 5천~1.2만 원',
+    minWon: 5000,
+    maxWon: 12000,
+    reason: '실크벽지 찢김 예방 & 퇴실 시 자국 복구',
+    keyword: '꼭꼬핀 벽지 스티커 제거제'
+  },
+  bulbKit: {
+    id: 'bulbKit',
+    title: 'E26 2700K 전구색 LED · 연장 스위치',
+    estCost: '약 5천~1만 원',
+    minWon: 5000,
+    maxWon: 10000,
+    reason: '별매 전구 확인 & 눈 편한 따뜻한 밤 분위기',
+    keyword: 'E26 LED 전구 전구색 2700K'
+  },
+  measureTape: {
+    id: 'measureTape',
+    title: '3m 미니 줄자 · 틈새 정리함',
+    estCost: '약 5천~1.2만 원',
+    minWon: 5000,
+    maxWon: 12000,
+    reason: '문 열림·60cm 동선 실측 & 자투리 공간 활용',
+    keyword: '미니 줄자 틈새 수납함'
+  }
+};

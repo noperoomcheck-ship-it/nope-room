@@ -242,3 +242,97 @@ export const TARGET_CATEGORIES = [
   { id: '조명·거울', label: '조명·협탁' },
   { id: '무타공·욕실', label: '커튼·소품' }
 ];
+
+export const ROOM_BASE_OPTIONS = [
+  { id: 'clean-white', label: '깔끔한 흰·밝은 바닥' },
+  { id: 'yellow-floor', label: '누런 장판' },
+  { id: 'cherry-molding', label: '붉은 체리몰딩·문틀' },
+  { id: 'dark-floor', label: '어둡고 칙칙한 바닥' }
+];
+
+const ROOM_BASE_RESCUE_MAP = {
+  'clean-white': {
+    baseLabel: '깔끔한 흰·밝은 바닥',
+    headline: '기본 도화지가 밝아서 어떤 무드든 가장 쉽게 어울려요',
+    defaultAvoid: '벽·이불·조명까지 전부 차가운 흰색으로만 채우면 병원이나 사무실처럼 휑해질 수 있어요.',
+    coverSteps: [
+      '전체 면적의 60%는 밝은 벽·이불을 그대로 두고, 바닥 한쪽에만 작은 단모 러그로 구역을 나눠보세요.',
+      '전구색(2700~3000K) 단스탠드 하나만 켜도 흰 바탕 위에 따뜻한 분위기가 바로 살아납니다.'
+    ],
+    coverKeywords: [
+      { label: '먼지 없는 단모 러그 보기', keyword: '단모 워셔블 아이보리 러그' },
+      { label: '무타공 쉬폰 커튼 보기', keyword: '무타공 꼭꼬핀 린넨 쉬폰 커튼' }
+    ],
+    productIds: ['washable-short-carpet', 'pin-sheer-curtain']
+  },
+  'yellow-floor': {
+    baseLabel: '누런 장판',
+    headline: '노란 기운을 절반만 덮어도 원룸 인상이 완전히 달라져요',
+    defaultAvoid: '누런 장판 위에 붉은기 강한 갈색 가구나 차가운 은색 철제만 띄엄띄엄 놓으면 방이 더 낡고 어수선해 보여요.',
+    toneAvoids: {
+      'white-minimal': '누런 장판 위에 새하얀 가구만 바로 올리면 바닥의 노란 색감이 두 배로 튀어 보여요. 바닥부터 먼저 덮어주세요.',
+      'steel-modern': '노란 장판과 차가운 블랙·실버 스틸이 그대로 맞닿으면 색이 겉돌아요. 무채색 대형 러그로 경계를 끊어주는 게 핵심입니다.',
+      'walnut-vintage': '노란 장판 위에 진한 고동색 가구를 넓게 깔면 방이 좁고 칙칙해 보이기 쉬워요. 크림색 러그를 꼭 깔아주세요.'
+    },
+    coverSteps: [
+      '바닥 면적의 50% 이상을 접착제 없는 무타공 조립 데코타일이나 밝은 아이보리·오트밀 단모 러그로 먼저 덮어주세요.',
+      '이불과 커튼은 노란빛이 도는 크림보다 깨끗한 오프화이트·베이지로 맞추면 누런 장판 시선이 자연스럽게 중화됩니다.'
+    ],
+    coverKeywords: [
+      { label: '접착제 없는 조립 데코타일 보기', keyword: '무타공 조립식 데코타일 아이보리' },
+      { label: '누런 바닥 가리는 대형 단모 러그', keyword: '워셔블 단모 대형 러그 아이보리' }
+    ],
+    productIds: ['washable-short-carpet', 'sisal-look-rug']
+  },
+  'cherry-molding': {
+    baseLabel: '붉은 체리몰딩·문틀',
+    headline: '붉은 몰딩 시선만 천으로 끊어줘도 촌스러움이 싹 잡혀요',
+    defaultAvoid: '붉은 체리목 문틀 옆에 쨍한 파스텔 소품이나 차가운 은색 철제만 두면 색이 충돌해 방이 산만해집니다.',
+    toneAvoids: {
+      'steel-modern': '붉은 체리몰딩과 차가운 실버 스틸은 대비가 너무 세요. 문·창틀 쪽을 긴 커튼으로 먼저 가려줘야 모던 톤이 삽니다.',
+      'butter-pastel': '체리색 문틀 옆에 연노랑·소라색 소품을 바로 붙이면 촌스러워 보일 수 있어요. 아이보리 천으로 경계를 분리해 주세요.',
+      'white-minimal': '하얀 가구를 체리몰딩에 바짝 붙이기보다, 창가와 방문 옆에 밝은 천을 길게 늘어뜨려 붉은 선을 줄여주세요.'
+    },
+    coverSteps: [
+      '창틀과 베란다 샷시는 꼭꼬핀이나 굵은 무타공 압축봉에 긴 아이보리·린넨 쉬폰 커튼을 달아 붉은 몰딩 선을 가려주세요.',
+      '큰 가구는 붉은기 없는 오크·화이트로 통일하고, 방문 쪽에는 가벼운 도어 가림 커튼이나 패브릭 포스터를 걸어 시선을 분산하세요.'
+    ],
+    coverKeywords: [
+      { label: '꼭꼬핀·압축봉 긴 커튼 보기', keyword: '무타공 꼭꼬핀 린넨 쉬폰 커튼' },
+      { label: '문틀 가리는 도어 가림 패브릭', keyword: '방문 가리개 패브릭 커튼 압축봉' }
+    ],
+    productIds: ['pin-sheer-curtain', 'tension-curtain-rod-black']
+  },
+  'dark-floor': {
+    baseLabel: '어둡고 칙칙한 바닥',
+    headline: '다리가 가늘고 밝은 천을 더해 답답함을 걷어내세요',
+    defaultAvoid: '어두운 바닥 위에 바닥까지 꽉 막힌 짙은 색 수납장을 세우면 4~6평 방이 훨씬 좁고 무겁게 느껴집니다.',
+    toneAvoids: {
+      'walnut-vintage': '바닥도 어두운데 가구까지 짙은 월넛으로 채우면 동굴처럼 어두워져요. 침구와 러그만큼은 꼭 밝은 크림으로 빼세요.',
+      'steel-modern': '칙칙한 회색 바닥에 검은 철제만 놓으면 차가워 보일 수 있어요. 따뜻한 전구색 조명과 밝은 패브릭을 꼭 섞어주세요.'
+    },
+    coverSteps: [
+      '침대와 책상 사이 바닥에 밝은 아이보리·베이지 단모 러그를 깔아 빛을 반사시켜 주세요.',
+      '서랍장과 침대는 바닥에 딱 붙는 통짜형보다 다리가 드러나는 슬림 다리형을 고르면 방이 훨씬 트여 보입니다.'
+    ],
+    coverKeywords: [
+      { label: '방이 환해지는 밝은 단모 러그', keyword: '단모 워셔블 크림 러그 150 200' },
+      { label: '분위기 살리는 전구색 단스탠드', keyword: '전구색 2700K 단스탠드 조명' }
+    ],
+    productIds: ['sisal-look-rug', 'washable-short-carpet']
+  }
+};
+
+export function getRoomBaseRescue(baseId = 'clean-white', toneId = 'white-minimal') {
+  const entry = ROOM_BASE_RESCUE_MAP[baseId] || ROOM_BASE_RESCUE_MAP['clean-white'];
+  const avoidLine = (entry.toneAvoids && entry.toneAvoids[toneId]) || entry.defaultAvoid;
+  return {
+    id: baseId,
+    baseLabel: entry.baseLabel,
+    headline: entry.headline,
+    avoidLine,
+    coverSteps: entry.coverSteps,
+    coverKeywords: entry.coverKeywords,
+    productIds: entry.productIds
+  };
+}
