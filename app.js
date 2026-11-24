@@ -19,9 +19,13 @@ import {
   getItemGapHint,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './data/app-data.js?v=nope53';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope53';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope53';
+} from './data/app-data.js?v=nope59';
+import { QUIZ_VISUAL_SVGS } from './data/quiz-visuals.js?v=nope59';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope59';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope59';
+
+const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
+const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
 
 const STORAGE_KEYS = {
   cycles: 'nope_cycles_v2',
@@ -263,6 +267,18 @@ function showHomeStage(stage) {
   });
 }
 
+const nicknameNextBtn = document.getElementById('nickname-next-btn');
+const nicknameErrorMsg = document.getElementById('nickname-error-msg');
+
+function syncNicknameNextState() {
+  const hasName = Boolean(nicknameInputEl.value.trim());
+  if (nicknameNextBtn) nicknameNextBtn.disabled = !hasName;
+  if (hasName) {
+    nicknameInputEl.classList.remove('is-error');
+    if (nicknameErrorMsg) nicknameErrorMsg.classList.add('hidden');
+  }
+}
+
 function startQuiz() {
   clearAnalysisTimers();
   state.quizIndex = 0;
@@ -271,21 +287,31 @@ function startQuiz() {
   if (saved && saved.nickname && !nicknameInputEl.value) {
     nicknameInputEl.value = saved.nickname;
   }
+  syncNicknameNextState();
   showHomeStage('nickname');
   setTimeout(() => nicknameInputEl.focus(), 80);
 }
 
 function confirmNicknameAndStartQuestions() {
   const raw = nicknameInputEl.value.trim();
-  state.nickname = raw || '자취러';
+  if (!raw) {
+    nicknameInputEl.classList.add('is-error');
+    if (nicknameErrorMsg) nicknameErrorMsg.classList.remove('hidden');
+    if (nicknameNextBtn) nicknameNextBtn.disabled = true;
+    showToast('닉네임을 먼저 입력해 주세요.');
+    nicknameInputEl.focus();
+    return;
+  }
+  state.nickname = raw;
   state.quizIndex = 0;
   state.quizAnswers = [];
   showHomeStage('quiz');
   renderQuizStep();
 }
 
-document.getElementById('nickname-next-btn').addEventListener('click', confirmNicknameAndStartQuestions);
+nicknameNextBtn.addEventListener('click', confirmNicknameAndStartQuestions);
 document.getElementById('nickname-back-btn').addEventListener('click', () => showHomeStage('cover'));
+nicknameInputEl.addEventListener('input', syncNicknameNextState);
 nicknameInputEl.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') confirmNicknameAndStartQuestions();
 });
@@ -307,7 +333,7 @@ savedProfileBtn.addEventListener('click', () => {
     pyeongLabel: saved.pyeongLabel || '6~7평',
     wishId: saved.wishId || 'spacious',
     toneId: saved.toneId || 'white-minimal',
-    toneName: saved.toneName || '화이트 · 크림',
+    toneName: saved.toneName || '화이트 미니멀',
     tasteId: saved.tasteId || 'plant',
     density: saved.density || 'balanced',
     mbtiId: saved.mbtiId || '',
@@ -393,14 +419,7 @@ function renderQuizStep() {
   if (chapterEl) chapterEl.textContent = q.chapter || `STEP ${state.quizIndex + 1}`;
   document.getElementById('quiz-question-title').textContent = q.title;
   const reasonEl = document.getElementById('quiz-reason-hint');
-  if (reasonEl) {
-    if (q.reasonHint) {
-      reasonEl.textContent = `→ ${q.reasonHint}`;
-      reasonEl.classList.remove('hidden');
-    } else {
-      reasonEl.classList.add('hidden');
-    }
-  }
+  if (reasonEl) reasonEl.classList.add('hidden');
 
   const hintEl = document.getElementById('quiz-multi-hint');
   const nextBtn = document.getElementById('quiz-next-btn');
@@ -421,7 +440,7 @@ function renderQuizStep() {
   }
 
   const optsWrap = document.getElementById('quiz-options');
-  const isVisual = Boolean(q.visualGrid || q.options.some((o) => o.image));
+  const isVisual = Boolean(q.visualGrid || q.options.some((o) => o.visualKey || o.image));
   optsWrap.classList.add('no-hover-yet');
   optsWrap.classList.toggle('is-visual-grid', isVisual);
   optsWrap.innerHTML = '';
@@ -437,19 +456,24 @@ function renderQuizStep() {
   q.options.forEach((opt, optIdx) => {
     const btn = document.createElement('button');
     btn.type = 'button';
+    const hasVis = Boolean((opt.visualKey && QUIZ_VISUAL_SVGS[opt.visualKey]) || opt.image);
     const classes = ['quiz-option-btn'];
     if (q.multiSelect) classes.push('is-multi');
-    if (opt.image) classes.push('is-visual');
+    if (hasVis) classes.push('is-visual');
     btn.className = classes.join(' ');
 
-    if (opt.image) {
+    if (hasVis) {
       const thumb = document.createElement('div');
       thumb.className = 'quiz-vis-thumb';
-      const img = document.createElement('img');
-      img.src = opt.image;
-      img.alt = opt.shortTitle || opt.label;
-      img.loading = 'eager';
-      thumb.appendChild(img);
+      if (opt.visualKey && QUIZ_VISUAL_SVGS[opt.visualKey]) {
+        thumb.innerHTML = QUIZ_VISUAL_SVGS[opt.visualKey];
+      } else {
+        const img = document.createElement('img');
+        img.src = opt.image;
+        img.alt = opt.shortTitle || opt.label;
+        img.loading = 'eager';
+        thumb.appendChild(img);
+      }
 
       const meta = document.createElement('div');
       meta.className = 'quiz-vis-meta';
@@ -861,7 +885,6 @@ function finalizeRoomAnalysis() {
 function renderTasteSummaryStage(data) {
   const { nickname, pyeongLabel, wishId, toneId, toneName, tasteId, density, mbtiId, activity, secondaryRisks, dynamicAvoid, dynamicAlt, analysisBasis, estimatedSavedWon, profile, dangerScore } = data;
   const toneObj = ROOM_TONES.find((t) => t.id === toneId) || ROOM_TONES[0];
-  const tasteObj = TASTE_INSIGHTS[tasteId] || TASTE_INSIGHTS.plant;
   const wishCat = (wishId && WISH_CATEGORIES[wishId]) || WISH_CATEGORIES.spacious;
   const spaceMbti = (mbtiId && SPACE_MBTI_TYPES.find((m) => m.id === mbtiId)) || computeSpaceMbti({ density, toneId, tasteId });
 
@@ -873,33 +896,43 @@ function renderTasteSummaryStage(data) {
       <button id="taste-retake-btn" class="btn-ghost btn-sm">다시 테스트 ↺</button>
     </div>
     <div class="card taste-summary-card">
-      <h2 class="taste-headline">${escapeHtml(nickname)}님은<br /><span style="color:var(--accent)">'${escapeHtml(toneName)}'</span> 취향을 선택하셨어요.</h2>
+      <span class="micro-label" style="display:block;margin-bottom:6px;">SPACE TYPE SUMMARY</span>
+      <h2 class="taste-headline">${escapeHtml(nickname)}님의 방 타입은<br /><span style="color:var(--accent)">${escapeHtml(spaceMbti.code)}</span></h2>
 
       <div class="mbti-verdict-banner">
         <strong>${escapeHtml(spaceMbti.headline)}</strong>
         <p>${escapeHtml(spaceMbti.summary)}</p>
       </div>
 
-      <div class="palette-diagram-card">
-        <div class="taste-swatches-bar">
-          <span class="taste-swatch-segment" style="flex:3;background:${toneObj.swatches[0]};color:#141B29;">60%</span>
-          <span class="taste-swatch-segment" style="flex:2;background:${toneObj.swatches[1]};color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,0.35);">30%</span>
-          <span class="taste-swatch-segment" style="flex:1;background:${toneObj.swatches[2]};color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,0.35);">10%</span>
+      <div class="space-spec-grid">
+        <div class="space-spec-cell">
+          <span class="space-spec-lbl">공간 크기</span>
+          <strong class="space-spec-val">${escapeHtml(pyeongLabel)}</strong>
         </div>
-        <div class="palette-ratio-caption">
-          <span class="palette-ratio-kicker">추천 배색 비율</span>
-          <strong class="palette-ratio-text">${escapeHtml(toneObj.ratioRule)}</strong>
+        <div class="space-spec-cell">
+          <span class="space-spec-lbl">생활 중심</span>
+          <strong class="space-spec-val">${escapeHtml(activity || '재택·휴식')}</strong>
+        </div>
+        <div class="space-spec-cell">
+          <span class="space-spec-lbl">공간 목표</span>
+          <strong class="space-spec-val">${escapeHtml(wishCat.name)}</strong>
+        </div>
+        <div class="space-spec-cell">
+          <span class="space-spec-lbl">희망 무드</span>
+          <strong class="space-spec-val" style="display:flex;align-items:center;gap:5px;">
+            <span class="space-spec-dot" style="background:${toneObj.swatches[1]};"></span>
+            ${escapeHtml(toneObj.name)}
+          </strong>
         </div>
       </div>
 
       <div class="taste-analysis-box">
-        <p style="margin-bottom:8px;">${escapeHtml(wishCat.summary)}</p>
-        <p><strong>어울리는 무드·색조합:</strong> ${escapeHtml(wishCat.linkedMoods)} — ${escapeHtml(tasteObj.detail)}</p>
+        <p>${escapeHtml(wishCat.summary)}</p>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:8px;">
         <button id="taste-to-verdict-btn" class="btn-primary btn-full">${escapeHtml(nickname)}님의 리스크 · 맞춤 리포트 보기 →</button>
-        <button id="taste-to-matcher-btn" class="btn-secondary btn-full">이 취향으로 가구·소품 바로 보기</button>
+        <button id="taste-to-matcher-btn" class="btn-secondary btn-full">내 공간 맞춤 가구·소품 보기</button>
       </div>
     </div>
   `;
@@ -907,7 +940,7 @@ function renderTasteSummaryStage(data) {
   document.getElementById('taste-back-cover-btn').addEventListener('click', () => showHomeStage('cover'));
   document.getElementById('taste-retake-btn').addEventListener('click', startQuiz);
   document.getElementById('taste-to-verdict-btn').addEventListener('click', () => {
-    renderQuizResultView(profile, dangerScore, pyeongLabel, toneName, nickname, spaceMbti.code, secondaryRisks, dynamicAvoid, dynamicAlt, analysisBasis, estimatedSavedWon);
+    renderQuizResultView(profile, dangerScore, pyeongLabel, toneObj.name, nickname, spaceMbti.code, secondaryRisks, dynamicAvoid, dynamicAlt, analysisBasis, estimatedSavedWon);
   });
   document.getElementById('taste-to-matcher-btn').addEventListener('click', () => {
     state.matcherReturnOrigin = 'taste';
@@ -916,7 +949,7 @@ function renderTasteSummaryStage(data) {
   });
 }
 
-function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', toneName = '화이트 · 크림', nickname = '자취러', mbtiCode = '', secondaryRisks = [], dynamicAvoid = null, dynamicAlt = null, analysisBasis = [], estimatedSavedWon = 180000) {
+function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', toneName = '화이트 미니멀', nickname = '자취러', mbtiCode = '', secondaryRisks = [], dynamicAvoid = null, dynamicAlt = null, analysisBasis = [], estimatedSavedWon = 180000) {
   showHomeStage('result');
 
   const tips = profile.lifeTips || [];
@@ -1006,13 +1039,7 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
       ` : ''}
     </div>
 
-    <div class="app-sync-strip">
-      <button id="result-jump-scan-btn" type="button" class="app-sync-btn">🔍 내 방 판독</button>
-      <button id="result-jump-compare-btn" type="button" class="app-sync-btn">⚔️ A vs B 비교</button>
-      <button id="result-jump-scale-btn" type="button" class="app-sync-btn">📐 맞춤 치수</button>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
       <button id="share-story-btn" class="btn-accent btn-full btn-insta">
         <svg class="insta-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/>
@@ -1043,19 +1070,6 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
       const fuzzy = ITEMS_DB.find((it) => it.name.includes(label) || label.includes(it.name));
       if (fuzzy) openDetailSheet(fuzzy);
     });
-  });
-
-  document.getElementById('result-jump-scan-btn').addEventListener('click', () => {
-    switchTab('scanner');
-    setScannerMode('search');
-  });
-  document.getElementById('result-jump-compare-btn').addEventListener('click', () => {
-    switchTab('scanner');
-    setScannerMode('compare');
-  });
-  document.getElementById('result-jump-scale-btn').addEventListener('click', () => {
-    switchTab('scale');
-    renderScaleQuizHint();
   });
 
   document.getElementById('share-story-btn').addEventListener('click', () => {
@@ -1820,13 +1834,10 @@ function renderYukaCard(item) {
   return `
     <button class="yuka-card ${cardStateCls}" data-item-id="${escapeHtml(item.id)}">
       <div class="yuka-top">
-        <span class="brand-meta">${escapeHtml(item.brand)} · ${escapeHtml(item.priceTier)}</span>
+        <span class="brand-meta">${escapeHtml(item.brand)} · ${escapeHtml(item.category)} · ${escapeHtml(item.priceTier)}</span>
         <span class="verdict-pill ${v.cls}">${v.text}</span>
       </div>
       <div class="yuka-title">${escapeHtml(item.name)}</div>
-      <div class="yuka-chips">
-        ${item.chips.map((c) => `<span class="mini-chip">${escapeHtml(c)}</span>`).join('')}
-      </div>
       <p class="yuka-oneliner">${escapeHtml(item.oneLiner)}</p>
       ${topAlert ? `<div class="yuka-fit-pill is-${topAlert.tone}">${escapeHtml(topAlert.shortBadge)}</div>` : ''}
     </button>
@@ -1936,7 +1947,7 @@ function openDetailSheet(item) {
       <div>
         <span class="verdict-pill ${v.cls} is-hero">${v.text}</span>
         <h2 class="sheet-title">${escapeHtml(item.name)}</h2>
-        <span class="sheet-meta">${escapeHtml(item.brand)} · ${escapeHtml(item.category)} · ${escapeHtml(item.priceTier)}</span>
+        <span class="sheet-meta">${escapeHtml(item.brand)} · ${escapeHtml(item.category)} · ${escapeHtml(item.priceTier)} · ${escapeHtml(primaryTone)} 톤</span>
       </div>
       <div class="sheet-head-actions">
         <button class="sheet-wish-btn ${wished ? 'active' : ''}" id="sheet-wish-toggle-btn" type="button">${wished ? '♥ 찜됨' : '♡ 저장'}</button>
@@ -2006,7 +2017,6 @@ function openDetailSheet(item) {
         <strong class="pair-head-title">함께 두면 어울리는 궁합 가구</strong>
         <span class="pair-tone-badge">${escapeHtml(primaryTone)} 톤</span>
       </div>
-      <p class="pair-reason-line">${escapeHtml(pairingReason)}</p>
       <div class="pair-grid">
         ${pairedItems.map((p) => {
           const pv = verdictMeta(p.verdict);
@@ -2032,11 +2042,11 @@ function openDetailSheet(item) {
           return `
             <div class="prep-kit-row">
               <div class="prep-kit-info">
-                <strong>${escapeHtml(kit.title)} <span class="prep-kit-price">${escapeHtml(kit.estCost)}</span></strong>
-                <span>${escapeHtml(kit.reason)}</span>
+                <strong>${escapeHtml(kit.title)}</strong>
+                <span class="prep-kit-price">${escapeHtml(kit.estCost)}</span>
               </div>
               <div class="prep-kit-links">
-                <a href="${kitUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">쿠팡 →</a>
+                <a href="${kitUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill is-primary-shop">쿠팡 보기 →</a>
                 <a href="${kitUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">오늘의집 →</a>
               </div>
             </div>
@@ -2048,19 +2058,18 @@ function openDetailSheet(item) {
     <div class="sheet-share-box">
       <div class="sheet-share-head">
         <strong>이 판독 결과 공유하기</strong>
-        <span>단톡방 · 스토리</span>
       </div>
       <div class="sheet-share-row">
-        <button type="button" id="sheet-copy-share-btn" class="btn-share-chip">카톡 요약·링크 복사</button>
-        <button type="button" id="sheet-story-share-btn" class="btn-share-chip is-story">판독 카드 저장 (스토리용)</button>
+        <button type="button" id="sheet-copy-share-btn" class="btn-share-chip is-kakao">${KAKAO_LOGO_SVG}<span>카톡 공유</span></button>
+        <button type="button" id="sheet-story-share-btn" class="btn-share-chip is-story">${INSTA_LOGO_SVG}<span>인스타 스토리</span></button>
       </div>
     </div>
 
     <div class="sheet-alt-box ${altBoxCls}">
-      <span class="text-tertiary" style="font-weight:700;display:block;margin-bottom:5px;">${altLabel}</span>
-      <strong style="font-size:14.5px;display:block;margin-bottom:12px;">${escapeHtml(item.altName)}</strong>
+      <span class="sheet-alt-kicker">${altLabel}</span>
+      <strong class="sheet-alt-name">${escapeHtml(item.altName)}</strong>
       <div class="dual-link-row">
-        <a href="${urls.coupang}" target="_blank" rel="noopener noreferrer" class="${primaryBtnCls}" style="padding:12px 10px;font-size:13.5px;">쿠팡에서 보기 →</a>
+        <a href="${urls.coupang}" target="_blank" rel="noopener noreferrer" class="${primaryBtnCls}" style="padding:13px 12px;font-size:14px;font-weight:800;">쿠팡에서 보기 →</a>
         <a href="${urls.ohouse}" target="_blank" rel="noopener noreferrer" class="btn-ohouse">오늘의집 보기 →</a>
       </div>
       ${urls.hasCoupangAffiliate ? `<p class="ftc-affiliate-note">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
@@ -2564,17 +2573,13 @@ function renderCustomScanResult({ analyzedItem, engineLabel, urlStatusNote, rawI
     ` : ''}
     ${renderYukaCard(analyzedItem)}
     <div class="live-search-bridge">
-      <div class="live-bridge-copy">
-        <span class="micro-label">ZERO DEAD-END PIPELINE</span>
-        <p>${urlStatusNote ? escapeHtml(urlStatusNote) : '방금 판독한 결과가 자동 저장 목록에 적재되었습니다. 아래에서 오늘의집·쿠팡 최저평점 실사 후기를 확인하거나 친구에게 공유하세요.'}</p>
-      </div>
       <div class="dual-link-row" style="margin-bottom:8px;">
         <a href="${analyzedItem.sourceUrl || urls.ohouse}" target="_blank" rel="noopener noreferrer" class="btn-ohouse">${analyzedItem.sourceUrl ? '원본 링크 열기 →' : '오늘의집 리뷰 검색 →'}</a>
-        <a href="${urls.coupang}" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="padding:11px 10px;font-size:13px;">쿠팡 실후기 보기 →</a>
+        <a href="${urls.coupang}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="padding:11px 10px;font-size:13px;font-weight:800;">쿠팡 실후기 보기 →</a>
       </div>
       <div class="sheet-share-row">
-        <button type="button" id="live-copy-share-btn" class="btn-share-chip">카톡 요약·링크 복사</button>
-        <button type="button" id="live-story-share-btn" class="btn-share-chip is-story">판독 카드 저장 (스토리용)</button>
+        <button type="button" id="live-copy-share-btn" class="btn-share-chip is-kakao">${KAKAO_LOGO_SVG}<span>카톡 공유</span></button>
+        <button type="button" id="live-story-share-btn" class="btn-share-chip is-story">${INSTA_LOGO_SVG}<span>인스타 스토리</span></button>
       </div>
     </div>
   `;
@@ -2791,6 +2796,73 @@ const COMPARE_PRESETS = [
 
 let activeCompareA = 'ikea-lagkapten';
 let activeCompareB = 'dodot-quattro';
+let comparePickerTarget = null;
+let compareSearchQuery = '';
+let compareSearchCat = 'ALL';
+
+function getFilteredCompareItems() {
+  const q = compareSearchQuery.trim().toLowerCase();
+  const compactQ = q.replace(/\s+/g, '');
+  const list = ITEMS_DB.filter((it) => {
+    if (compareSearchCat !== 'ALL' && it.category !== compareSearchCat) return false;
+    if (!q) return true;
+    const hay = `${it.name} ${it.brand} ${it.category} ${it.oneLiner || ''} ${(it.chips || []).join(' ')}`.toLowerCase();
+    return hay.includes(q) || (compactQ && hay.replace(/\s+/g, '').includes(compactQ));
+  });
+  return list;
+}
+
+function renderComparePickerList() {
+  const listEl = document.getElementById('compare-picker-list');
+  const countEl = document.getElementById('compare-picker-count');
+  if (!listEl) return;
+  const items = getFilteredCompareItems();
+  const selectedId = comparePickerTarget === 'A' ? activeCompareA : activeCompareB;
+  const otherId = comparePickerTarget === 'A' ? activeCompareB : activeCompareA;
+
+  if (countEl) {
+    countEl.textContent = compareSearchQuery.trim()
+      ? `검색 결과 ${items.length}종`
+      : `총 ${items.length}종`;
+  }
+
+  if (!items.length) {
+    listEl.innerHTML = `<div class="compare-picker-empty">일치하는 제품이 없어요. 브랜드명이나 카테고리(예: 책상, 러그, 행거)로 검색해 보세요.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = items.map((it) => {
+    const vm = verdictMeta(it.verdict);
+    const isCurrent = it.id === selectedId;
+    const isOther = it.id === otherId;
+    return `
+      <button type="button" class="compare-picker-item ${isCurrent ? 'is-current' : ''}" data-pick-id="${escapeHtml(it.id)}">
+        <div class="compare-picker-item-main">
+          <span class="verdict-pill ${vm.cls}">${vm.text}</span>
+          <div class="compare-picker-item-text">
+            <strong>${escapeHtml(it.name)}</strong>
+            <span>${escapeHtml(it.brand)} · ${escapeHtml(it.category)} · ${escapeHtml(it.priceTier)}</span>
+          </div>
+        </div>
+        <span class="compare-picker-item-tag">${isCurrent ? '현재 선택' : (isOther ? '상대 제품' : '고르기')}</span>
+      </button>
+    `;
+  }).join('');
+
+  listEl.querySelectorAll('.compare-picker-item').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.pickId;
+      if (comparePickerTarget === 'A') {
+        activeCompareA = id;
+      } else if (comparePickerTarget === 'B') {
+        activeCompareB = id;
+      }
+      comparePickerTarget = null;
+      compareSearchQuery = '';
+      renderCompareView();
+    });
+  });
+}
 
 function renderCompareView() {
   const chipsEl = document.getElementById('compare-preset-chips');
@@ -2806,6 +2878,8 @@ function renderCompareView() {
     btn.addEventListener('click', () => {
       activeCompareA = btn.dataset.cmpA;
       activeCompareB = btn.dataset.cmpB;
+      comparePickerTarget = null;
+      compareSearchQuery = '';
       renderCompareView();
     });
   });
@@ -2828,27 +2902,53 @@ function renderCompareView() {
   const winner = scoreA === scoreB ? null : (scoreA > scoreB ? itemA : itemB);
   const loser = winner === itemA ? itemB : itemA;
 
-  const optsHtml = (selectedId) => ITEMS_DB.map((it) =>
-    `<option value="${escapeHtml(it.id)}" ${it.id === selectedId ? 'selected' : ''}>[${it.verdict}] ${escapeHtml(it.name)}</option>`
-  ).join('');
-
   const vA = verdictMeta(itemA.verdict);
   const vB = verdictMeta(itemB.verdict);
 
+  const pickerHtml = comparePickerTarget ? `
+    <div id="compare-picker-panel" class="compare-picker-panel">
+      <div class="compare-picker-head">
+        <strong>제품 ${comparePickerTarget} 바꾸기 <span id="compare-picker-count" class="compare-picker-count"></span></strong>
+        <button type="button" id="compare-picker-close" class="btn-ghost btn-sm" style="padding:2px 6px;">닫기 ✕</button>
+      </div>
+      <div class="compare-search-box">
+        <input id="compare-search-input" type="text" value="${escapeHtml(compareSearchQuery)}" placeholder="제품명 · 브랜드 · 키워드 검색 (예: 두닷, 이케아, 러그)" autocomplete="off" />
+        ${compareSearchQuery ? '<button type="button" id="compare-search-clear" class="compare-search-clear" aria-label="검색어 지우기">✕</button>' : ''}
+      </div>
+      <div id="compare-cat-chips" class="compare-cat-chips">
+        <button type="button" class="chip ${compareSearchCat === 'ALL' ? 'active' : ''}" data-pick-cat="ALL">전체</button>
+        ${TARGET_CATEGORIES.map((c) => `
+          <button type="button" class="chip ${compareSearchCat === c.id ? 'active' : ''}" data-pick-cat="${escapeHtml(c.id)}">${escapeHtml(c.label)}</button>
+        `).join('')}
+      </div>
+      <div id="compare-picker-list" class="compare-picker-list"></div>
+    </div>
+  ` : '';
+
   outEl.innerHTML = `
     <div class="compare-select-grid">
-      <div class="compare-pick-card">
-        <span class="verdict-pill ${vA.cls}">${vA.text}</span>
-        <select id="compare-select-a" aria-label="제품 A 선택">${optsHtml(itemA.id)}</select>
-        <span style="font-size:11px;color:var(--ink-secondary);font-weight:700;">${escapeHtml(itemA.priceTier)}</span>
-      </div>
+      <button type="button" id="compare-pick-btn-a" class="compare-pick-card ${comparePickerTarget === 'A' ? 'is-picking' : ''}" aria-label="제품 A 검색해서 변경">
+        <div class="compare-pick-top">
+          <span class="compare-slot-tag">A</span>
+          <span class="verdict-pill ${vA.cls}">${vA.text}</span>
+        </div>
+        <strong class="compare-pick-name">${escapeHtml(itemA.name)}</strong>
+        <span class="compare-pick-sub">${escapeHtml(itemA.brand)} · ${escapeHtml(itemA.priceTier)}</span>
+        <span class="compare-pick-cta">${comparePickerTarget === 'A' ? '선택 중 ▲' : '검색해서 변경 ›'}</span>
+      </button>
       <div class="compare-vs-badge">VS</div>
-      <div class="compare-pick-card">
-        <span class="verdict-pill ${vB.cls}">${vB.text}</span>
-        <select id="compare-select-b" aria-label="제품 B 선택">${optsHtml(itemB.id)}</select>
-        <span style="font-size:11px;color:var(--ink-secondary);font-weight:700;">${escapeHtml(itemB.priceTier)}</span>
-      </div>
+      <button type="button" id="compare-pick-btn-b" class="compare-pick-card ${comparePickerTarget === 'B' ? 'is-picking' : ''}" aria-label="제품 B 검색해서 변경">
+        <div class="compare-pick-top">
+          <span class="compare-slot-tag">B</span>
+          <span class="verdict-pill ${vB.cls}">${vB.text}</span>
+        </div>
+        <strong class="compare-pick-name">${escapeHtml(itemB.name)}</strong>
+        <span class="compare-pick-sub">${escapeHtml(itemB.brand)} · ${escapeHtml(itemB.priceTier)}</span>
+        <span class="compare-pick-cta">${comparePickerTarget === 'B' ? '선택 중 ▲' : '검색해서 변경 ›'}</span>
+      </button>
     </div>
+
+    ${pickerHtml}
 
     <div class="compare-matrix-card">
       <div class="compare-row">
@@ -2879,8 +2979,8 @@ function renderCompareView() {
 
     <div class="compare-winner-banner">
       ${winner
-        ? `<strong>✓ 추천 승자: ${escapeHtml(winner.name)}</strong><br />${escapeHtml(loser.name)} 대비 내 방 조건과 유지관리·내구성 점수가 더 안정적입니다.`
-        : `<strong>⚖️ 두 제품 스펙이 비슷해요</strong><br />예산과 방 톤에 맞춰 상세 근거를 비교해 보세요.`}
+        ? `<strong class="compare-reco-title">✓ 추천 제품: ${escapeHtml(winner.name)}</strong><p class="compare-reco-desc">${escapeHtml(loser.name)} 대비 내 방 조건과 유지관리·내구성 점수가 더 안정적입니다.</p>`
+        : `<strong class="compare-reco-title">⚖️ 두 제품 스펙이 비슷해요</strong><p class="compare-reco-desc">예산과 방 톤에 맞춰 상세 근거를 비교해 보세요.</p>`}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
         <button type="button" id="compare-open-a" class="btn-secondary btn-sm">A 상세 보기</button>
         <button type="button" id="compare-open-b" class="btn-primary btn-sm">B 상세 보기</button>
@@ -2888,14 +2988,71 @@ function renderCompareView() {
     </div>
   `;
 
-  document.getElementById('compare-select-a').addEventListener('change', (e) => {
-    activeCompareA = e.target.value;
+  document.getElementById('compare-pick-btn-a').addEventListener('click', () => {
+    comparePickerTarget = comparePickerTarget === 'A' ? null : 'A';
+    compareSearchQuery = '';
     renderCompareView();
   });
-  document.getElementById('compare-select-b').addEventListener('change', (e) => {
-    activeCompareB = e.target.value;
+  document.getElementById('compare-pick-btn-b').addEventListener('click', () => {
+    comparePickerTarget = comparePickerTarget === 'B' ? null : 'B';
+    compareSearchQuery = '';
     renderCompareView();
   });
+
+  if (comparePickerTarget) {
+    renderComparePickerList();
+    const searchInput = document.getElementById('compare-search-input');
+    if (searchInput) {
+      searchInput.focus();
+      searchInput.addEventListener('input', (e) => {
+        compareSearchQuery = e.target.value;
+        const clearBtn = document.getElementById('compare-search-clear');
+        if (compareSearchQuery && !clearBtn) {
+          const box = searchInput.parentElement;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.id = 'compare-search-clear';
+          btn.className = 'compare-search-clear';
+          btn.setAttribute('aria-label', '검색어 지우기');
+          btn.textContent = '✕';
+          btn.addEventListener('click', () => {
+            compareSearchQuery = '';
+            searchInput.value = '';
+            btn.remove();
+            renderComparePickerList();
+            searchInput.focus();
+          });
+          box.appendChild(btn);
+        } else if (!compareSearchQuery && clearBtn) {
+          clearBtn.remove();
+        }
+        renderComparePickerList();
+      });
+    }
+    const clearBtn = document.getElementById('compare-search-clear');
+    if (clearBtn && searchInput) {
+      clearBtn.addEventListener('click', () => {
+        compareSearchQuery = '';
+        searchInput.value = '';
+        clearBtn.remove();
+        renderComparePickerList();
+        searchInput.focus();
+      });
+    }
+    document.getElementById('compare-picker-close').addEventListener('click', () => {
+      comparePickerTarget = null;
+      compareSearchQuery = '';
+      renderCompareView();
+    });
+    document.querySelectorAll('#compare-cat-chips button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        compareSearchCat = btn.dataset.pickCat;
+        document.querySelectorAll('#compare-cat-chips button').forEach((b) => b.classList.toggle('active', b === btn));
+        renderComparePickerList();
+      });
+    });
+  }
+
   document.getElementById('compare-open-a').addEventListener('click', () => openDetailSheet(itemA));
   document.getElementById('compare-open-b').addEventListener('click', () => openDetailSheet(itemB));
 }
@@ -3047,7 +3204,6 @@ function renderToneMatcher() {
         <span class="tone-name">${escapeHtml(t.name)}</span>
         ${isSurveyPicked ? `<span class="survey-pick-pill">내 설문</span>` : ''}
       </div>
-      <span class="tone-sub">${escapeHtml(t.sub)}</span>
     `;
     btn.addEventListener('click', () => {
       state.matcherTone = t.id;
@@ -3218,7 +3374,6 @@ function renderToneMatcher() {
 
     <div class="matcher-section-head">
       <strong>${escapeHtml(activeTone.name)} 톤 맞춤 · ${escapeHtml(TARGET_CATEGORIES.find((c) => c.id === state.matcherCat)?.label || state.matcherCat)}</strong>
-      <span>눌러서 궁합 보기</span>
     </div>
     <div class="cards-stack" id="matcher-primary-list">
       ${primaryMatches.length ? primaryMatches.map(renderYukaCard).join('') : `<div class="card"><p class="text-secondary" style="margin:0;">해당 조건의 추천 가구를 준비 중입니다.</p></div>`}
@@ -3226,7 +3381,6 @@ function renderToneMatcher() {
 
     <div class="matcher-section-head">
       <strong>함께 두면 완성되는 궁합 가구</strong>
-      <span>다른 카테고리</span>
     </div>
     <div class="cards-stack" id="matcher-companion-list">
       ${pickedCompanions.map(renderYukaCard).join('')}
@@ -3234,7 +3388,6 @@ function renderToneMatcher() {
 
     <div class="matcher-section-head">
       <strong>10% 포인트 소품 · 조경·식기·오브제</strong>
-      <span>쿠팡 · 오늘의집</span>
     </div>
     <div class="cards-stack">
       ${orderedAccents.map((acc) => {
@@ -3261,10 +3414,9 @@ function renderToneMatcher() {
     </div>
 
     <div class="matcher-share-bar">
-      <p class="matcher-share-copy">이 조합과 바탕 중화 공식을 1장 이미지로 저장하거나 카톡으로 공유해 두세요.</p>
       <div class="sheet-share-row">
-        <button type="button" id="copy-tone-link-btn" class="btn-share-chip">카톡 무드 링크 복사</button>
-        <button type="button" id="share-tone-rescue-btn" class="btn-share-chip is-story">중화 레시피 저장</button>
+        <button type="button" id="copy-tone-link-btn" class="btn-share-chip is-kakao">${KAKAO_LOGO_SVG}<span>카톡 무드 공유</span></button>
+        <button type="button" id="share-tone-rescue-btn" class="btn-share-chip is-story">${INSTA_LOGO_SVG}<span>인스타 중화 레시피</span></button>
       </div>
     </div>
   `;
@@ -4917,6 +5069,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope53').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope59').catch(() => {});
   }
 }

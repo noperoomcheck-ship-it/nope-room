@@ -1,12 +1,12 @@
 // NOPE! v9 — 212종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
-import { ITEMS_DB } from './products-db.js?v=nope53';
+import { ITEMS_DB } from './products-db.js?v=nope59';
 import {
   STYLE_MOODS,
   ROOM_TONES,
   TARGET_CATEGORIES,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './mood-palettes.js?v=nope53';
+} from './mood-palettes.js?v=nope59';
 export {
   ITEMS_DB,
   STYLE_MOODS,
@@ -183,29 +183,29 @@ export const WISH_CATEGORIES = {
     id: 'spacious',
     name: '여백 · 개방감 중심형',
     wishShort: '방이 넓어 보였으면 좋겠어요',
-    linkedMoods: '화이트 · 크림 / 블랙 · 실버 스틸',
-    summary: '평수보다 방이 탁 트여 보이길 바라는 취향이에요. 벽과 비슷한 밝은 크림·화이트를 바탕 60%로 쓰고, 바닥이 비치는 슬림 다리 가구를 고르면 시야가 막히지 않아요.'
+    linkedMoods: '화이트 미니멀 / 모노 · 스틸',
+    summary: '평수 대비 시야가 트여야 답답하지 않은 구조예요. 바닥이 드러나는 슬림 프레임 가구와 밝은 톤 베이스를 유지하는 것이 핵심입니다.'
   },
   storage: {
     id: 'storage',
     name: '실속 · 수납 집중형',
     wishShort: '평수 대비 수납이 많았으면 좋겠어요',
-    linkedMoods: '오크 · 베이지 우드 / 화이트 · 크림',
-    summary: '작은 평수에서도 수납 공간을 최대로 쓰고 싶은 실속 취향이에요. 겉이 통일된 베이지·오크 도어형 수납장과 침대 하부 수납을 맞추면 짐이 많아도 깔끔해 보여요.'
+    linkedMoods: '내추럴 오크 / 화이트 미니멀',
+    summary: '작은 평수에서 수납 효율을 최대한 뽑아야 하는 조건이에요. 전면이 가려지는 도어형 수납장과 침대 하부 수납으로 시각 노이즈를 줄이는 게 유리합니다.'
   },
   moodlight: {
     id: 'moodlight',
     name: '아늑 · 무드등 분위기형',
     wishShort: '너무 밝지 않고 무드등 위주로 아늑했으면 해요',
-    linkedMoods: '월넛 · 빈티지 우드 / 풀색 · 테라코타',
-    summary: '형광등 대신 은은한 조명과 차분한 밤 분위기를 즐기는 취향이에요. 진한 월넛이나 풀색·벽돌색 톤에 따뜻한 전구색 단스탠드를 두면 눈이 편하고 아늑한 방이 됩니다.'
+    linkedMoods: '월넛 · 미드센추리 / 세이지 · 테라코타',
+    summary: '저녁 휴식감과 간접조명 무드가 중요한 공간이에요. 2700K 확산광 스탠드와 내추럴·월넛 계열 질감을 매치하면 눈이 훨씬 편해집니다.'
   },
   easycare: {
     id: 'easycare',
     name: '단정 · 관리 편의형',
     wishShort: '청소와 관리가 쉬웠으면 좋겠어요',
-    linkedMoods: '버터 · 파스텔 크림 / 화이트 · 크림',
-    summary: '청소·세탁 스트레스를 줄이고 늘 정돈된 상태를 유지하고 싶은 취향이에요. 산뜻한 크림·파스텔 바탕에 커버 분리 세탁이 되는 소품과 완제품 수납을 짝지으면 관리가 훨씬 쉬워져요.'
+    linkedMoods: '버터 · 파스텔 / 화이트 미니멀',
+    summary: '청소·세탁 스트레스를 줄여야 오래 정돈되는 생활 패턴이에요. 커버 분리 세탁이 가능한 패브릭과 틈새 먼지가 적은 완제품 가구가 잘 맞습니다.'
   }
 };
 
@@ -263,7 +263,7 @@ export const SPACE_MBTI_TYPES = [
     id: 'modern',
     code: 'F-MOD · 선이 반듯한 모더너',
     headline: '군더더기 없는 직선과 정돈된 분위기를 좋아하는 타입',
-    summary: '알록달록한 장식보다 블랙·화이트·실버 스틸처럼 선이 깔끔하게 떨어지는 실용적 공간에서 집중력과 안정감을 느껴요. 전선과 생활용품을 케이스에 깔끔히 숨겨주면 만족도가 두 배로 올라갑니다.'
+    summary: '알록달록한 장식보다 모노 스틸·화이트처럼 선이 깔끔하게 떨어지는 실용적 공간에서 집중력과 안정감을 느껴요. 전선과 생활용품을 케이스에 깔끔히 숨겨주면 만족도가 두 배로 올라갑니다.'
   }
 ];
 
@@ -333,9 +333,9 @@ export const QUIZ_QUESTIONS = [
     reasonHint: '이미지에서 내 방 바닥과 가장 가까운 재질·톤을 탭하세요.',
     visualGrid: true,
     options: [
-      { label: 'PVC 장판 (난방 열 변색·가구 찍힘 주의)', shortTitle: 'PVC 장판', image: './assets/quiz/floor-jangpan.png', swatches: ['#F2E2BA', '#DFC893'], floorMaterial: 'jangpan', scores: { depositRisk: 6, fabricRisk: 4 } },
-      { label: '강마루·온돌마루 (물기·의자 바퀴 긁힘 주의)', shortTitle: '강마루 · 원목톤', image: './assets/quiz/floor-wood.png', swatches: ['#D2A779', '#B48453'], floorMaterial: 'wood', scores: { depositRisk: 6, assemblyRisk: 2 } },
-      { label: '타일 · 데코타일 (차가움·줄눈 먼지)', shortTitle: '타일 · 데코타일', image: './assets/quiz/floor-tile.png', swatches: ['#EEF0F2', '#CFD4D9'], floorMaterial: 'tile', scores: { dustRisk: 3 } }
+      { label: 'PVC 장판 (난방 열 변색·가구 찍힘 주의)', shortTitle: 'PVC 장판', visualKey: 'floor-jangpan', image: './assets/quiz/floor-jangpan.png', swatches: ['#F2E2BA', '#DFC893'], floorMaterial: 'jangpan', scores: { depositRisk: 6, fabricRisk: 4 } },
+      { label: '강마루·온돌마루 (물기·의자 바퀴 긁힘 주의)', shortTitle: '강마루 · 원목톤', visualKey: 'floor-wood', image: './assets/quiz/floor-wood.png', swatches: ['#D2A779', '#B48453'], floorMaterial: 'wood', scores: { depositRisk: 6, assemblyRisk: 2 } },
+      { label: '타일 · 데코타일 (차가움·줄눈 먼지)', shortTitle: '타일 · 데코타일', visualKey: 'floor-tile', image: './assets/quiz/floor-tile.png', swatches: ['#EEF0F2', '#CFD4D9'], floorMaterial: 'tile', scores: { dustRisk: 3 } }
     ]
   },
 
@@ -511,12 +511,12 @@ export const QUIZ_QUESTIONS = [
     reasonHint: '긴 설명 없이 사진 느낌으로 바로 골라주세요. 톤 매처에 즉시 연결됩니다.',
     visualGrid: true,
     options: [
-      { label: '화이트 · 크림 (밝고 훤히 넓어 보이는 방)', shortTitle: '화이트 · 크림', image: './assets/tones/white-minimal.png', swatches: ['#FAF9F6', '#EAE5DC', '#2C2523'], toneId: 'white-minimal', scores: { dustRisk: 2 } },
-      { label: '오크 · 베이지 우드 (따뜻하고 포근한 나무 느낌)', shortTitle: '오크 · 베이지', image: './assets/tones/oak-natural.png', swatches: ['#FAF6EE', '#CFA676', '#6D8658'], toneId: 'oak-natural', scores: { dustRisk: 3 } },
-      { label: '월넛 · 빈티지 우드 (고동색 원목의 깊은 분위기)', shortTitle: '월넛 · 빈티지', image: './assets/tones/walnut-vintage.png', swatches: ['#F2EDE3', '#5E3F2E', '#D15B34'], toneId: 'walnut-vintage', scores: { dustRisk: 4, spaceStress: 3 } },
-      { label: '블랙 · 실버 스틸 (선이 반듯한 시크한 방)', shortTitle: '블랙 · 실버 스틸', image: './assets/tones/steel-modern.png', swatches: ['#F5F7F8', '#202326', '#2557B8'], toneId: 'steel-modern', scores: { dustRisk: 5, assemblyRisk: 2 } },
-      { label: '버터 · 파스텔 크림 (연노랑·소라색의 생기 있는 방)', shortTitle: '버터 · 파스텔', image: './assets/tones/butter-pastel.png', swatches: ['#FFFDF4', '#F7DF8A', '#87A9D6'], toneId: 'butter-pastel', scores: { dustRisk: 3 } },
-      { label: '풀색 · 테라코타 (차분한 초록과 벽돌색 카페 무드)', shortTitle: '풀색 · 테라코타', image: './assets/tones/sage-terracotta.png', swatches: ['#F5F3EC', '#889E81', '#C86D51'], toneId: 'sage-terracotta', scores: { dustRisk: 3 } }
+      { label: '화이트 미니멀 (밝고 훤히 넓어 보이는 방)', shortTitle: '화이트 미니멀', visualKey: 'white-minimal', image: './assets/tones/white-minimal.png', swatches: ['#FAF9F6', '#EAE5DC', '#2C2523'], toneId: 'white-minimal', scores: { dustRisk: 2 } },
+      { label: '내추럴 오크 (따뜻하고 포근한 원목 무드)', shortTitle: '내추럴 오크', visualKey: 'oak-natural', image: './assets/tones/oak-natural.png', swatches: ['#FAF6EE', '#CFA676', '#6D8658'], toneId: 'oak-natural', scores: { dustRisk: 3 } },
+      { label: '월넛 · 미드센추리 (짙은 월넛과 레트로 포인트)', shortTitle: '월넛 · 미드센추리', visualKey: 'walnut-vintage', image: './assets/tones/walnut-vintage.png', swatches: ['#F2EDE3', '#5E3F2E', '#D15B34'], toneId: 'walnut-vintage', scores: { dustRisk: 4, spaceStress: 3 } },
+      { label: '모노 · 스틸 (선이 반듯한 무채색·스틸 무드)', shortTitle: '모노 · 스틸', visualKey: 'steel-modern', image: './assets/tones/steel-modern.png', swatches: ['#F5F7F8', '#202326', '#2557B8'], toneId: 'steel-modern', scores: { dustRisk: 5, assemblyRisk: 2 } },
+      { label: '버터 · 파스텔 (연노랑·소라색의 생기 있는 방)', shortTitle: '버터 · 파스텔', visualKey: 'butter-pastel', image: './assets/tones/butter-pastel.png', swatches: ['#FFFDF4', '#F7DF8A', '#87A9D6'], toneId: 'butter-pastel', scores: { dustRisk: 3 } },
+      { label: '세이지 · 테라코타 (차분한 그린과 테라코타 무드)', shortTitle: '세이지 · 테라코타', visualKey: 'sage-terracotta', image: './assets/tones/sage-terracotta.png', swatches: ['#F5F3EC', '#889E81', '#C86D51'], toneId: 'sage-terracotta', scores: { dustRisk: 3 } }
     ]
   },
   {
@@ -526,9 +526,9 @@ export const QUIZ_QUESTIONS = [
     reasonHint: '소재별 변형·먼지·열기 내구성 기준과 연결됩니다.',
     visualGrid: true,
     options: [
-      { label: '시원하고 깔끔한 스틸 · 유리 · 매트 화이트', shortTitle: '스틸 · 매트 화이트', image: './assets/quiz/mat-steel.png', swatches: ['#FFFFFF', '#B6C0C9', '#2557B8'], materialPref: 'steel', scores: { assemblyRisk: 3 } },
-      { label: '따뜻하고 포근한 원목 · 오크 · 라탄', shortTitle: '원목 · 오크 · 라탄', image: './assets/quiz/mat-wood.png', swatches: ['#F8F3E8', '#CFA676', '#B08655'], materialPref: 'wood', scores: { dustRisk: 3 } },
-      { label: '폭신한 패브릭 · 면 · 코튼 질감', shortTitle: '패브릭 · 코튼', image: './assets/quiz/mat-fabric.png', swatches: ['#FFFFFF', '#F2ECE1', '#DED6C8'], materialPref: 'fabric', scores: { fabricRisk: 5, dustRisk: 4 } }
+      { label: '시원하고 깔끔한 스틸 · 유리 · 매트 화이트', shortTitle: '스틸 · 매트 화이트', visualKey: 'mat-steel', image: './assets/quiz/mat-steel.png', swatches: ['#FFFFFF', '#B6C0C9', '#2557B8'], materialPref: 'steel', scores: { assemblyRisk: 3 } },
+      { label: '따뜻하고 포근한 원목 · 오크 · 라탄', shortTitle: '내추럴 우드 · 라탄', visualKey: 'mat-wood', image: './assets/quiz/mat-wood.png', swatches: ['#F8F3E8', '#CFA676', '#B08655'], materialPref: 'wood', scores: { dustRisk: 3 } },
+      { label: '폭신한 패브릭 · 면 · 코튼 질감', shortTitle: '패브릭 · 코튼', visualKey: 'mat-fabric', image: './assets/quiz/mat-fabric.png', swatches: ['#FFFFFF', '#F2ECE1', '#DED6C8'], materialPref: 'fabric', scores: { fabricRisk: 5, dustRisk: 4 } }
     ]
   },
   {
@@ -550,9 +550,9 @@ export const QUIZ_QUESTIONS = [
     reasonHint: '조명 색온도에 맞춰 확산광 스탠드·전구 추천이 달라집니다.',
     visualGrid: true,
     options: [
-      { label: '천장 형광등 끄고 따뜻한 간접등·스탠드만 켜둠', shortTitle: '2700K 따뜻한 간접등', image: './assets/quiz/light-mood.png', swatches: ['#FFD07B', '#8A572A', '#1E1814'], lightingPref: 'mood', scores: { spaceStress: 2 } },
-      { label: '작업할 땐 환하게, 잘 때만 끔', shortTitle: '4000K 밝은 주백색', image: './assets/quiz/light-bright.png', swatches: ['#FFFDF5', '#F6F3EA', '#D6D2C7'], lightingPref: 'bright', scores: {} },
-      { label: '큰 신경 안 쓰고 기본 형광등 사용', shortTitle: '6500K 기본 형광등', image: './assets/quiz/light-basic.png', swatches: ['#EFF4FA', '#FFFFFF', '#C5D4E8'], lightingPref: 'basic', scores: {} }
+      { label: '천장 형광등 끄고 따뜻한 간접등·스탠드만 켜둠', shortTitle: '2700K 전구색 무드등', visualKey: 'light-mood', image: './assets/quiz/light-mood.png', swatches: ['#FFD07B', '#8A572A', '#1E1814'], lightingPref: 'mood', scores: { spaceStress: 2 } },
+      { label: '작업할 땐 환하게, 잘 때만 끔', shortTitle: '4000K 주백색 작업등', visualKey: 'light-bright', image: './assets/quiz/light-bright.png', swatches: ['#FFFDF5', '#F6F3EA', '#D6D2C7'], lightingPref: 'bright', scores: {} },
+      { label: '큰 신경 안 쓰고 기본 형광등 사용', shortTitle: '6500K 기본 주광등', visualKey: 'light-basic', image: './assets/quiz/light-basic.png', swatches: ['#EFF4FA', '#FFFFFF', '#C5D4E8'], lightingPref: 'basic', scores: {} }
     ]
   },
   {
@@ -610,25 +610,25 @@ export const QUIZ_QUESTIONS = [
   {
     id: 'q29',
     chapter: 'STEP 5 · 구매·예산',
-    title: 'DIY 셀프 조립과 공구 보유 상태는 어떤가요?',
-    reasonHint: '드라이버가 없으면 이케아 알렉스·헬메르·마켓비 철제 조립에서 바로 포기하게 돼요.',
+    title: '가구 조립이나 설치는 어느 정도까지 괜찮나요?',
+    reasonHint: '설치·조립 부담 허용 범위에 따라 반제품 추천이 달라져요.',
     condition: (ans) => !(ans.some((a) => a.optionLevel === 'full') && !ans.some((a) => a.targetItem === 'desk' || a.targetItem === 'storage')),
     options: [
-      { label: '드라이버 없음 · 완제품 또는 기사 설치 희망', diySkill: 'none', scores: { assemblyRisk: 14, depositRisk: 2 } },
-      { label: '동봉된 육각렌치·작은 드라이버 정도 가능', diySkill: 'basic', scores: { assemblyRisk: 6 } },
-      { label: '전동드릴 보유 · 복잡한 조립도 문제없음', diySkill: 'pro', scores: { assemblyRisk: 1 } }
+      { label: '완제품이나 기사님 방문 설치만 원해요 (직접 조립 X)', diySkill: 'none', scores: { assemblyRisk: 14, depositRisk: 2 } },
+      { label: '혼자 15~30분 정도 간단한 조립까지는 괜찮아요', diySkill: 'basic', scores: { assemblyRisk: 6 } },
+      { label: '전동드릴 있어서 큰 가구 셀프 조립도 문제없어요', diySkill: 'pro', scores: { assemblyRisk: 1 } }
     ]
   },
   {
     id: 'q30',
     chapter: 'STEP 5 · 구매·예산',
-    title: '가구 사고 나서 가장 피하고 싶은 최악의 상황은?',
-    reasonHint: '점수가 비슷한 경우 최종 처방전 타입과 최우선 경고 1순위를 결정합니다.',
+    title: '가구 산 뒤 가장 피하고 싶은 상황은?',
+    reasonHint: '최종 처방전 타입과 최우선 경고 1순위를 결정합니다.',
     options: [
-      { label: '퇴실 때 벽지·장판 손상으로 보증금 깎이는 것', worstFear: 'deposit', scores: { depositRisk: 8 } },
-      { label: '먼지 쌓이고 세탁 안 돼서 청소 지옥 겪는 것', worstFear: 'dust', scores: { dustRisk: 8, fabricRisk: 5 } },
-      { label: '조립하다 포기하거나 금방 흔들리고 부서지는 것', worstFear: 'trouble', scores: { assemblyRisk: 8 } },
-      { label: '방이 꽉 막혀서 문도 잘 안 열리고 답답해지는 것', worstFear: 'space', scores: { spaceStress: 8 } }
+      { label: '벽지·장판 손상으로 퇴실 보증금 깎이는 것', worstFear: 'deposit', scores: { depositRisk: 8 } },
+      { label: '먼지·세탁 관리가 안 돼서 청소 지옥 겪는 것', worstFear: 'dust', scores: { dustRisk: 8, fabricRisk: 5 } },
+      { label: '흔들리고 삐걱대다 금방 망가지는 것', worstFear: 'trouble', scores: { assemblyRisk: 8 } },
+      { label: '동선이 막혀서 방이 좁고 답답해지는 것', worstFear: 'space', scores: { spaceStress: 8 } }
     ]
   }
 ];
