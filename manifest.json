@@ -4,8 +4,8 @@
   "description": "예쁜 사진 빼고 단점·원상복구·휴먼스케일 치수부터 까발리는 자취 스펙 판독 앱",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#F6F7F5",
-  "theme_color": "#F6F7F5",
+  "background_color": "#F4F6F9",
+  "theme_color": "#F4F6F9",
   "lang": "ko",
   "icons": [
     {

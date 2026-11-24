@@ -19,9 +19,9 @@ import {
   getItemGapHint,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './data/app-data.js?v=nope51';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope51';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope51';
+} from './data/app-data.js?v=nope53';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope53';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope53';
 
 const STORAGE_KEYS = {
   cycles: 'nope_cycles_v2',
@@ -421,7 +421,9 @@ function renderQuizStep() {
   }
 
   const optsWrap = document.getElementById('quiz-options');
+  const isVisual = Boolean(q.visualGrid || q.options.some((o) => o.image));
   optsWrap.classList.add('no-hover-yet');
+  optsWrap.classList.toggle('is-visual-grid', isVisual);
   optsWrap.innerHTML = '';
 
   const unlockHover = (e) => {
@@ -435,15 +437,52 @@ function renderQuizStep() {
   q.options.forEach((opt, optIdx) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = q.multiSelect ? 'quiz-option-btn is-multi' : 'quiz-option-btn';
+    const classes = ['quiz-option-btn'];
+    if (q.multiSelect) classes.push('is-multi');
+    if (opt.image) classes.push('is-visual');
+    btn.className = classes.join(' ');
+
+    if (opt.image) {
+      const thumb = document.createElement('div');
+      thumb.className = 'quiz-vis-thumb';
+      const img = document.createElement('img');
+      img.src = opt.image;
+      img.alt = opt.shortTitle || opt.label;
+      img.loading = 'eager';
+      thumb.appendChild(img);
+
+      const meta = document.createElement('div');
+      meta.className = 'quiz-vis-meta';
+      const titleEl = document.createElement('span');
+      titleEl.className = 'quiz-vis-title';
+      titleEl.textContent = opt.shortTitle || opt.label;
+      meta.appendChild(titleEl);
+
+      if (Array.isArray(opt.swatches) && opt.swatches.length) {
+        const swRow = document.createElement('div');
+        swRow.className = 'quiz-vis-swatches';
+        opt.swatches.forEach((hex) => {
+          const dot = document.createElement('span');
+          dot.className = 'quiz-vis-dot';
+          dot.style.backgroundColor = hex;
+          swRow.appendChild(dot);
+        });
+        meta.appendChild(swRow);
+      }
+
+      btn.appendChild(thumb);
+      btn.appendChild(meta);
+    }
 
     if (q.multiSelect) {
-      const labelSpan = document.createElement('span');
-      labelSpan.textContent = opt.label;
+      if (!opt.image) {
+        const labelSpan = document.createElement('span');
+        labelSpan.textContent = opt.label;
+        btn.appendChild(labelSpan);
+      }
       const checkSpan = document.createElement('span');
       checkSpan.className = 'quiz-opt-check';
       checkSpan.textContent = '';
-      btn.appendChild(labelSpan);
       btn.appendChild(checkSpan);
 
       btn.addEventListener('click', () => {
@@ -464,7 +503,9 @@ function renderQuizStep() {
         if (nextBtn) nextBtn.disabled = currentMultiSelected.size === 0;
       });
     } else {
-      btn.textContent = opt.label;
+      if (!opt.image) {
+        btn.textContent = opt.label;
+      }
       btn.addEventListener('click', () => {
         btn.blur();
         state.quizAnswers.push(opt);
@@ -841,7 +882,7 @@ function renderTasteSummaryStage(data) {
 
       <div class="palette-diagram-card">
         <div class="taste-swatches-bar">
-          <span class="taste-swatch-segment" style="flex:3;background:${toneObj.swatches[0]};color:#111311;">60%</span>
+          <span class="taste-swatch-segment" style="flex:3;background:${toneObj.swatches[0]};color:#141B29;">60%</span>
           <span class="taste-swatch-segment" style="flex:2;background:${toneObj.swatches[1]};color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,0.35);">30%</span>
           <span class="taste-swatch-segment" style="flex:1;background:${toneObj.swatches[2]};color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,0.35);">10%</span>
         </div>
@@ -1065,62 +1106,62 @@ function exportEditorialStoryCard(profile, dangerScore, nickname = '자취러', 
   const W = 1080;
   const H = 1920;
 
-  ctx.fillStyle = '#F6F7F5';
+  ctx.fillStyle = '#F4F6F9';
   ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = '#111311';
+  ctx.strokeStyle = '#141B29';
   ctx.lineWidth = 4;
   ctx.strokeRect(56, 56, W - 112, H - 112);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.font = '900 132px "Space Grotesk", "SUIT", sans-serif';
   ctx.fillText('NOPE!', 96, 220);
 
-  ctx.fillStyle = '#525651';
+  ctx.fillStyle = '#536076';
   ctx.font = '700 32px "Space Grotesk", "SUIT", sans-serif';
   const moodSub = toneName ? ` · ${toneName}` : '';
   ctx.fillText(`${nickname}님의 자취 처방전${moodSub}`, 100, 275);
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.fillRect(96, 315, W - 192, 3);
 
-  ctx.fillStyle = '#525651';
+  ctx.fillStyle = '#536076';
   ctx.font = '700 34px "SUIT", sans-serif';
   ctx.fillText('자취 리스크 지수', 100, 420);
 
-  ctx.fillStyle = '#E53935';
+  ctx.fillStyle = '#E11D48';
   ctx.font = '900 220px "Space Grotesk", sans-serif';
   ctx.fillText(`${dangerScore}`, 92, 640);
   ctx.font = '800 54px "Space Grotesk", sans-serif';
   ctx.fillText('/ 100', 400, 640);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.fillRect(96, 720, W - 192, 120);
   ctx.fillStyle = '#FFFFFF';
   ctx.font = '800 46px "SUIT", sans-serif';
   ctx.fillText(profile.badge, 128, 796);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.font = '700 44px "SUIT", sans-serif';
   const nextY = wrapCanvasText(ctx, profile.tagline, 96, 940, W - 192, 64);
 
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(96, nextY + 50, W - 192, 390);
-  ctx.strokeStyle = '#111311';
+  ctx.strokeStyle = '#141B29';
   ctx.lineWidth = 2.5;
   ctx.strokeRect(96, nextY + 50, W - 192, 390);
-  ctx.fillStyle = '#E53935';
+  ctx.fillStyle = '#E11D48';
   ctx.font = '800 30px "Space Grotesk", "SUIT", sans-serif';
   ctx.fillText('WHY NOPE? · ACTION LIST', 132, nextY + 115);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.font = '600 33px "SUIT", sans-serif';
   let y = nextY + 185;
   profile.top3.forEach((tip, idx) => {
     y = wrapCanvasText(ctx, `0${idx + 1}. ${tip}`, 132, y, W - 264, 46) + 18;
   });
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.fillRect(96, H - 170, W - 192, 2);
-  ctx.fillStyle = '#525651';
+  ctx.fillStyle = '#536076';
   ctx.font = '700 28px "SUIT", sans-serif';
   ctx.fillText('NOPE! · 내 방에 들이기 전 딱 한 번만 의심해 보기', 96, H - 110);
 
@@ -1195,24 +1236,24 @@ function exportItemVerdictCard(item) {
   const W = 1080;
   const H = 1920;
   const vm = verdictMeta(item.verdict);
-  const badgeColor = item.verdict === 'NOPE' ? '#E53935' : (item.verdict === 'WARN' ? '#C97A2B' : '#18794E');
+  const badgeColor = item.verdict === 'NOPE' ? '#E11D48' : (item.verdict === 'WARN' ? '#C97A2B' : '#2563EB');
   const specs = item.specs || { dust: 2, deposit: 1, trouble: 2 };
 
-  ctx.fillStyle = '#F6F7F5';
+  ctx.fillStyle = '#F4F6F9';
   ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = '#111311';
+  ctx.strokeStyle = '#141B29';
   ctx.lineWidth = 4;
   ctx.strokeRect(56, 56, W - 112, H - 112);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.font = '900 116px "Space Grotesk", "SUIT", sans-serif';
   ctx.fillText('NOPE!', 96, 210);
 
-  ctx.fillStyle = '#525651';
+  ctx.fillStyle = '#536076';
   ctx.font = '700 32px "SUIT", sans-serif';
   ctx.fillText(`${item.brand || 'NOPE SCAN'} · ${item.category || '자취 가구'} · ${item.priceTier || ''}`, 100, 268);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.fillRect(96, 308, W - 192, 3);
 
   // Verdict stamp pill
@@ -1223,7 +1264,7 @@ function exportItemVerdictCard(item) {
   ctx.fillText(vm.text, 128, 420);
 
   // Product title
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.font = '800 54px "SUIT", sans-serif';
   let nextY = wrapCanvasText(ctx, item.name, 96, 540, W - 192, 72);
 
@@ -1238,10 +1279,10 @@ function exportItemVerdictCard(item) {
     const bx = 96 + idx * (boxW + 18);
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(bx, boxY, boxW, 160);
-    ctx.strokeStyle = '#111311';
+    ctx.strokeStyle = '#141B29';
     ctx.lineWidth = 2;
     ctx.strokeRect(bx, boxY, boxW, 160);
-    ctx.fillStyle = '#525651';
+    ctx.fillStyle = '#536076';
     ctx.font = '700 28px "SUIT", sans-serif';
     ctx.fillText(sp.label, bx + 28, boxY + 56);
     ctx.fillStyle = badgeColor;
@@ -1259,25 +1300,25 @@ function exportItemVerdictCard(item) {
   ctx.font = '900 30px "Space Grotesk", "SUIT", sans-serif';
   ctx.fillText(item.verdict === 'PASS' ? 'WHY PASS?' : (item.verdict === 'WARN' ? 'WHY CHECK?' : 'WHY NOPE?'), 138, whyY + 66);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.font = '700 38px "SUIT", sans-serif';
   const reasonText = item.oneLiner || item.checkLine || item.goodLine || '';
   wrapCanvasText(ctx, reasonText, 138, whyY + 140, W - 270, 56);
 
   // Alt Recommendation box
   const altY = whyY + 388;
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.fillRect(96, altY, W - 192, 240);
-  ctx.fillStyle = '#E53935';
+  ctx.fillStyle = '#E11D48';
   ctx.font = '800 28px "SUIT", sans-serif';
   ctx.fillText(item.verdict === 'PASS' ? '함께 챙기면 좋은 스펙' : '대신 이 스펙을 추천해요', 132, altY + 62);
-  ctx.fillStyle = '#F6F7F5';
+  ctx.fillStyle = '#F4F6F9';
   ctx.font = '800 36px "SUIT", sans-serif';
   wrapCanvasText(ctx, item.altName || '무타공 · 워셔블 대체 스펙 확인', 132, altY + 128, W - 264, 52);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.fillRect(96, H - 170, W - 192, 2);
-  ctx.fillStyle = '#525651';
+  ctx.fillStyle = '#536076';
   ctx.font = '700 28px "SUIT", sans-serif';
   ctx.fillText('NOPE! · 내 방에 들이기 전 딱 한 번만 의심해 보기', 96, H - 110);
 
@@ -1296,19 +1337,19 @@ function exportToneRescueCard(toneObj, baseId, rescue) {
   const W = 1080;
   const H = 1920;
 
-  ctx.fillStyle = '#F6F7F5';
+  ctx.fillStyle = '#F4F6F9';
   ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = '#111311';
+  ctx.strokeStyle = '#141B29';
   ctx.lineWidth = 4;
   ctx.strokeRect(56, 56, W - 112, H - 112);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.font = '900 112px "Space Grotesk", "SUIT", sans-serif';
   ctx.fillText('NOPE!', 96, 206);
-  ctx.fillStyle = '#525651';
+  ctx.fillStyle = '#536076';
   ctx.font = '700 32px "SUIT", sans-serif';
   ctx.fillText('원룸 바닥·몰딩 중화 레시피', 100, 262);
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.fillRect(96, 302, W - 192, 3);
 
   ctx.fillStyle = '#C97A2B';
@@ -1317,7 +1358,7 @@ function exportToneRescueCard(toneObj, baseId, rescue) {
   ctx.font = '800 34px "SUIT", sans-serif';
   ctx.fillText(`현재 방: ${rescue.baseLabel}`, 124, 399);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.font = '900 54px "SUIT", sans-serif';
   ctx.fillText(`목표 무드 · ${toneObj.name}`, 96, 504);
 
@@ -1330,7 +1371,7 @@ function exportToneRescueCard(toneObj, baseId, rescue) {
   segWidths.forEach((sw, idx) => {
     ctx.fillStyle = swatches[idx];
     ctx.fillRect(sx, barY, sw - 8, 96);
-    ctx.strokeStyle = '#111311';
+    ctx.strokeStyle = '#141B29';
     ctx.lineWidth = 2;
     ctx.strokeRect(sx, barY, sw - 8, 96);
     sx += sw;
@@ -1340,11 +1381,11 @@ function exportToneRescueCard(toneObj, baseId, rescue) {
   const avoidY = 690;
   ctx.fillStyle = 'rgba(230, 83, 75, 0.12)';
   ctx.fillRect(96, avoidY, W - 192, 260);
-  ctx.fillStyle = '#E53935';
+  ctx.fillStyle = '#E11D48';
   ctx.fillRect(96, avoidY, 12, 260);
   ctx.font = '900 30px "SUIT", sans-serif';
   ctx.fillText('이 방에서 꼭 피할 실수', 138, avoidY + 60);
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.font = '700 35px "SUIT", sans-serif';
   wrapCanvasText(ctx, rescue.avoidLine, 138, avoidY + 126, W - 266, 52);
 
@@ -1352,27 +1393,27 @@ function exportToneRescueCard(toneObj, baseId, rescue) {
   const stepY = 995;
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(96, stepY, W - 192, 560);
-  ctx.strokeStyle = '#111311';
+  ctx.strokeStyle = '#141B29';
   ctx.lineWidth = 2.5;
   ctx.strokeRect(96, stepY, W - 192, 560);
-  ctx.fillStyle = '#18794E';
+  ctx.fillStyle = '#2563EB';
   ctx.font = '900 32px "SUIT", sans-serif';
   ctx.fillText('못질 없는 3분 중화 커버 공식', 134, stepY + 68);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.font = '600 33px "SUIT", sans-serif';
   let sy = stepY + 140;
   rescue.coverSteps.forEach((st, idx) => {
     sy = wrapCanvasText(ctx, `0${idx + 1}. ${st}`, 134, sy, W - 268, 50) + 34;
   });
 
-  ctx.fillStyle = '#525651';
+  ctx.fillStyle = '#536076';
   ctx.font = '700 28px "SUIT", sans-serif';
   ctx.fillText(`추천 조명: ${toneObj.kelvin || '2700K~3000K 전구색'}`, 134, stepY + 510);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.fillRect(96, H - 170, W - 192, 2);
-  ctx.fillStyle = '#525651';
+  ctx.fillStyle = '#536076';
   ctx.font = '700 28px "SUIT", sans-serif';
   ctx.fillText('NOPE! · 작은 월세방도 큰 톤 하나로 정돈됩니다', 96, H - 110);
 
@@ -3344,7 +3385,7 @@ function updateScaleInputsUI() {
   document.getElementById('home-scale-summary-line').textContent = `${s.heightCm}cm · ${keyMetric}`;
 }
 
-function svgPill(cx, cy, text, bg = '#FFFFFF', fg = '#111311', border = '#111311') {
+function svgPill(cx, cy, text, bg = '#FFFFFF', fg = '#141B29', border = '#141B29') {
   const w = Math.max(46, text.length * 7.2 + 16);
   const h = 18;
   return `
@@ -3355,7 +3396,7 @@ function svgPill(cx, cy, text, bg = '#FFFFFF', fg = '#111311', border = '#111311
   `;
 }
 
-function svgCadDim(x, y1, y2, label, color = '#111311', pillBg = '#FFFFFF', pillFg = '#111311', labelOffsetX = 0) {
+function svgCadDim(x, y1, y2, label, color = '#141B29', pillBg = '#FFFFFF', pillFg = '#141B29', labelOffsetX = 0) {
   const midY = (y1 + y2) / 2;
   return `
     <line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${color}" stroke-width="1.4"/>
@@ -3379,9 +3420,9 @@ function renderArchitecturalSvg(s) {
   const ticks = [0, 50, 100, 150, 200].map((cm) => {
     const y = toY(cm);
     return `
-      <line x1="28" y1="${y}" x2="364" y2="${y}" stroke="${cm === 0 ? '#111311' : '#E2E4DF'}" stroke-width="${cm === 0 ? 2 : 1}"/>
-      <line x1="23" y1="${y}" x2="29" y2="${y}" stroke="#111311" stroke-width="1.2"/>
-      <text x="20" y="${y + 3.5}" text-anchor="end" fill="#525651" font-size="9" font-weight="700">${cm}</text>
+      <line x1="28" y1="${y}" x2="364" y2="${y}" stroke="${cm === 0 ? '#141B29' : '#E2E4DF'}" stroke-width="${cm === 0 ? 2 : 1}"/>
+      <line x1="23" y1="${y}" x2="29" y2="${y}" stroke="#141B29" stroke-width="1.2"/>
+      <text x="20" y="${y + 3.5}" text-anchor="end" fill="#536076" font-size="9" font-weight="700">${cm}</text>
     `;
   }).join('');
 
@@ -3405,45 +3446,45 @@ function renderArchitecturalSvg(s) {
       <rect x="28" y="${monTopY - 8}" width="336" height="${floorY - (monTopY - 8)}" fill="rgba(235, 236, 232, 0.45)"/>
 
       <!-- Ergonomic Mesh Chair -->
-      <path d="M 88 ${seatY - 48} Q 85 ${seatY - 22} 91 ${seatY + 3} L 136 ${seatY + 3}" fill="none" stroke="#525651" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-      <rect x="93" y="${seatY - 3}" width="44" height="7" rx="3" fill="#EBECE8" stroke="#111311" stroke-width="1.5"/>
-      <line x1="115" y1="${seatY + 4}" x2="115" y2="${floorY - 6}" stroke="#111311" stroke-width="3"/>
-      <path d="M 97 ${floorY - 2} L 115 ${floorY - 7} L 133 ${floorY - 2}" fill="none" stroke="#111311" stroke-width="2.2" stroke-linecap="round"/>
-      <circle cx="98" cy="${floorY - 2}" r="2.2" fill="#111311"/>
-      <circle cx="132" cy="${floorY - 2}" r="2.2" fill="#111311"/>
+      <path d="M 88 ${seatY - 48} Q 85 ${seatY - 22} 91 ${seatY + 3} L 136 ${seatY + 3}" fill="none" stroke="#536076" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="93" y="${seatY - 3}" width="44" height="7" rx="3" fill="#E9EEF5" stroke="#141B29" stroke-width="1.5"/>
+      <line x1="115" y1="${seatY + 4}" x2="115" y2="${floorY - 6}" stroke="#141B29" stroke-width="3"/>
+      <path d="M 97 ${floorY - 2} L 115 ${floorY - 7} L 133 ${floorY - 2}" fill="none" stroke="#141B29" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="98" cy="${floorY - 2}" r="2.2" fill="#141B29"/>
+      <circle cx="132" cy="${floorY - 2}" r="2.2" fill="#141B29"/>
 
       <!-- Architectural Seated Silhouette (Facing Right) -->
       <g>
         <!-- Torso & Legs -->
-        <path d="M 103 ${shoulderY} Q 96 ${hipY - 12} 102 ${hipY} L 138 ${kneeY} Q 144 ${kneeY + 2} 145 ${kneeY + 9} L 146 ${floorY - 4}" fill="none" stroke="#111311" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 103 ${shoulderY} Q 96 ${hipY - 12} 102 ${hipY} L 138 ${kneeY} Q 144 ${kneeY + 2} 145 ${kneeY + 9} L 146 ${floorY - 4}" fill="none" stroke="#141B29" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
         <!-- Shoes -->
-        <path d="M 142 ${floorY - 3} L 157 ${floorY - 3}" stroke="#111311" stroke-width="5.5" stroke-linecap="round"/>
+        <path d="M 142 ${floorY - 3} L 157 ${floorY - 3}" stroke="#141B29" stroke-width="5.5" stroke-linecap="round"/>
         <!-- Head & Neck -->
-        <line x1="106" y1="${headCy + 6}" x2="104" y2="${shoulderY}" stroke="#111311" stroke-width="6.5" stroke-linecap="round"/>
-        <circle cx="110" cy="${headCy}" r="10.5" fill="#111311"/>
+        <line x1="106" y1="${headCy + 6}" x2="104" y2="${shoulderY}" stroke="#141B29" stroke-width="6.5" stroke-linecap="round"/>
+        <circle cx="110" cy="${headCy}" r="10.5" fill="#141B29"/>
         <!-- Ergonomic 90° Arm Posture (Accent Coral) -->
-        <path d="M 105 ${shoulderY + 2} L 122 ${deskY - 4} L 164 ${deskY - 4}" fill="none" stroke="#E53935" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 105 ${shoulderY + 2} L 122 ${deskY - 4} L 164 ${deskY - 4}" fill="none" stroke="#E11D48" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
       </g>
 
       <!-- Ergonomic Desk & Monitor Elevation -->
-      <rect x="150" y="${deskY}" width="108" height="6" rx="1.5" fill="#111311"/>
-      <rect x="156" y="${deskY + 6}" width="4" height="${floorY - deskY - 6}" fill="#111311"/>
-      <rect x="248" y="${deskY + 6}" width="4" height="${floorY - deskY - 6}" fill="#111311"/>
+      <rect x="150" y="${deskY}" width="108" height="6" rx="1.5" fill="#141B29"/>
+      <rect x="156" y="${deskY + 6}" width="4" height="${floorY - deskY - 6}" fill="#141B29"/>
+      <rect x="248" y="${deskY + 6}" width="4" height="${floorY - deskY - 6}" fill="#141B29"/>
       <!-- Monitor & Keyboard -->
-      <rect x="218" y="${monTopY}" width="6" height="34" rx="1.5" fill="#111311"/>
-      <rect x="214" y="${monTopY + 3}" width="3" height="28" rx="1" fill="#E53935"/>
-      <line x1="221" y1="${monBottomY}" x2="221" y2="${deskY}" stroke="#111311" stroke-width="3"/>
-      <line x1="208" y1="${deskY}" x2="233" y2="${deskY}" stroke="#111311" stroke-width="2.5" stroke-linecap="round"/>
-      <rect x="172" y="${deskY - 3}" width="22" height="3" rx="1" fill="#525651"/>
+      <rect x="218" y="${monTopY}" width="6" height="34" rx="1.5" fill="#141B29"/>
+      <rect x="214" y="${monTopY + 3}" width="3" height="28" rx="1" fill="#E11D48"/>
+      <line x1="221" y1="${monBottomY}" x2="221" y2="${deskY}" stroke="#141B29" stroke-width="3"/>
+      <line x1="208" y1="${deskY}" x2="233" y2="${deskY}" stroke="#141B29" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="172" y="${deskY - 3}" width="22" height="3" rx="1" fill="#536076"/>
 
       <!-- Eye Sightline 15° -->
-      <line x1="121" y1="${eyeY}" x2="213" y2="${monTopY + 13}" stroke="#E53935" stroke-width="1.3" stroke-dasharray="4 3"/>
-      ${svgPill(165, eyeY - 14, '시야각 15°', '#FFFFFF', '#E53935', '#E53935')}
+      <line x1="121" y1="${eyeY}" x2="213" y2="${monTopY + 13}" stroke="#E11D48" stroke-width="1.3" stroke-dasharray="4 3"/>
+      ${svgPill(165, eyeY - 14, '시야각 15°', '#FFFFFF', '#E11D48', '#E11D48')}
 
       <!-- Non-overlapping CAD Dimensions -->
-      ${svgCadDim(56, seatY, floorY, `의자 ${s.chairSeat}cm`, '#111311', '#FFFFFF', '#111311', 4)}
-      ${svgCadDim(278, deskY, floorY, `책상 ${s.deskHeight}cm`, '#E53935', '#E53935', '#FFFFFF', 36)}
-      ${svgCadDim(278, monTopY, deskY, `모니터 ${s.monitorTop}cm`, '#111311', '#FFFFFF', '#111311', 36)}
+      ${svgCadDim(56, seatY, floorY, `의자 ${s.chairSeat}cm`, '#141B29', '#FFFFFF', '#141B29', 4)}
+      ${svgCadDim(278, deskY, floorY, `책상 ${s.deskHeight}cm`, '#E11D48', '#E11D48', '#FFFFFF', 36)}
+      ${svgCadDim(278, monTopY, deskY, `모니터 ${s.monitorTop}cm`, '#141B29', '#FFFFFF', '#141B29', 36)}
     `;
   } else if (state.scaleMode === 'floor') {
     const tblY = toY(s.floorTable);
@@ -3455,31 +3496,31 @@ function renderArchitecturalSvg(s) {
     sceneSvg = `
       <!-- Floor Back Cushion -->
       <path d="M 76 ${floorY - 34} Q 74 ${floorY - 4} 84 ${floorY - 4} L 128 ${floorY - 4}" fill="none" stroke="#C49A6C" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-      <rect x="82" y="${floorY - 9}" width="50" height="8" rx="4" fill="#EBECE8" stroke="#111311" stroke-width="1.4"/>
+      <rect x="82" y="${floorY - 9}" width="50" height="8" rx="4" fill="#E9EEF5" stroke="#141B29" stroke-width="1.4"/>
 
       <!-- Architectural Floor-Sitting Silhouette -->
       <g>
-        <path d="M 94 ${headCy + 20} Q 88 ${hipY - 10} 96 ${hipY} L 134 ${floorY - 6}" fill="none" stroke="#111311" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-        <line x1="97" y1="${headCy + 6}" x2="94" y2="${headCy + 20}" stroke="#111311" stroke-width="6.5" stroke-linecap="round"/>
-        <circle cx="101" cy="${headCy}" r="10.5" fill="#111311"/>
-        <path d="M 96 ${headCy + 22} L 116 ${tblY - 4} L 154 ${tblY - 4}" fill="none" stroke="#E53935" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 94 ${headCy + 20} Q 88 ${hipY - 10} 96 ${hipY} L 134 ${floorY - 6}" fill="none" stroke="#141B29" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="97" y1="${headCy + 6}" x2="94" y2="${headCy + 20}" stroke="#141B29" stroke-width="6.5" stroke-linecap="round"/>
+        <circle cx="101" cy="${headCy}" r="10.5" fill="#141B29"/>
+        <path d="M 96 ${headCy + 22} L 116 ${tblY - 4} L 154 ${tblY - 4}" fill="none" stroke="#E11D48" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
       </g>
 
       <!-- Low Floor Desk & Elevated Laptop Stand -->
-      <rect x="146" y="${tblY}" width="102" height="5.5" rx="1.5" fill="#111311"/>
-      <line x1="154" y1="${tblY + 5}" x2="150" y2="${floorY}" stroke="#111311" stroke-width="2.6" stroke-linecap="round"/>
-      <line x1="240" y1="${tblY + 5}" x2="244" y2="${floorY}" stroke="#111311" stroke-width="2.6" stroke-linecap="round"/>
+      <rect x="146" y="${tblY}" width="102" height="5.5" rx="1.5" fill="#141B29"/>
+      <line x1="154" y1="${tblY + 5}" x2="150" y2="${floorY}" stroke="#141B29" stroke-width="2.6" stroke-linecap="round"/>
+      <line x1="240" y1="${tblY + 5}" x2="244" y2="${floorY}" stroke="#141B29" stroke-width="2.6" stroke-linecap="round"/>
       <!-- Laptop Riser + Screen -->
-      <path d="M 192 ${tblY} L 208 ${tblY - 10} L 220 ${tblY}" fill="none" stroke="#525651" stroke-width="1.6"/>
-      <path d="M 190 ${tblY - 10} L 214 ${tblY - 10} L 222 ${monTopY + 10}" fill="none" stroke="#111311" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 192 ${tblY} L 208 ${tblY - 10} L 220 ${tblY}" fill="none" stroke="#536076" stroke-width="1.6"/>
+      <path d="M 190 ${tblY - 10} L 214 ${tblY - 10} L 222 ${monTopY + 10}" fill="none" stroke="#141B29" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 
       <!-- Neck-safe Sightline -->
-      <line x1="112" y1="${eyeY}" x2="214" y2="${monTopY + 14}" stroke="#E53935" stroke-width="1.3" stroke-dasharray="4 3"/>
-      ${svgPill(166, headCy - 14, '거북목 방지 시야', '#FFFFFF', '#E53935', '#E53935')}
+      <line x1="112" y1="${eyeY}" x2="214" y2="${monTopY + 14}" stroke="#E11D48" stroke-width="1.3" stroke-dasharray="4 3"/>
+      ${svgPill(166, headCy - 14, '거북목 방지 시야', '#FFFFFF', '#E11D48', '#E11D48')}
 
       <!-- Non-overlapping CAD Dimensions -->
-      ${svgCadDim(268, tblY, floorY, `좌식상 ${s.floorTable}cm`, '#E53935', '#E53935', '#FFFFFF', 40)}
-      ${svgCadDim(268, monTopY + 8, tblY, `화면 ${s.monitorTop}cm`, '#111311', '#FFFFFF', '#111311', 40)}
+      ${svgCadDim(268, tblY, floorY, `좌식상 ${s.floorTable}cm`, '#E11D48', '#E11D48', '#FFFFFF', 40)}
+      ${svgCadDim(268, monTopY + 8, tblY, `화면 ${s.monitorTop}cm`, '#141B29', '#FFFFFF', '#141B29', 40)}
     `;
   } else {
     const bedY = toY(s.bedTotal);
@@ -3493,56 +3534,56 @@ function renderArchitecturalSvg(s) {
     const mirrorTopY = toY(28 + s.mirrorMinH);
 
     overheadGuides = `
-      <line x1="64" y1="${hangerY}" x2="288" y2="${hangerY}" stroke="#525651" stroke-width="1.2" stroke-dasharray="4 3"/>
-      ${svgPill(192, hangerY - 11, `행거봉 ${s.hangerBar}cm`, '#FFFFFF', '#111311', '#878B84')}
-      <line x1="64" y1="${shelfY}" x2="288" y2="${shelfY}" stroke="#878B84" stroke-width="1" stroke-dasharray="2 3"/>
-      ${svgPill(192, shelfY - 11, `선반한계 ${s.shelfMax}cm`, '#F6F7F5', '#525651', '#C9C6B8')}
+      <line x1="64" y1="${hangerY}" x2="288" y2="${hangerY}" stroke="#536076" stroke-width="1.2" stroke-dasharray="4 3"/>
+      ${svgPill(192, hangerY - 11, `행거봉 ${s.hangerBar}cm`, '#FFFFFF', '#141B29', '#7A8699')}
+      <line x1="64" y1="${shelfY}" x2="288" y2="${shelfY}" stroke="#7A8699" stroke-width="1" stroke-dasharray="2 3"/>
+      ${svgPill(192, shelfY - 11, `선반한계 ${s.shelfMax}cm`, '#F4F6F9', '#536076', '#C9C6B8')}
     `;
 
     sceneSvg = `
       <!-- Standing Architectural Silhouette (Clean Proportional CAD Figure) -->
       <g>
         <!-- Left & Right Legs -->
-        <path d="M 88 ${hipY} L 83 ${floorY - 4} M 94 ${hipY} L 99 ${floorY - 4}" stroke="#111311" stroke-width="6.5" stroke-linecap="round"/>
-        <path d="M 79 ${floorY - 2} L 87 ${floorY - 2} M 96 ${floorY - 2} L 104 ${floorY - 2}" stroke="#111311" stroke-width="4" stroke-linecap="round"/>
+        <path d="M 88 ${hipY} L 83 ${floorY - 4} M 94 ${hipY} L 99 ${floorY - 4}" stroke="#141B29" stroke-width="6.5" stroke-linecap="round"/>
+        <path d="M 79 ${floorY - 2} L 87 ${floorY - 2} M 96 ${floorY - 2} L 104 ${floorY - 2}" stroke="#141B29" stroke-width="4" stroke-linecap="round"/>
         <!-- Torso (Tapered Coat/Body Silhouette) -->
-        <path d="M 80 ${shoulderY} Q 91 ${shoulderY - 4} 102 ${shoulderY} L 98 ${hipY + 2} L 84 ${hipY + 2} Z" fill="#111311"/>
+        <path d="M 80 ${shoulderY} Q 91 ${shoulderY - 4} 102 ${shoulderY} L 98 ${hipY + 2} L 84 ${hipY + 2} Z" fill="#141B29"/>
         <!-- Relaxed Arm -->
-        <path d="M 101 ${shoulderY + 2} Q 108 ${shoulderY + 20} 105 ${hipY + 12}" fill="none" stroke="#111311" stroke-width="4.5" stroke-linecap="round"/>
+        <path d="M 101 ${shoulderY + 2} Q 108 ${shoulderY + 20} 105 ${hipY + 12}" fill="none" stroke="#141B29" stroke-width="4.5" stroke-linecap="round"/>
         <!-- Neck & Head -->
-        <rect x="88" y="${headCy + 6}" width="6" height="9" fill="#111311"/>
-        <circle cx="91" cy="${headCy}" r="${headR}" fill="#111311"/>
+        <rect x="88" y="${headCy + 6}" width="6" height="9" fill="#141B29"/>
+        <circle cx="91" cy="${headCy}" r="${headR}" fill="#141B29"/>
       </g>
 
       <!-- Key Height Callout Left of Standing Figure -->
-      ${svgCadDim(54, headTopY, floorY, `키 ${s.heightCm}cm`, '#111311', '#111311', '#FFFFFF', 4)}
+      ${svgCadDim(54, headTopY, floorY, `키 ${s.heightCm}cm`, '#141B29', '#141B29', '#FFFFFF', 4)}
 
       <!-- Architectural Bed Elevation -->
       <g>
         <!-- Headboard -->
-        <rect x="116" y="${bedY - 26}" width="7" height="${floorY - (bedY - 26)}" rx="2" fill="#111311"/>
+        <rect x="116" y="${bedY - 26}" width="7" height="${floorY - (bedY - 26)}" rx="2" fill="#141B29"/>
         <!-- Bed Frame & Legs -->
-        <rect x="122" y="${frameTopY}" width="96" height="8" rx="1.5" fill="#111311"/>
-        <rect x="212" y="${frameTopY + 6}" width="5" height="${underBedH}" fill="#111311"/>
+        <rect x="122" y="${frameTopY}" width="96" height="8" rx="1.5" fill="#141B29"/>
+        <rect x="212" y="${frameTopY + 6}" width="5" height="${underBedH}" fill="#141B29"/>
         <!-- Mattress + Blanket Fold + Pillow -->
-        <rect x="123" y="${bedY}" width="95" height="19" rx="3" fill="#EBECE8" stroke="#E53935" stroke-width="1.8"/>
-        <path d="M 150 ${bedY} H 215 A 3 3 0 0 1 218 ${bedY + 3} V ${bedY + 19} H 150 Z" fill="#FFFFFF" stroke="#111311" stroke-width="1.2"/>
-        <rect x="127" y="${bedY - 9}" width="20" height="9" rx="4" fill="#FFFFFF" stroke="#111311" stroke-width="1.4"/>
+        <rect x="123" y="${bedY}" width="95" height="19" rx="3" fill="#E9EEF5" stroke="#E11D48" stroke-width="1.8"/>
+        <path d="M 150 ${bedY} H 215 A 3 3 0 0 1 218 ${bedY + 3} V ${bedY + 19} H 150 Z" fill="#FFFFFF" stroke="#141B29" stroke-width="1.2"/>
+        <rect x="127" y="${bedY - 9}" width="20" height="9" rx="4" fill="#FFFFFF" stroke="#141B29" stroke-width="1.4"/>
       </g>
 
       <!-- Bed Height Dimension (Clear between bed and mirror) -->
-      ${svgCadDim(228, bedY, floorY, `총높이 ${s.bedTotal}cm`, '#E53935', '#E53935', '#FFFFFF', 34)}
+      ${svgCadDim(228, bedY, floorY, `총높이 ${s.bedTotal}cm`, '#E11D48', '#E11D48', '#FFFFFF', 34)}
 
       <!-- Detailed Wall Mirror Elevation (Far Right, Zero Overlap) -->
       <g>
-        <rect x="310" y="${mirrorTopY}" width="28" height="${mirrorBottomY - mirrorTopY}" rx="4" fill="#111311"/>
-        <rect x="314" y="${mirrorTopY + 4}" width="20" height="${mirrorBottomY - mirrorTopY - 8}" rx="2" fill="#E6E8E4"/>
+        <rect x="310" y="${mirrorTopY}" width="28" height="${mirrorBottomY - mirrorTopY}" rx="4" fill="#141B29"/>
+        <rect x="314" y="${mirrorTopY + 4}" width="20" height="${mirrorBottomY - mirrorTopY - 8}" rx="2" fill="#E4EAF2"/>
         <!-- Mirror Glass Reflection Diagonals -->
         <line x1="317" y1="${mirrorTopY + 24}" x2="331" y2="${mirrorTopY + 10}" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
         <line x1="317" y1="${mirrorTopY + 34}" x2="331" y2="${mirrorTopY + 20}" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round"/>
-        <circle cx="324" cy="${mirrorTopY - 4}" r="2" fill="#111311"/>
+        <circle cx="324" cy="${mirrorTopY - 4}" r="2" fill="#141B29"/>
       </g>
-      ${svgPill(324, mirrorTopY - 18, `거울 ${s.mirrorMinH}cm+`, '#FFFFFF', '#111311', '#111311')}
+      ${svgPill(324, mirrorTopY - 18, `거울 ${s.mirrorMinH}cm+`, '#FFFFFF', '#141B29', '#141B29')}
     `;
   }
 
@@ -3550,7 +3591,7 @@ function renderArchitecturalSvg(s) {
     <svg viewBox="0 0 380 278" role="img" aria-label="휴먼스케일 도해">
       <rect x="0" y="0" width="380" height="278" rx="8" fill="#FFFFFF"/>
       ${ticks}
-      <text x="364" y="${floorY + 16}" text-anchor="end" fill="#111311" font-size="9.5" font-weight="800">FL ±0 cm</text>
+      <text x="364" y="${floorY + 16}" text-anchor="end" fill="#141B29" font-size="9.5" font-weight="800">FL ±0 cm</text>
       ${overheadGuides}
       ${sceneSvg}
     </svg>
@@ -3779,32 +3820,32 @@ function exportGapCheatsheetCard(activeZone, activeOpt) {
   const savedProfile = loadSavedRoomProfile();
   const nick = (savedProfile && savedProfile.nickname) || '자취러';
 
-  ctx.fillStyle = '#F6F7F5';
+  ctx.fillStyle = '#F4F6F9';
   ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = '#111311';
+  ctx.strokeStyle = '#141B29';
   ctx.lineWidth = 4;
   ctx.strokeRect(56, 56, W - 112, H - 112);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.font = '900 108px "Space Grotesk", "SUIT", sans-serif';
   ctx.fillText('NOPE!', 96, 200);
 
-  ctx.fillStyle = '#E53935';
+  ctx.fillStyle = '#E11D48';
   ctx.font = '800 32px "SUIT", sans-serif';
   ctx.fillText('DEAD SPACE STORAGE CHEAT SHEET', 96, 255);
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.font = '800 48px "SUIT", sans-serif';
   ctx.fillText(`${nick}님의 작은 방 빈틈 기준표`, 96, 330);
   ctx.fillRect(96, 365, W - 192, 3);
 
   // Highlighted selected condition
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.fillRect(96, 405, W - 192, 235);
-  ctx.fillStyle = '#E53935';
+  ctx.fillStyle = '#E11D48';
   ctx.font = '800 28px "SUIT", sans-serif';
   ctx.fillText(`선택한 빈틈 · ${activeZone.label} (${activeOpt.label})`, 132, 462);
-  ctx.fillStyle = '#F6F7F5';
+  ctx.fillStyle = '#F4F6F9';
   ctx.font = '700 34px "SUIT", sans-serif';
   wrapCanvasText(ctx, activeOpt.passText, 132, 522, W - 264, 48);
 
@@ -3818,21 +3859,21 @@ function exportGapCheatsheetCard(activeZone, activeOpt) {
 
   let currY = 695;
   cheatRows.forEach((row) => {
-    ctx.strokeStyle = '#111311';
+    ctx.strokeStyle = '#141B29';
     ctx.lineWidth = 2;
     ctx.strokeRect(96, currY, W - 192, 225);
-    ctx.fillStyle = '#E53935';
+    ctx.fillStyle = '#E11D48';
     ctx.font = '800 30px "SUIT", sans-serif';
     ctx.fillText(row.title, 132, currY + 60);
-    ctx.fillStyle = '#111311';
+    ctx.fillStyle = '#141B29';
     ctx.font = '600 32px "SUIT", sans-serif';
     wrapCanvasText(ctx, row.rule, 132, currY + 118, W - 264, 46);
     currY += 255;
   });
 
-  ctx.fillStyle = '#111311';
+  ctx.fillStyle = '#141B29';
   ctx.fillRect(96, H - 170, W - 192, 2);
-  ctx.fillStyle = '#525651';
+  ctx.fillStyle = '#536076';
   ctx.font = '700 28px "SUIT", sans-serif';
   ctx.fillText('NOPE! · 바닥 0cm 쓰고 수납 늘리는 원룸 빈틈 공식', 96, H - 110);
 
@@ -4876,6 +4917,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope51').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope53').catch(() => {});
   }
 }

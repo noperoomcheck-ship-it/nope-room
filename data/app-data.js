@@ -1,12 +1,12 @@
 // NOPE! v9 — 212종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
-import { ITEMS_DB } from './products-db.js?v=nope51';
+import { ITEMS_DB } from './products-db.js?v=nope53';
 import {
   STYLE_MOODS,
   ROOM_TONES,
   TARGET_CATEGORIES,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './mood-palettes.js?v=nope51';
+} from './mood-palettes.js?v=nope53';
 export {
   ITEMS_DB,
   STYLE_MOODS,
@@ -329,12 +329,13 @@ export const QUIZ_QUESTIONS = [
   {
     id: 'q6',
     chapter: 'STEP 1 · 공간·구조',
-    title: '방 바닥재 재질은 무엇인가요?',
-    reasonHint: '장판은 고무·바퀴 변색이, 마루는 물기·스크래치가 보증금 공제 1순위예요.',
+    title: '방 바닥재 재질·톤은 무엇인가요?',
+    reasonHint: '이미지에서 내 방 바닥과 가장 가까운 재질·톤을 탭하세요.',
+    visualGrid: true,
     options: [
-      { label: 'PVC 장판 (난방 열 변색·가구 찍힘 주의)', floorMaterial: 'jangpan', scores: { depositRisk: 6, fabricRisk: 4 } },
-      { label: '강마루·온돌마루 (물기·의자 바퀴 긁힘 주의)', floorMaterial: 'wood', scores: { depositRisk: 6, assemblyRisk: 2 } },
-      { label: '타일 · 데코타일 (차가움·줄눈 먼지)', floorMaterial: 'tile', scores: { dustRisk: 3 } }
+      { label: 'PVC 장판 (난방 열 변색·가구 찍힘 주의)', shortTitle: 'PVC 장판', image: './assets/quiz/floor-jangpan.png', swatches: ['#F2E2BA', '#DFC893'], floorMaterial: 'jangpan', scores: { depositRisk: 6, fabricRisk: 4 } },
+      { label: '강마루·온돌마루 (물기·의자 바퀴 긁힘 주의)', shortTitle: '강마루 · 원목톤', image: './assets/quiz/floor-wood.png', swatches: ['#D2A779', '#B48453'], floorMaterial: 'wood', scores: { depositRisk: 6, assemblyRisk: 2 } },
+      { label: '타일 · 데코타일 (차가움·줄눈 먼지)', shortTitle: '타일 · 데코타일', image: './assets/quiz/floor-tile.png', swatches: ['#EEF0F2', '#CFD4D9'], floorMaterial: 'tile', scores: { dustRisk: 3 } }
     ]
   },
 
@@ -506,26 +507,28 @@ export const QUIZ_QUESTIONS = [
   {
     id: 'q21',
     chapter: 'STEP 4 · 취향·무드',
-    title: '맞추고 싶은 내 방의 메인 색감 · 무드는?',
-    reasonHint: '선택한 톤에 맞는 PASS 가구만 톤 매처에서 자동 필터링해 드려요.',
+    title: '원하는 방 색 조합 · 톤 이미지를 고르세요',
+    reasonHint: '긴 설명 없이 사진 느낌으로 바로 골라주세요. 톤 매처에 즉시 연결됩니다.',
+    visualGrid: true,
     options: [
-      { label: '화이트 · 크림 (밝고 훤히 넓어 보이는 방)', toneId: 'white-minimal', scores: { dustRisk: 2 } },
-      { label: '오크 · 베이지 우드 (따뜻하고 포근한 나무 느낌)', toneId: 'oak-natural', scores: { dustRisk: 3 } },
-      { label: '월넛 · 빈티지 우드 (고동색 원목의 깊은 분위기)', toneId: 'walnut-vintage', scores: { dustRisk: 4, spaceStress: 3 } },
-      { label: '블랙 · 실버 스틸 (선이 반듯한 시크한 방)', toneId: 'steel-modern', scores: { dustRisk: 5, assemblyRisk: 2 } },
-      { label: '버터 · 파스텔 크림 (연노랑·소라색의 생기 있는 방)', toneId: 'butter-pastel', scores: { dustRisk: 3 } },
-      { label: '풀색 · 테라코타 (차분한 초록과 벽돌색 카페 무드)', toneId: 'sage-terracotta', scores: { dustRisk: 3 } }
+      { label: '화이트 · 크림 (밝고 훤히 넓어 보이는 방)', shortTitle: '화이트 · 크림', image: './assets/tones/white-minimal.png', swatches: ['#FAF9F6', '#EAE5DC', '#2C2523'], toneId: 'white-minimal', scores: { dustRisk: 2 } },
+      { label: '오크 · 베이지 우드 (따뜻하고 포근한 나무 느낌)', shortTitle: '오크 · 베이지', image: './assets/tones/oak-natural.png', swatches: ['#FAF6EE', '#CFA676', '#6D8658'], toneId: 'oak-natural', scores: { dustRisk: 3 } },
+      { label: '월넛 · 빈티지 우드 (고동색 원목의 깊은 분위기)', shortTitle: '월넛 · 빈티지', image: './assets/tones/walnut-vintage.png', swatches: ['#F2EDE3', '#5E3F2E', '#D15B34'], toneId: 'walnut-vintage', scores: { dustRisk: 4, spaceStress: 3 } },
+      { label: '블랙 · 실버 스틸 (선이 반듯한 시크한 방)', shortTitle: '블랙 · 실버 스틸', image: './assets/tones/steel-modern.png', swatches: ['#F5F7F8', '#202326', '#2557B8'], toneId: 'steel-modern', scores: { dustRisk: 5, assemblyRisk: 2 } },
+      { label: '버터 · 파스텔 크림 (연노랑·소라색의 생기 있는 방)', shortTitle: '버터 · 파스텔', image: './assets/tones/butter-pastel.png', swatches: ['#FFFDF4', '#F7DF8A', '#87A9D6'], toneId: 'butter-pastel', scores: { dustRisk: 3 } },
+      { label: '풀색 · 테라코타 (차분한 초록과 벽돌색 카페 무드)', shortTitle: '풀색 · 테라코타', image: './assets/tones/sage-terracotta.png', swatches: ['#F5F3EC', '#889E81', '#C86D51'], toneId: 'sage-terracotta', scores: { dustRisk: 3 } }
     ]
   },
   {
     id: 'q22',
     chapter: 'STEP 4 · 취향·무드',
-    title: '가장 마음에 끌리는 가구·소품 소재는 무엇인가요?',
+    title: '가장 끌리는 가구·소품 질감은?',
     reasonHint: '소재별 변형·먼지·열기 내구성 기준과 연결됩니다.',
+    visualGrid: true,
     options: [
-      { label: '시원하고 깔끔한 스틸 · 유리 · 매트 화이트', materialPref: 'steel', scores: { assemblyRisk: 3 } },
-      { label: '따뜻하고 포근한 원목 · 오크 · 라탄', materialPref: 'wood', scores: { dustRisk: 3 } },
-      { label: '폭신한 패브릭 · 면 · 코튼 질감', materialPref: 'fabric', scores: { fabricRisk: 5, dustRisk: 4 } }
+      { label: '시원하고 깔끔한 스틸 · 유리 · 매트 화이트', shortTitle: '스틸 · 매트 화이트', image: './assets/quiz/mat-steel.png', swatches: ['#FFFFFF', '#B6C0C9', '#2557B8'], materialPref: 'steel', scores: { assemblyRisk: 3 } },
+      { label: '따뜻하고 포근한 원목 · 오크 · 라탄', shortTitle: '원목 · 오크 · 라탄', image: './assets/quiz/mat-wood.png', swatches: ['#F8F3E8', '#CFA676', '#B08655'], materialPref: 'wood', scores: { dustRisk: 3 } },
+      { label: '폭신한 패브릭 · 면 · 코튼 질감', shortTitle: '패브릭 · 코튼', image: './assets/quiz/mat-fabric.png', swatches: ['#FFFFFF', '#F2ECE1', '#DED6C8'], materialPref: 'fabric', scores: { fabricRisk: 5, dustRisk: 4 } }
     ]
   },
   {
@@ -543,12 +546,13 @@ export const QUIZ_QUESTIONS = [
   {
     id: 'q24',
     chapter: 'STEP 4 · 취향·무드',
-    title: '저녁 시간 방 안 조명 사용 스타일은 어떤가요?',
-    reasonHint: '눈 시린 아크릴 네온사인 vs 확산광 스탠드/집게등 추천이 나뉩니다.',
+    title: '선호하는 저녁 조명 빛 톤을 골라보세요',
+    reasonHint: '조명 색온도에 맞춰 확산광 스탠드·전구 추천이 달라집니다.',
+    visualGrid: true,
     options: [
-      { label: '천장 형광등 끄고 따뜻한 간접등·스탠드만 켜둠', lightingPref: 'mood', scores: { spaceStress: 2 } },
-      { label: '작업할 땐 환하게, 잘 때만 끔', lightingPref: 'bright', scores: {} },
-      { label: '큰 신경 안 쓰고 기본 형광등 사용', lightingPref: 'basic', scores: {} }
+      { label: '천장 형광등 끄고 따뜻한 간접등·스탠드만 켜둠', shortTitle: '2700K 따뜻한 간접등', image: './assets/quiz/light-mood.png', swatches: ['#FFD07B', '#8A572A', '#1E1814'], lightingPref: 'mood', scores: { spaceStress: 2 } },
+      { label: '작업할 땐 환하게, 잘 때만 끔', shortTitle: '4000K 밝은 주백색', image: './assets/quiz/light-bright.png', swatches: ['#FFFDF5', '#F6F3EA', '#D6D2C7'], lightingPref: 'bright', scores: {} },
+      { label: '큰 신경 안 쓰고 기본 형광등 사용', shortTitle: '6500K 기본 형광등', image: './assets/quiz/light-basic.png', swatches: ['#EFF4FA', '#FFFFFF', '#C5D4E8'], lightingPref: 'basic', scores: {} }
     ]
   },
   {
