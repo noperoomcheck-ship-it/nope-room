@@ -19,10 +19,10 @@ import {
   getItemGapHint,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './data/app-data.js?v=nope63';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope63';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope63';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope63';
+} from './data/app-data.js?v=nope64';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope64';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope64';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope64';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -4803,6 +4803,110 @@ function closeAccountSheet() {
   if (accountSheetBackdrop) accountSheetBackdrop.classList.add('hidden');
 }
 
+function parsePriceTierManWon(tierStr) {
+  const clean = String(tierStr || '').replace(/\([^)]*\)/g, '').trim();
+  if (!clean) return null;
+  const parts = clean.split(/[~–-]/);
+  const parsePart = (chunk, fallbackUnit) => {
+    const numMatch = chunk.match(/(\d+(?:\.\d+)?)/);
+    if (!numMatch) return null;
+    const val = parseFloat(numMatch[1]);
+    if (chunk.includes('천')) return val / 10;
+    if (chunk.includes('만')) return val;
+    return fallbackUnit === '천' ? val / 10 : val;
+  };
+  const tailUnit = clean.includes('만') ? '만' : (clean.includes('천') ? '천' : '만');
+  const first = parsePart(parts[0], parts.length === 1 ? tailUnit : (parts[0].includes('천') ? '천' : tailUnit));
+  if (first === null) return null;
+  const second = parts[1] ? parsePart(parts[1], tailUnit) : first;
+  const hi = second !== null ? Math.max(first, second) : first;
+  return [first, hi];
+}
+
+function formatManWonValue(val) {
+  if (val < 1) return `${Math.max(1, Math.round(val * 10))}천`;
+  const rounded = Math.round(val * 10) / 10;
+  return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}만`;
+}
+
+function analyzeWishlistCombo(wishlist) {
+  const savedSet = new Set(wishlist.map((it) => it.id));
+  const hydrated = wishlist.map((it) => {
+    const live = ITEMS_DB.find((x) => x.id === it.id);
+    return live ? { ...live, ...it, tones: live.tones, pairIds: live.pairIds } : it;
+  });
+
+  let minSum = 0;
+  let maxSum = 0;
+  let pricedCount = 0;
+  const toneCounts = {};
+  const pairScores = {};
+
+  hydrated.forEach((it) => {
+    const parsed = parsePriceTierManWon(it.priceTier);
+    if (parsed) {
+      minSum += parsed[0];
+      maxSum += parsed[1];
+      pricedCount += 1;
+    }
+    if (Array.isArray(it.tones)) {
+      it.tones.forEach((tid) => {
+        toneCounts[tid] = (toneCounts[tid] || 0) + 1;
+      });
+    }
+    if (Array.isArray(it.pairIds)) {
+      it.pairIds.forEach((pid) => {
+        if (!savedSet.has(pid)) {
+          pairScores[pid] = (pairScores[pid] || 0) + 1;
+        }
+      });
+    }
+  });
+
+  const budgetText = pricedCount
+    ? (Math.round(minSum * 10) === Math.round(maxSum * 10)
+      ? `약 ${formatManWonValue(minSum)} 원`
+      : `약 ${formatManWonValue(minSum)}~${formatManWonValue(maxSum)} 원`)
+    : '가격 정보 확인 필요';
+
+  const topToneEntry = Object.entries(toneCounts).sort((a, b) => b[1] - a[1])[0] || null;
+  const savedProfile = loadSavedRoomProfile();
+  let toneStatus = 'neutral';
+  let toneSummary = '톤 매칭 데이터가 있는 가구를 추가해 보세요.';
+  if (topToneEntry) {
+    const [topToneId, topCount] = topToneEntry;
+    const topLabel = getToneLabel(topToneId);
+    if (savedProfile && savedProfile.toneId) {
+      const myLabel = getToneLabel(savedProfile.toneId);
+      const myMatchCount = toneCounts[savedProfile.toneId] || 0;
+      if (savedProfile.toneId === topToneId || myMatchCount === hydrated.length) {
+        toneStatus = 'ok';
+        toneSummary = `내 방(${myLabel}) 톤과 잘 어울리는 조합이에요.`;
+      } else if (myMatchCount > 0) {
+        toneStatus = 'neutral';
+        toneSummary = `내 방(${myLabel})과 ${topLabel} 톤이 섞여 있어요. 큰 가구 색을 기준으로 묶어보세요.`;
+      } else {
+        toneStatus = 'warn';
+        toneSummary = `내 방(${myLabel})보다 '${topLabel}' 계열 위주라 소품 톤 조율이 필요해요.`;
+      }
+    } else if (topCount >= Math.max(1, Math.ceil(hydrated.length * 0.7))) {
+      toneStatus = 'ok';
+      toneSummary = `'${topLabel}' 중심으로 톤 통일도가 안정적이에요.`;
+    } else {
+      toneStatus = 'warn';
+      toneSummary = '색상 톤이 여러 갈래라 큰 가구 1가지 톤으로 맞추는 편이 깔끔해요.';
+    }
+  }
+
+  const complements = Object.entries(pairScores)
+    .sort((a, b) => b[1] - a[1])
+    .map(([pid]) => ITEMS_DB.find((x) => x.id === pid))
+    .filter(Boolean)
+    .slice(0, 2);
+
+  return { hydrated, budgetText, pricedCount, toneStatus, toneSummary, complements };
+}
+
 function renderAccountSheet(tab = activeAccountTab) {
   activeAccountTab = tab;
   if (!accountSheetPanel) return;
@@ -4814,13 +4918,14 @@ function renderAccountSheet(tab = activeAccountTab) {
   const avgDust = wishlist.length
     ? (wishlist.reduce((s, x) => s + (x.specs ? Number(x.specs.dust || 2) : 2), 0) / wishlist.length).toFixed(1)
     : '0.0';
+  const combo = wishlist.length ? analyzeWishlistCombo(wishlist) : null;
 
   accountSheetPanel.innerHTML = `
     <div class="sheet-grabber" aria-hidden="true"></div>
     <div class="sheet-head" style="margin-bottom:14px;">
       <div>
         <span class="micro-label">MY ROOM & SAVE</span>
-        <h2 class="sheet-title" style="margin:6px 0 2px;">내 방 후보 · 계정 저장</h2>
+        <h2 class="sheet-title" style="margin:6px 0 2px;">내 방 후보 · 조합 점검</h2>
       </div>
       <button class="sheet-close" id="close-account-sheet-btn" type="button" aria-label="닫기">×</button>
     </div>
@@ -4832,26 +4937,59 @@ function renderAccountSheet(tab = activeAccountTab) {
 
     ${tab === 'wishlist' ? `
       ${wishlist.length ? `
+        <div class="wishlist-combo-card">
+          <div class="wishlist-budget-row">
+            <span class="wishlist-budget-lbl">예상 조합 예산 (${combo.pricedCount}종 합계)</span>
+            <strong class="wishlist-budget-val">${escapeHtml(combo.budgetText)}</strong>
+          </div>
+          <p class="wishlist-tone-note is-${combo.toneStatus}">${escapeHtml(combo.toneSummary)}</p>
+        </div>
         <div class="score-trio" style="margin-bottom:14px;">
           <div class="score-pill"><span class="score-lbl">PASS</span><strong class="score-safe">${passCnt}개</strong></div>
           <div class="score-pill"><span class="score-lbl">주의</span><strong class="${nopeCnt ? 'score-high' : ''}">${nopeCnt}개</strong></div>
           <div class="score-pill"><span class="score-lbl">평균 먼지</span><strong>${avgDust}/5</strong></div>
         </div>
         <div>
-          ${wishlist.map((it) => {
+          ${combo.hydrated.map((it) => {
             const vm = verdictMeta(it.verdict);
+            const firstTone = Array.isArray(it.tones) && it.tones.length ? getToneLabel(it.tones[0]) : '';
             return `
               <div class="wishlist-item-row">
                 <div class="wishlist-item-main" data-wish-open="${escapeHtml(it.id)}">
                   <span class="verdict-pill ${vm.cls}" style="font-size:10px;padding:2px 6px;">${vm.text}</span>
                   <strong style="margin-top:4px;">${escapeHtml(it.name)}</strong>
-                  <span>${escapeHtml(it.category || '')} · ${escapeHtml(it.priceTier || '')}</span>
+                  <span>${escapeHtml(it.category || '')} · ${escapeHtml(it.priceTier || '')}${firstTone ? ` · ${escapeHtml(firstTone)}` : ''}</span>
                 </div>
                 <button type="button" class="wishlist-remove-btn" data-wish-remove="${escapeHtml(it.id)}">삭제</button>
               </div>
             `;
           }).join('')}
         </div>
+        ${combo.complements.length ? `
+          <div class="wishlist-comp-box">
+            <span class="micro-label">MISSING COMPANIONS · 1초 보완</span>
+            <h3 class="wishlist-comp-heading">이 조합에 빠진 보완템 ${combo.complements.length}종</h3>
+            ${combo.complements.map((comp) => {
+              const cvm = verdictMeta(comp.verdict);
+              const urls = getShopUrls(comp.altSearchKeyword || comp.name, 'wishlist_combo', comp.id);
+              return `
+                <div class="wishlist-comp-card">
+                  <div class="wishlist-comp-top">
+                    <strong class="wishlist-comp-name">${escapeHtml(comp.name)}</strong>
+                    <span class="verdict-pill ${cvm.cls}" style="font-size:10px;padding:2px 6px;flex-shrink:0;">${cvm.text}</span>
+                  </div>
+                  <p class="wishlist-comp-desc">${escapeHtml(comp.goodLine || comp.oneLiner || '')}</p>
+                  <div class="wishlist-comp-actions">
+                    <button type="button" class="btn-secondary btn-sm" data-wish-open="${escapeHtml(comp.id)}">스펙 보기</button>
+                    <a class="shop-link-btn is-coupang" href="${urls.coupang}" target="_blank" rel="noopener noreferrer">쿠팡 최저가</a>
+                    <a class="shop-link-btn is-ohouse" href="${urls.ohouse}" target="_blank" rel="noopener noreferrer">오늘의집</a>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+            ${AFFILIATE_CONFIG.coupangEnabled ? `<p class="ftc-affiliate-note">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
+          </div>
+        ` : ''}
         ${!acc ? `
           <div class="sync-status-box" style="margin-top:12px;">
             다른 폰·PC에서도 찜한 가구와 입주 점검표를 이어보려면 <strong>3초 로그인·백업</strong>을 켜두세요.
@@ -4861,8 +4999,8 @@ function renderAccountSheet(tab = activeAccountTab) {
       ` : `
         <div class="auth-box" style="text-align:center;">
           <strong style="display:block;font-size:14.5px;margin-bottom:6px;">아직 찜한 가구가 없어요</strong>
-          <p class="text-secondary" style="font-size:12.5px;margin-bottom:14px;">제품 판독이나 톤·무드 매처에서 가구를 눌러 우측 상단 <strong>♡ 저장</strong>을 누르면 여기에 모입니다.</p>
-          <button type="button" id="wish-go-scanner-btn" class="btn-primary btn-full">200종 가구 둘러보기 →</button>
+          <p class="text-secondary" style="font-size:12.5px;margin-bottom:14px;">제품 판독이나 톤·무드 매처에서 가구를 눌러 우측 상단 <strong>♡ 저장</strong>을 누르면 예산·톤 조합·보완템까지 한 번에 계산해 드려요.</p>
+          <button type="button" id="wish-go-scanner-btn" class="btn-primary btn-full">${ITEMS_DB.length}종 가구 둘러보기 →</button>
         </div>
       `}
     ` : `
@@ -5069,6 +5207,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope63').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope64').catch(() => {});
   }
 }
