@@ -19,10 +19,10 @@ import {
   getItemGapHint,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './data/app-data.js?v=nope65';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope65';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope65';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope65';
+} from './data/app-data.js?v=nope66';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope66';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope66';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope66';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -143,39 +143,14 @@ function playBeep() {
   }
 }
 
-let activeViewTransition = null;
-let suppressViewTransition = false;
-const pendingViewCallbacks = [];
-
 function runViewTransition(updateFn) {
-  if (!suppressViewTransition && typeof document.startViewTransition === 'function') {
-    try {
-      while (pendingViewCallbacks.length > 0) {
-        const prev = pendingViewCallbacks.shift();
-        prev();
-      }
-      if (activeViewTransition && typeof activeViewTransition.skipTransition === 'function') {
-        activeViewTransition.skipTransition();
-      }
-      let ran = false;
-      const runner = () => {
-        if (ran) return;
-        ran = true;
-        const idx = pendingViewCallbacks.indexOf(runner);
-        if (idx >= 0) pendingViewCallbacks.splice(idx, 1);
-        updateFn();
-      };
-      pendingViewCallbacks.push(runner);
-      const vt = document.startViewTransition(runner);
-      activeViewTransition = vt;
-      if (vt && vt.finished) vt.finished.catch(() => {});
-      if (vt && vt.ready) vt.ready.catch(() => {});
-    } catch {
-      updateFn();
-    }
-  } else {
-    updateFn();
-  }
+  updateFn();
+}
+
+function syncBodyScrollLock() {
+  const detailOpen = Boolean(sheetBackdrop && !sheetBackdrop.classList.contains('hidden'));
+  const accountOpen = Boolean(accountSheetBackdrop && !accountSheetBackdrop.classList.contains('hidden'));
+  document.body.classList.toggle('modal-open', detailOpen || accountOpen);
 }
 
 function switchTab(tabName) {
@@ -215,7 +190,6 @@ document.getElementById('top-home-btn').addEventListener('click', () => {
 
 // ---------------- Tab 1: Home & Room Profile Onboarding ----------------
 const homeStageCover = document.getElementById('home-stage-cover');
-const homeStageHub = document.getElementById('home-stage-hub');
 const quizNicknameEl = document.getElementById('quiz-nickname');
 const nicknameInputEl = document.getElementById('nickname-input');
 const quizRunner = document.getElementById('quiz-runner');
@@ -255,16 +229,13 @@ function updateSavedProfileBadge() {
 
 function showHomeStage(stage) {
   if (stage !== 'analyzing') clearAnalysisTimers();
-  runViewTransition(() => {
-    homeStageCover.classList.toggle('hidden', stage !== 'cover');
-    homeStageHub.classList.toggle('hidden', stage !== 'hub');
-    quizNicknameEl.classList.toggle('hidden', stage !== 'nickname');
-    quizRunner.classList.toggle('hidden', stage !== 'quiz');
-    quizAnalyzingEl.classList.toggle('hidden', stage !== 'analyzing');
-    quizTasteEl.classList.toggle('hidden', stage !== 'taste');
-    quizResultEl.classList.toggle('hidden', stage !== 'result');
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  });
+  homeStageCover.classList.toggle('hidden', stage !== 'cover');
+  quizNicknameEl.classList.toggle('hidden', stage !== 'nickname');
+  quizRunner.classList.toggle('hidden', stage !== 'quiz');
+  quizAnalyzingEl.classList.toggle('hidden', stage !== 'analyzing');
+  quizTasteEl.classList.toggle('hidden', stage !== 'taste');
+  quizResultEl.classList.toggle('hidden', stage !== 'result');
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 const nicknameNextBtn = document.getElementById('nickname-next-btn');
@@ -349,10 +320,13 @@ savedProfileBtn.addEventListener('click', () => {
 });
 
 document.getElementById('start-quiz-btn').addEventListener('click', startQuiz);
-document.getElementById('start-quiz-btn-hub').addEventListener('click', startQuiz);
-const openHubBtn = document.getElementById('open-home-hub-btn');
-if (openHubBtn) openHubBtn.addEventListener('click', () => showHomeStage('hub'));
-document.getElementById('back-to-cover-btn').addEventListener('click', () => showHomeStage('cover'));
+const coverDirectScanBtn = document.getElementById('cover-direct-scan-btn');
+if (coverDirectScanBtn) {
+  coverDirectScanBtn.addEventListener('click', () => {
+    switchTab('scanner');
+    setScannerMode('search');
+  });
+}
 
 function getFlattenedQuizAnswers() {
   const flat = [];
@@ -986,9 +960,10 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
       ${analysisBasis && analysisBasis.length ? `
         <div class="report-basis-box">
           <span class="report-basis-title">판정 근거 · 입력하신 내 방 30문항 핵심 조건</span>
-          <div class="report-basis-grid">
-            ${analysisBasis.map((b) => `<span class="report-basis-chip">${escapeHtml(b)}</span>`).join('')}
+          <div class="report-basis-grid" id="report-basis-grid">
+            ${analysisBasis.slice(0, 4).map((b) => `<span class="report-basis-chip">${escapeHtml(b)}</span>`).join('')}
           </div>
+          ${analysisBasis.length > 4 ? `<button type="button" id="toggle-basis-btn" class="report-more-btn">판정 근거 +${analysisBasis.length - 4}개 더보기</button>` : ''}
         </div>
       ` : ''}
 
@@ -1012,8 +987,8 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
       ${tips.length ? `
         <div class="life-tips-box">
           <span class="life-tips-kicker">자취생활 팁! · ${escapeHtml(profile.badge)} 맞춤</span>
-          <div class="life-tips-list">
-            ${tips.map((tip) => {
+          <div class="life-tips-list" id="life-tips-list">
+            ${tips.slice(0, 2).map((tip) => {
               const tipUrls = tip.itemKeyword ? buildShopUrls(tip.itemKeyword) : null;
               return `
                 <div class="life-tip-item">
@@ -1032,12 +1007,14 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
               `;
             }).join('')}
           </div>
+          ${tips.length > 2 ? `<button type="button" id="toggle-tips-btn" class="report-more-btn">추가 팁 +${tips.length - 2}개 더보기</button>` : ''}
           ${tips.some((t) => t.itemKeyword) && AFFILIATE_CONFIG.coupangEnabled ? `<p class="ftc-affiliate-note" style="margin-top:10px;">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
         </div>
       ` : ''}
     </div>
 
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+      <button id="share-report-link-btn" class="btn-share-chip is-kakao" style="width:100%;justify-content:center;padding:12px 14px;">${KAKAO_LOGO_SVG}<span>카톡으로 내 방 결과 링크 공유하기</span></button>
       <button id="share-story-btn" class="btn-accent btn-full btn-insta">
         <svg class="insta-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/>
@@ -1049,6 +1026,55 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
       <button id="go-scanner-from-result" class="btn-primary btn-full">내 방 톤 맞춤 가구 보기 →</button>
     </div>
   `;
+
+  const toggleBasisBtn = document.getElementById('toggle-basis-btn');
+  if (toggleBasisBtn) {
+    let basisExpanded = false;
+    toggleBasisBtn.addEventListener('click', () => {
+      basisExpanded = !basisExpanded;
+      const list = basisExpanded ? analysisBasis : analysisBasis.slice(0, 4);
+      document.getElementById('report-basis-grid').innerHTML = list.map((b) => `<span class="report-basis-chip">${escapeHtml(b)}</span>`).join('');
+      toggleBasisBtn.textContent = basisExpanded ? '접기 ▲' : `판정 근거 +${analysisBasis.length - 4}개 더보기`;
+    });
+  }
+
+  const toggleTipsBtn = document.getElementById('toggle-tips-btn');
+  if (toggleTipsBtn) {
+    let tipsExpanded = false;
+    toggleTipsBtn.addEventListener('click', () => {
+      tipsExpanded = !tipsExpanded;
+      const list = tipsExpanded ? tips : tips.slice(0, 2);
+      document.getElementById('life-tips-list').innerHTML = list.map((tip) => {
+        const tipUrls = tip.itemKeyword ? buildShopUrls(tip.itemKeyword) : null;
+        return `
+          <div class="life-tip-item">
+            <strong>${escapeHtml(tip.title)}</strong>
+            <p>${escapeHtml(tip.desc)}</p>
+            ${tipUrls ? `
+              <div class="life-tip-shop-row">
+                <span class="life-tip-item-name">추천 · ${escapeHtml(tip.itemLabel)}</span>
+                <div class="life-tip-links">
+                  <a href="${tipUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">쿠팡 →</a>
+                  <a href="${tipUrls.kurly}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill is-kurly">컬리 →</a>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+      toggleTipsBtn.textContent = tipsExpanded ? '추가 팁 접기 ▲' : `추가 팁 +${tips.length - 2}개 더보기`;
+    });
+  }
+
+  const shareLinkBtn = document.getElementById('share-report-link-btn');
+  if (shareLinkBtn) {
+    shareLinkBtn.addEventListener('click', () => {
+      const base = location.protocol.startsWith('http') ? `${location.origin}${location.pathname}` : 'https://nope-room.vercel.app/';
+      const url = `${base}?type=${encodeURIComponent(profile.id)}&nick=${encodeURIComponent(nickname)}`;
+      const msg = `[NOPE! 내 방 판독 결과]\n${nickname}님은 '${profile.badge}' (위험도 ${dangerScore}점)\n예상 절약 효과: 약 ${savedMan}만 원\n내 방도 1분 만에 판독해 보기 👉 ${url}`;
+      copyTextToClipboard(msg, '카톡 공유 문구·링크 복사 완료!');
+    });
+  }
 
   quizResultEl.querySelectorAll('.swap-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -1450,19 +1476,44 @@ const customOutEl = document.getElementById('custom-analysis-output');
 const sheetBackdrop = document.getElementById('detail-sheet-backdrop');
 const sheetPanel = document.getElementById('detail-sheet-panel');
 
-const FILTER_CHIPS = [
-  { label: `전체 ${ITEMS_DB.length}종`, type: 'all', value: '전체' },
-  { label: '이케아', type: 'brand', value: 'IKEA' },
-  { label: '한샘·리바트·일룸', type: 'brand', value: 'HANSSEM|LIVART|ILOOM' },
-  { label: '두닷·데스커·에이픽스', type: 'brand', value: 'DODOT|DESKER|APIX|SOFSYS' },
-  { label: '마켓비·룸앤홈·무지', type: 'brand', value: 'MARKETB|ROOMNHOME|MUJI' },
-  { label: '국내·리빙·조명', type: 'brand', value: '오늘의집|쿠팡|삼익|레이디|동서|웰퍼니|에몬스|보루네오|지누스|슬로우|몽제|까사미아|왕자|다이소|3M|제닉스|시디즈|시크릿|클라우드|린백|LEXON|ILKW|LIVING|DECO|SOODAM|EKO|LOUNGE|RARERAW|WANGJA|LUNARLAB|SIZEOF|DUOBACK|HERMAN|TP-LINK|PHILIPS|OSRAM|DAELIM|KYUNGDONG|LOCKNLOCK|SHINIL|XIAOMI|WINIX|CUCKOO|NB|LUNA|USM' },
-  { label: '책상·의자', type: 'cat', value: '책상·의자' },
-  { label: '수납·행거', type: 'cat', value: '수납·행거' },
-  { label: '소파·침대·매트', type: 'cat', value: '소파·침대·매트' },
-  { label: '식탁·주방·생활', type: 'cat', value: '식탁·주방·생활' },
-  { label: '조명·거울', type: 'cat', value: '조명·거울' },
-  { label: '무타공·욕실', type: 'cat', value: '무타공·욕실' }
+const THEME_MATCHERS = {
+  deskterior: /데스크|책상|모니터|키보드|매트|타공판|전선|멀티탭|노트북|시디즈|듀오백|허먼|사이즈오브|서랍/,
+  planterior: /화분|식물|토분|라탄|사츠마스|생장등|테라코타|베란다|룬넨|스니다드|톨크닝/,
+  homecafe: /홈카페|카페|식탁|커피|캡슐|머그|트레이|트롤리|아일랜드|홈바|협탁|독스타/,
+  cozybed: /침대|매트리스|토퍼|이불|베개|쿠션|러그|커튼|블라인드|패브릭|부클레|빈백|소파|스탠드|무드등/,
+  gapstorage: /틈새|슬림|침대밑|문걸이|압축|행거|리빙박스|스쿠브|트로네스|베스켄|선반|트롤리/,
+  nodrill: /무타공|꼭꼬핀|압축|문걸이|코맨드|자석|논슬립/
+};
+
+const FILTER_GROUPS = [
+  {
+    caption: '라이프스타일 테마',
+    chips: [
+      { label: '데스크테리어', type: 'theme', value: 'deskterior', isTheme: true },
+      { label: '플랜테리어', type: 'theme', value: 'planterior', isTheme: true },
+      { label: '홈카페·주방', type: 'theme', value: 'homecafe', isTheme: true },
+      { label: '침실·패브릭', type: 'theme', value: 'cozybed', isTheme: true },
+      { label: '틈새·초슬림', type: 'theme', value: 'gapstorage', isTheme: true },
+      { label: '무타공·보증금', type: 'theme', value: 'nodrill', isTheme: true }
+    ]
+  },
+  {
+    caption: '카테고리 · 브랜드',
+    chips: [
+      { label: `전체 ${ITEMS_DB.length}종`, type: 'all', value: '전체' },
+      { label: '책상·의자', type: 'cat', value: '책상·의자' },
+      { label: '수납·행거', type: 'cat', value: '수납·행거' },
+      { label: '소파·침대·매트', type: 'cat', value: '소파·침대·매트' },
+      { label: '식탁·주방·생활', type: 'cat', value: '식탁·주방·생활' },
+      { label: '조명·거울', type: 'cat', value: '조명·거울' },
+      { label: '무타공·욕실', type: 'cat', value: '무타공·욕실' },
+      { label: '이케아', type: 'brand', value: 'IKEA' },
+      { label: '한샘·리바트·일룸', type: 'brand', value: 'HANSSEM|LIVART|ILOOM' },
+      { label: '두닷·데스커·에이픽스', type: 'brand', value: 'DODOT|DESKER|APIX|SOFSYS' },
+      { label: '마켓비·룸앤홈·무지', type: 'brand', value: 'MARKETB|ROOMNHOME|MUJI' },
+      { label: '국내·리빙·조명', type: 'brand', value: '오늘의집|쿠팡|삼익|레이디|동서|웰퍼니|에몬스|보루네오|지누스|슬로우|몽제|까사미아|왕자|다이소|3M|제닉스|시디즈|시크릿|클라우드|린백|LEXON|ILKW|LIVING|DECO|SOODAM|EKO|LOUNGE|RARERAW|WANGJA|LUNARLAB|SIZEOF|DUOBACK|HERMAN|TP-LINK|PHILIPS|OSRAM|DAELIM|KYUNGDONG|LOCKNLOCK|SHINIL|XIAOMI|WINIX|CUCKOO|NB|LUNA|USM' }
+    ]
+  }
 ];
 
 function verdictMeta(verdict) {
@@ -1472,37 +1523,41 @@ function verdictMeta(verdict) {
 }
 
 function openScannerResults(label) {
-  runViewTransition(() => {
-    scannerGate.classList.add('hidden');
-    scannerResults.classList.remove('hidden');
-    document.getElementById('scanner-active-label').textContent = label;
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  });
+  scannerGate.classList.add('hidden');
+  scannerResults.classList.remove('hidden');
+  document.getElementById('scanner-active-label').textContent = label;
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 document.getElementById('scanner-reset-btn').addEventListener('click', () => {
-  runViewTransition(() => {
-    scannerResults.classList.add('hidden');
-    scannerGate.classList.remove('hidden');
-    searchInput.value = '';
-    customOutEl.innerHTML = '';
-  });
+  scannerResults.classList.add('hidden');
+  scannerGate.classList.remove('hidden');
+  searchInput.value = '';
+  customOutEl.innerHTML = '';
 });
 
 function renderCategoryChips() {
   chipsWrap.innerHTML = '';
-  FILTER_CHIPS.forEach((f) => {
-    const b = document.createElement('button');
-    b.className = 'chip';
-    b.textContent = f.label;
-    b.addEventListener('click', () => {
-      state.selectedFilter = f;
-      searchInput.value = '';
-      customOutEl.innerHTML = '';
-      renderItems();
-      openScannerResults(f.label);
+  FILTER_GROUPS.forEach((grp) => {
+    const cap = document.createElement('span');
+    cap.className = 'chip-group-caption';
+    cap.textContent = grp.caption;
+    chipsWrap.appendChild(cap);
+
+    grp.chips.forEach((f) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = `chip ${f.isTheme ? 'is-theme' : ''}`;
+      b.textContent = f.label;
+      b.addEventListener('click', () => {
+        state.selectedFilter = f;
+        searchInput.value = '';
+        customOutEl.innerHTML = '';
+        renderItems();
+        openScannerResults(f.label);
+      });
+      chipsWrap.appendChild(b);
     });
-    chipsWrap.appendChild(b);
   });
 }
 
@@ -1992,16 +2047,17 @@ function openDetailSheet(item) {
       </button>
     `}
 
-    <div class="sheet-brief-box">
-      <div class="sheet-brief-row">
-        <span class="brief-badge is-good">GOOD</span>
-        <span>${escapeHtml(goodLine)}</span>
-      </div>
-      <div class="sheet-brief-row">
-        <span class="brief-badge ${secondBadgeCls}">${secondBadgeText}</span>
-        <span>${escapeHtml(checkLine)}</span>
-      </div>
-    </div>
+    ${(() => {
+      const showGood = Boolean(goodLine && goodLine.trim() && goodLine.trim() !== whySentence.trim());
+      const showCheck = Boolean(checkLine && checkLine.trim() && checkLine.trim() !== whySentence.trim() && checkLine.trim() !== goodLine.trim());
+      if (!showGood && !showCheck) return '';
+      return `
+        <div class="sheet-brief-box">
+          ${showGood ? `<div class="sheet-brief-row"><span class="brief-badge is-good">GOOD</span><span>${escapeHtml(goodLine)}</span></div>` : ''}
+          ${showCheck ? `<div class="sheet-brief-row"><span class="brief-badge ${secondBadgeCls}">${secondBadgeText}</span><span>${escapeHtml(checkLine)}</span></div>` : ''}
+        </div>
+      `;
+    })()}
 
     ${gapHint ? `
       <div class="sheet-gap-hint">
@@ -2075,6 +2131,7 @@ function openDetailSheet(item) {
   `;
 
   sheetBackdrop.classList.remove('hidden');
+  syncBodyScrollLock();
   sheetPanel.scrollTop = 0;
   document.getElementById('close-sheet-btn').addEventListener('click', closeDetailSheet);
   const copyShareBtn = document.getElementById('sheet-copy-share-btn');
@@ -2115,6 +2172,7 @@ function openDetailSheet(item) {
 
 function closeDetailSheet() {
   sheetBackdrop.classList.add('hidden');
+  syncBodyScrollLock();
 }
 
 sheetBackdrop.addEventListener('click', (e) => {
@@ -2254,6 +2312,9 @@ function findDirectAndSimilarItems(rawQuery) {
       if (!brands.some((b) => item.brand.includes(b))) return false;
     } else if (!q && f && f.type === 'cat') {
       if (item.category !== f.value) return false;
+    } else if (!q && f && f.type === 'theme') {
+      const rx = THEME_MATCHERS[f.value];
+      if (rx && !rx.test(getItemSearchableText(item))) return false;
     }
 
     if (!q) return true;
@@ -2979,10 +3040,18 @@ function renderCompareView() {
       ${winner
         ? `<strong class="compare-reco-title">✓ 추천 제품: ${escapeHtml(winner.name)}</strong><p class="compare-reco-desc">${escapeHtml(loser.name)} 대비 내 방 조건과 유지관리·내구성 점수가 더 안정적입니다.</p>`
         : `<strong class="compare-reco-title">⚖️ 두 제품 스펙이 비슷해요</strong><p class="compare-reco-desc">예산과 방 톤에 맞춰 상세 근거를 비교해 보세요.</p>`}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
-        <button type="button" id="compare-open-a" class="btn-secondary btn-sm">A 상세 보기</button>
-        <button type="button" id="compare-open-b" class="btn-primary btn-sm">B 상세 보기</button>
-      </div>
+      ${(() => {
+        const pickItem = winner || itemA;
+        const pickWished = isWishlistedItem(pickItem.id);
+        return `
+          <div class="compare-winner-actions">
+            <button type="button" id="compare-open-a" class="btn-secondary btn-sm">A 상세 보기</button>
+            <button type="button" id="compare-open-b" class="btn-secondary btn-sm">B 상세 보기</button>
+            <button type="button" id="compare-wish-winner" class="btn-primary btn-sm">${pickWished ? '♥ 찜 저장됨' : `♡ ${winner ? '추천 제품' : 'A'} 찜하기`}</button>
+            <button type="button" id="compare-share-link" class="btn-share-chip is-kakao" style="justify-content:center;padding:8px 10px;">${KAKAO_LOGO_SVG}<span>비교 링크 복사</span></button>
+          </div>
+        `;
+      })()}
     </div>
   `;
 
@@ -3053,6 +3122,23 @@ function renderCompareView() {
 
   document.getElementById('compare-open-a').addEventListener('click', () => openDetailSheet(itemA));
   document.getElementById('compare-open-b').addEventListener('click', () => openDetailSheet(itemB));
+  const cmpWishBtn = document.getElementById('compare-wish-winner');
+  if (cmpWishBtn) {
+    cmpWishBtn.addEventListener('click', () => {
+      const target = winner || itemA;
+      toggleWishlistItem(target);
+      renderCompareView();
+    });
+  }
+  const cmpShareBtn = document.getElementById('compare-share-link');
+  if (cmpShareBtn) {
+    cmpShareBtn.addEventListener('click', () => {
+      const base = location.protocol.startsWith('http') ? `${location.origin}${location.pathname}` : 'https://nope-room.vercel.app/';
+      const url = `${base}?compare=${encodeURIComponent(itemA.id)},${encodeURIComponent(itemB.id)}`;
+      const headline = winner ? `내 방 추천: ${winner.name}` : '두 제품 1:1 스펙 비교';
+      copyTextToClipboard(`[NOPE! A vs B 비교]\n${itemA.name} vs ${itemB.name}\n${headline}\n바로 비교 보기 👉 ${url}`, '비교 링크 복사 완료!');
+    });
+  }
 }
 
 function setScannerMode(mode) {
@@ -3485,13 +3571,11 @@ function renderToneMatcher() {
 }
 
 // ---------------- Tab 3: Human Scale ----------------
-const scaleStageInput = document.getElementById('scale-stage-input');
-const scaleStageDiagram = document.getElementById('scale-stage-diagram');
+const scaleStageHeight = document.getElementById('scale-stage-height');
 const scaleStageGap = document.getElementById('scale-stage-gap');
 const heightSlider = document.getElementById('height-slider');
 const heightValEl = document.getElementById('height-val');
 const svgWrap = document.getElementById('human-scale-svg-wrap');
-let scaleHeightStage = 'input'; // 'input' | 'diagram'
 
 function loadScaleState() {
   try {
@@ -3527,14 +3611,7 @@ function updateScaleInputsUI() {
   document.querySelectorAll('#scale-mode-switch .mode-btn').forEach((b) => {
     b.classList.toggle('active', b.dataset.mode === state.scaleMode);
   });
-
-  const s = calcHumanScale(state.scaleHeight, state.scaleMode);
-  const keyMetric = state.scaleMode === 'floor'
-    ? `좌식상 ${s.floorTable} / 모니터 ${s.monitorTop}`
-    : state.scaleMode === 'bed'
-      ? `침대 ${s.bedTotal} / 거울 ${s.mirrorMinH}+`
-      : `책상 ${s.deskHeight} / 의자 ${s.chairSeat}`;
-  document.getElementById('home-scale-summary-line').textContent = `${s.heightCm}cm · ${keyMetric}`;
+  renderHumanScaleDiagram();
 }
 
 function svgPill(cx, cy, text, bg = '#FFFFFF', fg = '#141B29', border = '#141B29') {
@@ -3819,42 +3896,21 @@ document.querySelectorAll('#scale-mode-switch .mode-btn').forEach((btn) => {
   });
 });
 
-document.getElementById('show-scale-diagram-btn').addEventListener('click', () => {
-  scaleHeightStage = 'diagram';
-  runViewTransition(() => {
-    renderHumanScaleDiagram();
-    scaleStageInput.classList.add('hidden');
-    scaleStageDiagram.classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  });
-});
-
-document.getElementById('scale-edit-btn').addEventListener('click', () => {
-  scaleHeightStage = 'input';
-  runViewTransition(() => {
-    scaleStageDiagram.classList.add('hidden');
-    scaleStageInput.classList.remove('hidden');
-  });
-});
-
 function setScaleView(view) {
   state.scaleView = view === 'gap' ? 'gap' : 'height';
   document.querySelectorAll('#scale-view-switch .scan-mode-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.scaleView === state.scaleView);
   });
-  runViewTransition(() => {
-    if (state.scaleView === 'gap') {
-      scaleStageInput.classList.add('hidden');
-      scaleStageDiagram.classList.add('hidden');
-      if (scaleStageGap) scaleStageGap.classList.remove('hidden');
-      renderGapStorageFinder();
-    } else {
-      if (scaleStageGap) scaleStageGap.classList.add('hidden');
-      scaleStageInput.classList.toggle('hidden', scaleHeightStage === 'diagram');
-      scaleStageDiagram.classList.toggle('hidden', scaleHeightStage !== 'diagram');
-    }
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  });
+  if (state.scaleView === 'gap') {
+    if (scaleStageHeight) scaleStageHeight.classList.add('hidden');
+    if (scaleStageGap) scaleStageGap.classList.remove('hidden');
+    renderGapStorageFinder();
+  } else {
+    if (scaleStageGap) scaleStageGap.classList.add('hidden');
+    if (scaleStageHeight) scaleStageHeight.classList.remove('hidden');
+    renderHumanScaleDiagram();
+  }
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 document.querySelectorAll('#scale-view-switch .scan-mode-btn').forEach((btn) => {
@@ -4246,7 +4302,7 @@ function renderCycleAlarms() {
       <p class="text-secondary" style="font-size:12.5px;margin-top:2px;">${escapeHtml(alarm.tip)}</p>
       <div class="cycle-actions">
         <button class="btn-primary btn-sm done-cycle-btn">오늘 완료</button>
-        <button class="btn-secondary btn-sm ics-one-btn">.ics 추가</button>
+        <button class="btn-secondary btn-sm ics-one-btn">캘린더 추가</button>
       </div>
     `;
     row.querySelector('.done-cycle-btn').addEventListener('click', () => {
@@ -4556,66 +4612,99 @@ if (downloadReportBtn) {
   });
 }
 
+function renderSharedArrivalBanner(profileId, nick) {
+  const banner = document.getElementById('shared-arrival-banner');
+  if (!banner) return;
+  const target = QUIZ_RESULTS.find((r) => r.id === profileId);
+  if (!target) {
+    banner.classList.add('hidden');
+    return;
+  }
+  const cleanNick = (nick || '친구').slice(0, 12);
+  banner.innerHTML = `
+    <span class="shared-arrival-kicker">SHARED ROOM RESULT</span>
+    <p class="shared-arrival-title">${escapeHtml(cleanNick)}님의 방은 <span style="color:var(--accent)">'${escapeHtml(target.badge)}'</span>!</p>
+    <p class="shared-arrival-sub">${escapeHtml(target.tagline)} · 내 방은 몇 점인지 1분 진단해 보세요.</p>
+  `;
+  banner.classList.remove('hidden');
+}
+
 function handleDeepLinks() {
-  suppressViewTransition = true;
-  try {
-    const params = new URLSearchParams(location.search);
-    const utm = params.get('utm_source') || params.get('ref') || '';
-    if (utm) {
-      try {
-        sessionStorage.setItem('nope_utm_source', utm.slice(0, 40));
-      } catch {
-        // ignore sessionStorage block
-      }
+  const params = new URLSearchParams(location.search);
+  const utm = params.get('utm_source') || params.get('ref') || '';
+  if (utm) {
+    try {
+      sessionStorage.setItem('nope_utm_source', utm.slice(0, 40));
+    } catch {
+      // ignore sessionStorage block
     }
+  }
 
-    const itemId = params.get('item');
-    if (itemId) {
-      const target = ITEMS_DB.find((it) => it.id === itemId);
-      if (target) {
-        switchTab('scanner');
-        state.selectedFilter = { label: target.category, type: 'cat', value: target.category };
-        renderItems();
-        openScannerResults(target.category);
-        openDetailSheet(target);
-        return;
-      }
-    }
+  const sharedType = params.get('type');
+  if (sharedType) {
+    renderSharedArrivalBanner(sharedType, params.get('nick') || '');
+  }
 
-    const tab = params.get('tab');
-    const q = params.get('q');
-    const mode = params.get('mode');
-    const tone = params.get('tone');
-    const base = params.get('base');
-    const seg = params.get('seg');
-
-    if (tab === 'scanner') {
+  const compareParam = params.get('compare');
+  if (compareParam) {
+    const [idA, idB] = compareParam.split(',').map((s) => s.trim()).filter(Boolean);
+    const hitA = ITEMS_DB.find((it) => it.id === idA);
+    const hitB = ITEMS_DB.find((it) => it.id === idB);
+    if (hitA && hitB) {
+      activeCompareA = hitA.id;
+      activeCompareB = hitB.id;
       switchTab('scanner');
-      if (mode === 'matcher') {
-        if (tone) state.matcherTone = tone;
-        if (base && ROOM_BASE_OPTIONS.some((b) => b.id === base)) {
-          state.matcherRoomBase = base;
-          saveRoomBaseState(base);
-        }
-        setScannerMode('matcher');
-      } else if (q) {
-        searchInput.value = q;
-        runScannerSearch();
-      }
-    } else if (tab === 'scale') {
-      switchTab('scale');
-      const view = params.get('view');
-      if (view === 'gap') {
-        setScaleView('gap');
-      }
-    } else if (tab === 'routine') {
-      switchTab('routine');
-      if (seg && routinePanels[seg]) {
-        openRoutineSegment(seg);
-      }
+      setScannerMode('compare');
+      return;
     }
-  } finally {
-    suppressViewTransition = false;
+  }
+
+  const itemId = params.get('item');
+  if (itemId) {
+    const target = ITEMS_DB.find((it) => it.id === itemId);
+    if (target) {
+      switchTab('scanner');
+      state.selectedFilter = { label: target.category, type: 'cat', value: target.category };
+      renderItems();
+      openScannerResults(target.category);
+      openDetailSheet(target);
+      return;
+    }
+  }
+
+  const tab = params.get('tab');
+  const q = params.get('q');
+  const mode = params.get('mode');
+  const tone = params.get('tone');
+  const base = params.get('base');
+  const seg = params.get('seg');
+
+  if (tab === 'scanner') {
+    switchTab('scanner');
+    if (mode === 'compare') {
+      setScannerMode('compare');
+    } else if (mode === 'matcher') {
+      if (tone) state.matcherTone = tone;
+      if (base && ROOM_BASE_OPTIONS.some((b) => b.id === base)) {
+        state.matcherRoomBase = base;
+        saveRoomBaseState(base);
+      }
+      setScannerMode('matcher');
+    } else if (q) {
+      searchInput.value = q;
+      runScannerSearch();
+    }
+  } else if (tab === 'scale') {
+    switchTab('scale');
+    const view = params.get('view');
+    if (view === 'gap') {
+      setScaleView('gap');
+    }
+  } else if (tab === 'routine') {
+    switchTab('routine');
+    if (seg && routinePanels[seg]) {
+      openRoutineSegment(seg);
+    }
   }
 }
 
@@ -4801,6 +4890,7 @@ function recoverSupabaseSessionFromHash() {
 
 function closeAccountSheet() {
   if (accountSheetBackdrop) accountSheetBackdrop.classList.add('hidden');
+  syncBodyScrollLock();
 }
 
 function parsePriceTierManWon(tierStr) {
@@ -5116,6 +5206,7 @@ function renderAccountSheet(tab = activeAccountTab) {
 function openAccountSheet(tab = 'wishlist') {
   renderAccountSheet(tab);
   if (accountSheetBackdrop) accountSheetBackdrop.classList.remove('hidden');
+  syncBodyScrollLock();
 }
 
 if (topbarWishBtn) topbarWishBtn.addEventListener('click', () => openAccountSheet('wishlist'));
@@ -5207,6 +5298,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope65').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope66').catch(() => {});
   }
 }

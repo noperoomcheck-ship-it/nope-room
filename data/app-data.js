@@ -1,12 +1,12 @@
-// NOPE! v9 — 219종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
-import { ITEMS_DB } from './products-db.js?v=nope65';
+// NOPE! v9 — 223종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
+import { ITEMS_DB } from './products-db.js?v=nope66';
 import {
   STYLE_MOODS,
   ROOM_TONES,
   TARGET_CATEGORIES,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './mood-palettes.js?v=nope65';
+} from './mood-palettes.js?v=nope66';
 export {
   ITEMS_DB,
   STYLE_MOODS,
@@ -398,9 +398,8 @@ export const QUIZ_QUESTIONS = [
   {
     id: 'q12',
     chapter: 'STEP 2 · 환경·계약',
-    title: '향후 이 방에서 얼마나 거주할 계획인가요?',
+    title: '향후 이 집에서 얼마나 거주할 계획인가요?',
     reasonHint: '1~2년 내 이사 예정이면 분해 시 망가지는 PB/수납침대는 NOPE!입니다.',
-    condition: (ans) => !ans.some((a) => a.isOwner),
     options: [
       { label: '1년 내외 단기 거주 · 자주 이사 예정', frequentMover: true, scores: { depositRisk: 8, assemblyRisk: 6, spaceStress: 4 } },
       { label: '2년 계약 기준 거주 예정', scores: { depositRisk: 4, assemblyRisk: 3 } },
@@ -589,7 +588,6 @@ export const QUIZ_QUESTIONS = [
     chapter: 'STEP 5 · 구매·예산',
     title: '책상에 무거운 모니터암이나 본체를 올릴 계획인가요?',
     reasonHint: '종이 벌집 심재 책상(라그캅텐 등) 함몰 위험을 가르는 결정적 질문이에요.',
-    condition: (ans) => ans.some((a) => a.targetItem === 'desk') || ans.some((a) => a.postureMode === 'desk'),
     options: [
       { label: '네, 모니터암·듀얼모니터·본체 올려서 씀', heavyDeskLoad: true, scores: { assemblyRisk: 8 } },
       { label: '가벼운 노트북·필기·화장대 용도만 씀', scores: { assemblyRisk: 2 } },
@@ -612,7 +610,6 @@ export const QUIZ_QUESTIONS = [
     chapter: 'STEP 5 · 구매·예산',
     title: '가구 조립이나 설치는 어느 정도까지 괜찮나요?',
     reasonHint: '설치·조립 부담 허용 범위에 따라 반제품 추천이 달라져요.',
-    condition: (ans) => !(ans.some((a) => a.optionLevel === 'full') && !ans.some((a) => a.targetItem === 'desk' || a.targetItem === 'storage')),
     options: [
       { label: '완제품이나 기사님 방문 설치만 원해요 (직접 조립 X)', diySkill: 'none', scores: { assemblyRisk: 14, depositRisk: 2 } },
       { label: '혼자 15~30분 정도 간단한 조립까지는 괜찮아요', diySkill: 'basic', scores: { assemblyRisk: 6 } },
