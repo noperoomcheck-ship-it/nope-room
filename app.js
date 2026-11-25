@@ -19,10 +19,10 @@ import {
   getItemGapHint,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './data/app-data.js?v=nope67';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope67';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope67';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope67';
+} from './data/app-data.js?v=nope68';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope68';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope68';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope68';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -2853,11 +2853,54 @@ const COMPARE_PRESETS = [
   { label: '흡착 선반 vs 스텐304 압축', a: 'suction-corner-rack', b: 'ss304-tension-bath-rod' }
 ];
 
-let activeCompareA = 'ikea-lagkapten';
-let activeCompareB = 'dodot-quattro';
+let activeCompareA = '';
+let activeCompareB = '';
 let comparePickerTarget = null;
 let compareSearchQuery = '';
 let compareSearchCat = 'ALL';
+
+function getSurveyCompareRecommendations(savedProfile, excludeIds = []) {
+  const excluded = new Set(excludeIds.filter(Boolean));
+  const candidates = ITEMS_DB.filter((it) => !excluded.has(it.id) && it.verdict !== 'NOPE');
+
+  const scored = candidates.map((it) => {
+    const alerts = savedProfile ? getPersonalFitAlerts(it, savedProfile) : [];
+    const dangerCnt = alerts.filter((a) => a.tone === 'danger').length;
+    const warnCnt = alerts.filter((a) => a.tone === 'warn').length;
+    const toneHit = Boolean(savedProfile && savedProfile.toneId && Array.isArray(it.tones) && it.tones.includes(savedProfile.toneId));
+    const bonus = surveyFitBonus(it, savedProfile);
+    const verdictPts = it.verdict === 'PASS' ? 14 : 5;
+    const riskPenalty = ((it.specs?.dust || 2) + (it.specs?.deposit || 2) + (it.specs?.trouble || 2)) + dangerCnt * 12 + warnCnt * 4;
+    const score = verdictPts + bonus + (toneHit ? 6 : 0) - riskPenalty;
+
+    let reason = it.goodLine || it.oneLiner || '';
+    if (savedProfile) {
+      if (toneHit && savedProfile.toneName) {
+        reason = `'${savedProfile.toneName}' 톤 맞춤 · ${it.verdict === 'PASS' ? '내 방 조건 안정' : '체크 항목 양호'}`;
+      } else if (dangerCnt === 0 && warnCnt === 0) {
+        reason = '내 방 제약(원상복구·동선) 통과 추천';
+      }
+    }
+    return { item: it, score, dangerCnt, reason };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const picked = [];
+  const usedCats = new Set();
+  for (const entry of scored) {
+    if (entry.dangerCnt > 0) continue;
+    if (!usedCats.has(entry.item.category)) {
+      picked.push(entry);
+      usedCats.add(entry.item.category);
+    }
+    if (picked.length >= 4) break;
+  }
+  for (const entry of scored) {
+    if (picked.length >= 4) break;
+    if (!picked.includes(entry)) picked.push(entry);
+  }
+  return picked.slice(0, 4);
+}
 
 function getFilteredCompareItems() {
   const q = compareSearchQuery.trim().toLowerCase();
@@ -2913,10 +2956,11 @@ function renderComparePickerList() {
       const id = btn.dataset.pickId;
       if (comparePickerTarget === 'A') {
         activeCompareA = id;
+        comparePickerTarget = activeCompareB ? null : 'B';
       } else if (comparePickerTarget === 'B') {
         activeCompareB = id;
+        comparePickerTarget = activeCompareA ? null : 'A';
       }
-      comparePickerTarget = null;
       compareSearchQuery = '';
       renderCompareView();
     });
@@ -2943,35 +2987,52 @@ function renderCompareView() {
     });
   });
 
-  const itemA = ITEMS_DB.find((it) => it.id === activeCompareA) || ITEMS_DB[0];
-  const itemB = ITEMS_DB.find((it) => it.id === activeCompareB) || ITEMS_DB[1];
+  const itemA = ITEMS_DB.find((it) => it.id === activeCompareA) || null;
+  const itemB = ITEMS_DB.find((it) => it.id === activeCompareB) || null;
+  const hasBoth = Boolean(itemA && itemB);
   const savedProfile = loadSavedRoomProfile();
-  const alertsA = getPersonalFitAlerts(itemA, savedProfile);
-  const alertsB = getPersonalFitAlerts(itemB, savedProfile);
 
-  const calcCompareRank = (item, alerts) => {
-    const baseScore = item.verdict === 'PASS' ? 30 : (item.verdict === 'WARN' ? 18 : 4);
-    const specRisk = (item.specs?.dust || 3) + (item.specs?.deposit || 3) + (item.specs?.trouble || 3);
-    const penalty = alerts.filter((a) => a.tone === 'danger').length * 7 + alerts.filter((a) => a.tone === 'warn').length * 3;
-    return baseScore - specRisk - penalty;
+  if (!comparePickerTarget && !hasBoth) {
+    comparePickerTarget = !itemA ? 'A' : 'B';
+  }
+
+  const slotCardHtml = (slot, item) => {
+    const isPicking = comparePickerTarget === slot;
+    if (!item) {
+      return `
+        <button type="button" id="compare-pick-btn-${slot.toLowerCase()}" class="compare-pick-card is-empty ${isPicking ? 'is-picking' : ''}" aria-label="제품 ${slot} 검색해서 고르기">
+          <div class="compare-pick-top">
+            <span class="compare-slot-tag">${slot}</span>
+            <span class="compare-slot-empty-pill">미선택</span>
+          </div>
+          <strong class="compare-pick-name">비교할 제품 ${slot}</strong>
+          <span class="compare-pick-sub">아래에서 검색하거나 추천 가구를 담아보세요</span>
+          <span class="compare-pick-cta">${isPicking ? '검색 중 ▲' : '검색해서 고르기 ›'}</span>
+        </button>
+      `;
+    }
+    const vm = verdictMeta(item.verdict);
+    return `
+      <button type="button" id="compare-pick-btn-${slot.toLowerCase()}" class="compare-pick-card ${isPicking ? 'is-picking' : ''}" aria-label="제품 ${slot} 검색해서 변경">
+        <div class="compare-pick-top">
+          <span class="compare-slot-tag">${slot}</span>
+          <span class="verdict-pill ${vm.cls}">${vm.text}</span>
+        </div>
+        <strong class="compare-pick-name">${escapeHtml(item.name)}</strong>
+        <span class="compare-pick-sub">${escapeHtml(item.brand)} · ${escapeHtml(item.priceTier)}</span>
+        <span class="compare-pick-cta">${isPicking ? '선택 중 ▲' : '검색해서 변경 ›'}</span>
+      </button>
+    `;
   };
-
-  const scoreA = calcCompareRank(itemA, alertsA);
-  const scoreB = calcCompareRank(itemB, alertsB);
-  const winner = scoreA === scoreB ? null : (scoreA > scoreB ? itemA : itemB);
-  const loser = winner === itemA ? itemB : itemA;
-
-  const vA = verdictMeta(itemA.verdict);
-  const vB = verdictMeta(itemB.verdict);
 
   const pickerHtml = comparePickerTarget ? `
     <div id="compare-picker-panel" class="compare-picker-panel">
       <div class="compare-picker-head">
-        <strong>제품 ${comparePickerTarget} 바꾸기 <span id="compare-picker-count" class="compare-picker-count"></span></strong>
-        <button type="button" id="compare-picker-close" class="btn-ghost btn-sm" style="padding:2px 6px;">닫기 ✕</button>
+        <strong>제품 ${comparePickerTarget} ${(!itemA && comparePickerTarget === 'A') || (!itemB && comparePickerTarget === 'B') ? '검색해서 고르기' : '바꾸기'} <span id="compare-picker-count" class="compare-picker-count"></span></strong>
+        ${hasBoth ? `<button type="button" id="compare-picker-close" class="btn-ghost btn-sm" style="padding:2px 6px;">닫기 ✕</button>` : ''}
       </div>
       <div class="compare-search-box">
-        <input id="compare-search-input" type="text" value="${escapeHtml(compareSearchQuery)}" placeholder="제품명 · 브랜드 · 키워드 검색 (예: 두닷, 이케아, 러그)" autocomplete="off" />
+        <input id="compare-search-input" type="text" value="${escapeHtml(compareSearchQuery)}" placeholder="제품명 · 브랜드 · 키워드 검색 (예: 데스커, 러그, 행거)" autocomplete="off" />
         ${compareSearchQuery ? '<button type="button" id="compare-search-clear" class="compare-search-clear" aria-label="검색어 지우기">✕</button>' : ''}
       </div>
       <div id="compare-cat-chips" class="compare-cat-chips">
@@ -2984,98 +3045,135 @@ function renderCompareView() {
     </div>
   ` : '';
 
+  let bodyHtml = '';
+  if (hasBoth) {
+    const alertsA = getPersonalFitAlerts(itemA, savedProfile);
+    const alertsB = getPersonalFitAlerts(itemB, savedProfile);
+    const calcCompareRank = (item, alerts) => {
+      const baseScore = item.verdict === 'PASS' ? 30 : (item.verdict === 'WARN' ? 18 : 4);
+      const specRisk = (item.specs?.dust || 3) + (item.specs?.deposit || 3) + (item.specs?.trouble || 3);
+      const penalty = alerts.filter((a) => a.tone === 'danger').length * 7 + alerts.filter((a) => a.tone === 'warn').length * 3;
+      return baseScore - specRisk - penalty;
+    };
+    const scoreA = calcCompareRank(itemA, alertsA);
+    const scoreB = calcCompareRank(itemB, alertsB);
+    const winner = scoreA === scoreB ? null : (scoreA > scoreB ? itemA : itemB);
+    const loser = winner === itemA ? itemB : itemA;
+    const pickItem = winner || itemA;
+    const pickWished = isWishlistedItem(pickItem.id);
+
+    bodyHtml = `
+      <div class="compare-reset-row">
+        <span class="text-tertiary" style="font-size:11.5px;font-weight:700;">내 방 기준 1:1 판정 결과</span>
+        <button type="button" id="compare-clear-all-btn" class="btn-ghost btn-sm" style="padding:3px 8px;">선택 비우기 ↺</button>
+      </div>
+      <div class="compare-matrix-card">
+        <div class="compare-row">
+          <strong class="${itemA.specs.dust <= itemB.specs.dust ? 'compare-win' : 'compare-lose'}">${itemA.specs.dust}/5</strong>
+          <span class="compare-row-label">먼지 부담</span>
+          <strong class="${itemB.specs.dust <= itemA.specs.dust ? 'compare-win' : 'compare-lose'}">${itemB.specs.dust}/5</strong>
+        </div>
+        <div class="compare-row">
+          <strong class="${itemA.specs.deposit <= itemB.specs.deposit ? 'compare-win' : 'compare-lose'}">${itemA.specs.deposit}/5</strong>
+          <span class="compare-row-label">보증금·복구</span>
+          <strong class="${itemB.specs.deposit <= itemA.specs.deposit ? 'compare-win' : 'compare-lose'}">${itemB.specs.deposit}/5</strong>
+        </div>
+        <div class="compare-row">
+          <strong class="${itemA.specs.trouble <= itemB.specs.trouble ? 'compare-win' : 'compare-lose'}">${itemA.specs.trouble}/5</strong>
+          <span class="compare-row-label">고장·관리</span>
+          <strong class="${itemB.specs.trouble <= itemA.specs.trouble ? 'compare-win' : 'compare-lose'}">${itemB.specs.trouble}/5</strong>
+        </div>
+        <div class="compare-row">
+          <span style="font-size:11.5px;font-weight:700;color:${alertsA.some((a) => a.tone === 'danger') ? 'var(--accent)' : 'var(--safe)'};">
+            ${escapeHtml(alertsA[0] ? alertsA[0].shortBadge.replace(/^내 방 체크:\s*/, '') : '특이 경고 없음')}
+          </span>
+          <span class="compare-row-label">내 방 조건</span>
+          <span style="font-size:11.5px;font-weight:700;color:${alertsB.some((a) => a.tone === 'danger') ? 'var(--accent)' : 'var(--safe)'};">
+            ${escapeHtml(alertsB[0] ? alertsB[0].shortBadge.replace(/^내 방 체크:\s*/, '') : '특이 경고 없음')}
+          </span>
+        </div>
+      </div>
+
+      <div class="compare-winner-banner">
+        ${winner
+          ? `<strong class="compare-reco-title">✓ 추천 제품: ${escapeHtml(winner.name)}</strong><p class="compare-reco-desc">${escapeHtml(loser.name)} 대비 내 방 조건과 유지관리·내구성 점수가 더 안정적입니다.</p>`
+          : `<strong class="compare-reco-title">⚖️ 두 제품 스펙이 비슷해요</strong><p class="compare-reco-desc">예산과 방 톤에 맞춰 상세 근거를 비교해 보세요.</p>`}
+        <div class="compare-winner-actions">
+          <button type="button" id="compare-open-a" class="btn-secondary btn-sm">A 상세 보기</button>
+          <button type="button" id="compare-open-b" class="btn-secondary btn-sm">B 상세 보기</button>
+          <button type="button" id="compare-wish-winner" class="btn-primary btn-sm">${pickWished ? '♥ 찜 저장됨' : `♡ ${winner ? '추천 제품' : 'A'} 찜하기`}</button>
+          <button type="button" id="compare-share-link" class="btn-share-chip is-kakao" style="justify-content:center;padding:8px 10px;">${KAKAO_LOGO_SVG}<span>비교 링크 복사</span></button>
+        </div>
+      </div>
+    `;
+  } else {
+    const recos = getSurveyCompareRecommendations(savedProfile, [activeCompareA, activeCompareB]);
+    const targetSlot = !itemA ? 'A' : 'B';
+    const surveyTitle = savedProfile
+      ? `${escapeHtml(savedProfile.nickname || '내')}님 방 설문 기반 추천 가구`
+      : '인기 비교 추천 가구 (설문하면 내 방 맞춤 추천)';
+    bodyHtml = `
+      <div class="compare-reco-section">
+        <div class="compare-reco-head">
+          <div>
+            <span class="micro-label">${savedProfile ? 'PERSONAL SURVEY PICK' : 'POPULAR PICKS'}</span>
+            <h3 class="compare-reco-section-title">${surveyTitle}</h3>
+          </div>
+          ${!savedProfile ? `<button type="button" id="compare-go-survey-btn" class="btn-ghost btn-sm" style="color:var(--accent);font-weight:800;">1분 설문 →</button>` : ''}
+        </div>
+        <div class="compare-reco-grid">
+          ${recos.map(({ item, reason }) => {
+            const vm = verdictMeta(item.verdict);
+            return `
+              <div class="compare-reco-card">
+                <div class="compare-reco-top">
+                  <span class="verdict-pill ${vm.cls}" style="font-size:10px;padding:2px 6px;">${vm.text}</span>
+                  <span class="compare-reco-meta">${escapeHtml(item.category)} · ${escapeHtml(item.priceTier)}</span>
+                </div>
+                <strong class="compare-reco-name" data-cmp-detail="${escapeHtml(item.id)}">${escapeHtml(item.name)}</strong>
+                <p class="compare-reco-reason">${escapeHtml(reason)}</p>
+                <div class="compare-reco-btns">
+                  <button type="button" class="btn-primary btn-sm" data-add-slot="${targetSlot}" data-add-id="${escapeHtml(item.id)}">${targetSlot}에 담기</button>
+                  <button type="button" class="btn-secondary btn-sm" data-cmp-detail="${escapeHtml(item.id)}">스펙</button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   outEl.innerHTML = `
     <div class="compare-select-grid">
-      <button type="button" id="compare-pick-btn-a" class="compare-pick-card ${comparePickerTarget === 'A' ? 'is-picking' : ''}" aria-label="제품 A 검색해서 변경">
-        <div class="compare-pick-top">
-          <span class="compare-slot-tag">A</span>
-          <span class="verdict-pill ${vA.cls}">${vA.text}</span>
-        </div>
-        <strong class="compare-pick-name">${escapeHtml(itemA.name)}</strong>
-        <span class="compare-pick-sub">${escapeHtml(itemA.brand)} · ${escapeHtml(itemA.priceTier)}</span>
-        <span class="compare-pick-cta">${comparePickerTarget === 'A' ? '선택 중 ▲' : '검색해서 변경 ›'}</span>
-      </button>
+      ${slotCardHtml('A', itemA)}
       <div class="compare-vs-badge">VS</div>
-      <button type="button" id="compare-pick-btn-b" class="compare-pick-card ${comparePickerTarget === 'B' ? 'is-picking' : ''}" aria-label="제품 B 검색해서 변경">
-        <div class="compare-pick-top">
-          <span class="compare-slot-tag">B</span>
-          <span class="verdict-pill ${vB.cls}">${vB.text}</span>
-        </div>
-        <strong class="compare-pick-name">${escapeHtml(itemB.name)}</strong>
-        <span class="compare-pick-sub">${escapeHtml(itemB.brand)} · ${escapeHtml(itemB.priceTier)}</span>
-        <span class="compare-pick-cta">${comparePickerTarget === 'B' ? '선택 중 ▲' : '검색해서 변경 ›'}</span>
-      </button>
+      ${slotCardHtml('B', itemB)}
     </div>
-
     ${pickerHtml}
-
-    <div class="compare-matrix-card">
-      <div class="compare-row">
-        <strong class="${itemA.specs.dust <= itemB.specs.dust ? 'compare-win' : 'compare-lose'}">${itemA.specs.dust}/5</strong>
-        <span class="compare-row-label">먼지 부담</span>
-        <strong class="${itemB.specs.dust <= itemA.specs.dust ? 'compare-win' : 'compare-lose'}">${itemB.specs.dust}/5</strong>
-      </div>
-      <div class="compare-row">
-        <strong class="${itemA.specs.deposit <= itemB.specs.deposit ? 'compare-win' : 'compare-lose'}">${itemA.specs.deposit}/5</strong>
-        <span class="compare-row-label">보증금·복구</span>
-        <strong class="${itemB.specs.deposit <= itemA.specs.deposit ? 'compare-win' : 'compare-lose'}">${itemB.specs.deposit}/5</strong>
-      </div>
-      <div class="compare-row">
-        <strong class="${itemA.specs.trouble <= itemB.specs.trouble ? 'compare-win' : 'compare-lose'}">${itemA.specs.trouble}/5</strong>
-        <span class="compare-row-label">고장·관리</span>
-        <strong class="${itemB.specs.trouble <= itemA.specs.trouble ? 'compare-win' : 'compare-lose'}">${itemB.specs.trouble}/5</strong>
-      </div>
-      <div class="compare-row">
-        <span style="font-size:11.5px;font-weight:700;color:${alertsA.some((a) => a.tone === 'danger') ? 'var(--accent)' : 'var(--safe)'};">
-          ${escapeHtml(alertsA[0] ? alertsA[0].shortBadge.replace(/^내 방 체크:\s*/, '') : '특이 경고 없음')}
-        </span>
-        <span class="compare-row-label">내 방 조건</span>
-        <span style="font-size:11.5px;font-weight:700;color:${alertsB.some((a) => a.tone === 'danger') ? 'var(--accent)' : 'var(--safe)'};">
-          ${escapeHtml(alertsB[0] ? alertsB[0].shortBadge.replace(/^내 방 체크:\s*/, '') : '특이 경고 없음')}
-        </span>
-      </div>
-    </div>
-
-    <div class="compare-winner-banner">
-      ${winner
-        ? `<strong class="compare-reco-title">✓ 추천 제품: ${escapeHtml(winner.name)}</strong><p class="compare-reco-desc">${escapeHtml(loser.name)} 대비 내 방 조건과 유지관리·내구성 점수가 더 안정적입니다.</p>`
-        : `<strong class="compare-reco-title">⚖️ 두 제품 스펙이 비슷해요</strong><p class="compare-reco-desc">예산과 방 톤에 맞춰 상세 근거를 비교해 보세요.</p>`}
-      ${(() => {
-        const pickItem = winner || itemA;
-        const pickWished = isWishlistedItem(pickItem.id);
-        return `
-          <div class="compare-winner-actions">
-            <button type="button" id="compare-open-a" class="btn-secondary btn-sm">A 상세 보기</button>
-            <button type="button" id="compare-open-b" class="btn-secondary btn-sm">B 상세 보기</button>
-            <button type="button" id="compare-wish-winner" class="btn-primary btn-sm">${pickWished ? '♥ 찜 저장됨' : `♡ ${winner ? '추천 제품' : 'A'} 찜하기`}</button>
-            <button type="button" id="compare-share-link" class="btn-share-chip is-kakao" style="justify-content:center;padding:8px 10px;">${KAKAO_LOGO_SVG}<span>비교 링크 복사</span></button>
-          </div>
-        `;
-      })()}
-    </div>
+    ${bodyHtml}
   `;
 
   document.getElementById('compare-pick-btn-a').addEventListener('click', () => {
-    comparePickerTarget = comparePickerTarget === 'A' ? null : 'A';
+    comparePickerTarget = comparePickerTarget === 'A' && hasBoth ? null : 'A';
     compareSearchQuery = '';
     renderCompareView();
   });
   document.getElementById('compare-pick-btn-b').addEventListener('click', () => {
-    comparePickerTarget = comparePickerTarget === 'B' ? null : 'B';
+    comparePickerTarget = comparePickerTarget === 'B' && hasBoth ? null : 'B';
     compareSearchQuery = '';
     renderCompareView();
   });
 
   if (comparePickerTarget) {
     renderComparePickerList();
-    const searchInput = document.getElementById('compare-search-input');
-    if (searchInput) {
-      searchInput.focus();
-      searchInput.addEventListener('input', (e) => {
+    const cmpSearchInput = document.getElementById('compare-search-input');
+    if (cmpSearchInput) {
+      cmpSearchInput.addEventListener('input', (e) => {
         compareSearchQuery = e.target.value;
         const clearBtn = document.getElementById('compare-search-clear');
         if (compareSearchQuery && !clearBtn) {
-          const box = searchInput.parentElement;
+          const box = cmpSearchInput.parentElement;
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.id = 'compare-search-clear';
@@ -3084,10 +3182,10 @@ function renderCompareView() {
           btn.textContent = '✕';
           btn.addEventListener('click', () => {
             compareSearchQuery = '';
-            searchInput.value = '';
+            cmpSearchInput.value = '';
             btn.remove();
             renderComparePickerList();
-            searchInput.focus();
+            cmpSearchInput.focus();
           });
           box.appendChild(btn);
         } else if (!compareSearchQuery && clearBtn) {
@@ -3097,20 +3195,23 @@ function renderCompareView() {
       });
     }
     const clearBtn = document.getElementById('compare-search-clear');
-    if (clearBtn && searchInput) {
+    if (clearBtn && cmpSearchInput) {
       clearBtn.addEventListener('click', () => {
         compareSearchQuery = '';
-        searchInput.value = '';
+        cmpSearchInput.value = '';
         clearBtn.remove();
         renderComparePickerList();
-        searchInput.focus();
+        cmpSearchInput.focus();
       });
     }
-    document.getElementById('compare-picker-close').addEventListener('click', () => {
-      comparePickerTarget = null;
-      compareSearchQuery = '';
-      renderCompareView();
-    });
+    const closePickerBtn = document.getElementById('compare-picker-close');
+    if (closePickerBtn) {
+      closePickerBtn.addEventListener('click', () => {
+        comparePickerTarget = null;
+        compareSearchQuery = '';
+        renderCompareView();
+      });
+    }
     document.querySelectorAll('#compare-cat-chips button').forEach((btn) => {
       btn.addEventListener('click', () => {
         compareSearchCat = btn.dataset.pickCat;
@@ -3120,23 +3221,73 @@ function renderCompareView() {
     });
   }
 
-  document.getElementById('compare-open-a').addEventListener('click', () => openDetailSheet(itemA));
-  document.getElementById('compare-open-b').addEventListener('click', () => openDetailSheet(itemB));
-  const cmpWishBtn = document.getElementById('compare-wish-winner');
-  if (cmpWishBtn) {
-    cmpWishBtn.addEventListener('click', () => {
-      const target = winner || itemA;
-      toggleWishlistItem(target);
-      renderCompareView();
+  if (hasBoth) {
+    const clearAllBtn = document.getElementById('compare-clear-all-btn');
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', () => {
+        activeCompareA = '';
+        activeCompareB = '';
+        comparePickerTarget = 'A';
+        compareSearchQuery = '';
+        renderCompareView();
+      });
+    }
+    const alertsA = getPersonalFitAlerts(itemA, savedProfile);
+    const alertsB = getPersonalFitAlerts(itemB, savedProfile);
+    const calcRank = (item, alerts) => (item.verdict === 'PASS' ? 30 : (item.verdict === 'WARN' ? 18 : 4))
+      - ((item.specs?.dust || 3) + (item.specs?.deposit || 3) + (item.specs?.trouble || 3))
+      - (alerts.filter((a) => a.tone === 'danger').length * 7 + alerts.filter((a) => a.tone === 'warn').length * 3);
+    const sA = calcRank(itemA, alertsA);
+    const sB = calcRank(itemB, alertsB);
+    const winner = sA === sB ? null : (sA > sB ? itemA : itemB);
+
+    document.getElementById('compare-open-a').addEventListener('click', () => openDetailSheet(itemA));
+    document.getElementById('compare-open-b').addEventListener('click', () => openDetailSheet(itemB));
+    const cmpWishBtn = document.getElementById('compare-wish-winner');
+    if (cmpWishBtn) {
+      cmpWishBtn.addEventListener('click', () => {
+        const target = winner || itemA;
+        toggleWishlistItem(target);
+        renderCompareView();
+      });
+    }
+    const cmpShareBtn = document.getElementById('compare-share-link');
+    if (cmpShareBtn) {
+      cmpShareBtn.addEventListener('click', () => {
+        const base = location.protocol.startsWith('http') ? `${location.origin}${location.pathname}` : 'https://nope-room.vercel.app/';
+        const url = `${base}?compare=${encodeURIComponent(itemA.id)},${encodeURIComponent(itemB.id)}`;
+        const headline = winner ? `내 방 추천: ${winner.name}` : '두 제품 1:1 스펙 비교';
+        copyTextToClipboard(`[NOPE! A vs B 비교]\n${itemA.name} vs ${itemB.name}\n${headline}\n바로 비교 보기 👉 ${url}`, '비교 링크 복사 완료!');
+      });
+    }
+  } else {
+    const goSurveyBtn = document.getElementById('compare-go-survey-btn');
+    if (goSurveyBtn) {
+      goSurveyBtn.addEventListener('click', () => {
+        switchTab('home');
+        startQuiz();
+      });
+    }
+    outEl.querySelectorAll('[data-add-id]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.addId;
+        const slot = btn.dataset.addSlot;
+        if (slot === 'A') {
+          activeCompareA = id;
+          comparePickerTarget = activeCompareB ? null : 'B';
+        } else {
+          activeCompareB = id;
+          comparePickerTarget = activeCompareA ? null : 'A';
+        }
+        compareSearchQuery = '';
+        renderCompareView();
+      });
     });
-  }
-  const cmpShareBtn = document.getElementById('compare-share-link');
-  if (cmpShareBtn) {
-    cmpShareBtn.addEventListener('click', () => {
-      const base = location.protocol.startsWith('http') ? `${location.origin}${location.pathname}` : 'https://nope-room.vercel.app/';
-      const url = `${base}?compare=${encodeURIComponent(itemA.id)},${encodeURIComponent(itemB.id)}`;
-      const headline = winner ? `내 방 추천: ${winner.name}` : '두 제품 1:1 스펙 비교';
-      copyTextToClipboard(`[NOPE! A vs B 비교]\n${itemA.name} vs ${itemB.name}\n${headline}\n바로 비교 보기 👉 ${url}`, '비교 링크 복사 완료!');
+    outEl.querySelectorAll('[data-cmp-detail]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const found = ITEMS_DB.find((x) => x.id === el.dataset.cmpDetail);
+        if (found) openDetailSheet(found);
+      });
     });
   }
 }
@@ -5302,6 +5453,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope67').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope68').catch(() => {});
   }
 }
