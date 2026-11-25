@@ -1,12 +1,12 @@
-// NOPE! v9 — 212종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
-import { ITEMS_DB } from './products-db.js?v=nope62';
+// NOPE! v9 — 219종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
+import { ITEMS_DB } from './products-db.js?v=nope63';
 import {
   STYLE_MOODS,
   ROOM_TONES,
   TARGET_CATEGORIES,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './mood-palettes.js?v=nope62';
+} from './mood-palettes.js?v=nope63';
 export {
   ITEMS_DB,
   STYLE_MOODS,
