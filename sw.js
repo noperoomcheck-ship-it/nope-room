@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nope-v59';
+const CACHE_NAME = 'nope-v62';
 const ASSETS = [
   './',
   './index.html',
@@ -13,22 +13,7 @@ const ASSETS = [
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/apple-touch-icon.png',
-  './assets/tones/white-minimal.png',
-  './assets/tones/oak-natural.png',
-  './assets/tones/walnut-vintage.png',
-  './assets/tones/steel-modern.png',
-  './assets/tones/butter-pastel.png',
-  './assets/tones/sage-terracotta.png',
-  './assets/quiz/floor-jangpan.png',
-  './assets/quiz/floor-wood.png',
-  './assets/quiz/floor-tile.png',
-  './assets/quiz/mat-steel.png',
-  './assets/quiz/mat-wood.png',
-  './assets/quiz/mat-fabric.png',
-  './assets/quiz/light-mood.png',
-  './assets/quiz/light-bright.png',
-  './assets/quiz/light-basic.png'
+  './icons/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {

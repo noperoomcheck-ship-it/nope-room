@@ -19,10 +19,10 @@ import {
   getItemGapHint,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './data/app-data.js?v=nope59';
-import { QUIZ_VISUAL_SVGS } from './data/quiz-visuals.js?v=nope59';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope59';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope59';
+} from './data/app-data.js?v=nope62';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope62';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope62';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope62';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -456,7 +456,8 @@ function renderQuizStep() {
   q.options.forEach((opt, optIdx) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    const hasVis = Boolean((opt.visualKey && QUIZ_VISUAL_SVGS[opt.visualKey]) || opt.image);
+    const photoSrc = (opt.visualKey && QUIZ_VISUAL_PHOTOS[opt.visualKey]) || opt.image || '';
+    const hasVis = Boolean(photoSrc);
     const classes = ['quiz-option-btn'];
     if (q.multiSelect) classes.push('is-multi');
     if (hasVis) classes.push('is-visual');
@@ -465,15 +466,12 @@ function renderQuizStep() {
     if (hasVis) {
       const thumb = document.createElement('div');
       thumb.className = 'quiz-vis-thumb';
-      if (opt.visualKey && QUIZ_VISUAL_SVGS[opt.visualKey]) {
-        thumb.innerHTML = QUIZ_VISUAL_SVGS[opt.visualKey];
-      } else {
-        const img = document.createElement('img');
-        img.src = opt.image;
-        img.alt = opt.shortTitle || opt.label;
-        img.loading = 'eager';
-        thumb.appendChild(img);
-      }
+      const img = document.createElement('img');
+      img.src = photoSrc;
+      img.alt = opt.shortTitle || opt.label;
+      img.loading = 'eager';
+      img.decoding = 'async';
+      thumb.appendChild(img);
 
       const meta = document.createElement('div');
       meta.className = 'quiz-vis-meta';
@@ -499,7 +497,7 @@ function renderQuizStep() {
     }
 
     if (q.multiSelect) {
-      if (!opt.image) {
+      if (!hasVis) {
         const labelSpan = document.createElement('span');
         labelSpan.textContent = opt.label;
         btn.appendChild(labelSpan);
@@ -527,7 +525,7 @@ function renderQuizStep() {
         if (nextBtn) nextBtn.disabled = currentMultiSelected.size === 0;
       });
     } else {
-      if (!opt.image) {
+      if (!hasVis) {
         btn.textContent = opt.label;
       }
       btn.addEventListener('click', () => {
@@ -3194,7 +3192,9 @@ function renderToneMatcher() {
     const isSurveyPicked = savedProfile && savedProfile.toneId === t.id;
     const btn = document.createElement('button');
     btn.className = `tone-card ${state.matcherTone === t.id ? 'active' : ''}`;
+    const tonePhoto = QUIZ_VISUAL_PHOTOS[t.id] || '';
     btn.innerHTML = `
+      ${tonePhoto ? `<div class="tone-photo-thumb"><img src="${tonePhoto}" alt="${escapeHtml(t.name)}" loading="eager" decoding="async" /></div>` : ''}
       <div class="tone-swatches">
         <span class="tone-swatch-bar" style="flex:3;background:${t.swatches[0]};"></span>
         <span class="tone-swatch-bar" style="flex:2;background:${t.swatches[1]};"></span>
@@ -5069,6 +5069,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope59').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope62').catch(() => {});
   }
 }

@@ -1,12 +1,12 @@
 // NOPE! v9 — 212종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
-import { ITEMS_DB } from './products-db.js?v=nope59';
+import { ITEMS_DB } from './products-db.js?v=nope62';
 import {
   STYLE_MOODS,
   ROOM_TONES,
   TARGET_CATEGORIES,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './mood-palettes.js?v=nope59';
+} from './mood-palettes.js?v=nope62';
 export {
   ITEMS_DB,
   STYLE_MOODS,
@@ -333,9 +333,9 @@ export const QUIZ_QUESTIONS = [
     reasonHint: '이미지에서 내 방 바닥과 가장 가까운 재질·톤을 탭하세요.',
     visualGrid: true,
     options: [
-      { label: 'PVC 장판 (난방 열 변색·가구 찍힘 주의)', shortTitle: 'PVC 장판', visualKey: 'floor-jangpan', image: './assets/quiz/floor-jangpan.png', swatches: ['#F2E2BA', '#DFC893'], floorMaterial: 'jangpan', scores: { depositRisk: 6, fabricRisk: 4 } },
-      { label: '강마루·온돌마루 (물기·의자 바퀴 긁힘 주의)', shortTitle: '강마루 · 원목톤', visualKey: 'floor-wood', image: './assets/quiz/floor-wood.png', swatches: ['#D2A779', '#B48453'], floorMaterial: 'wood', scores: { depositRisk: 6, assemblyRisk: 2 } },
-      { label: '타일 · 데코타일 (차가움·줄눈 먼지)', shortTitle: '타일 · 데코타일', visualKey: 'floor-tile', image: './assets/quiz/floor-tile.png', swatches: ['#EEF0F2', '#CFD4D9'], floorMaterial: 'tile', scores: { dustRisk: 3 } }
+      { label: 'PVC 장판 (난방 열 변색·가구 찍힘 주의)', shortTitle: 'PVC 장판', visualKey: 'floor-jangpan', swatches: ['#F2E2BA', '#DFC893'], floorMaterial: 'jangpan', scores: { depositRisk: 6, fabricRisk: 4 } },
+      { label: '강마루·온돌마루 (물기·의자 바퀴 긁힘 주의)', shortTitle: '강마루 · 원목톤', visualKey: 'floor-wood', swatches: ['#D2A779', '#B48453'], floorMaterial: 'wood', scores: { depositRisk: 6, assemblyRisk: 2 } },
+      { label: '타일 · 데코타일 (차가움·줄눈 먼지)', shortTitle: '타일 · 데코타일', visualKey: 'floor-tile', swatches: ['#EEF0F2', '#CFD4D9'], floorMaterial: 'tile', scores: { dustRisk: 3 } }
     ]
   },
 
@@ -511,12 +511,12 @@ export const QUIZ_QUESTIONS = [
     reasonHint: '긴 설명 없이 사진 느낌으로 바로 골라주세요. 톤 매처에 즉시 연결됩니다.',
     visualGrid: true,
     options: [
-      { label: '화이트 미니멀 (밝고 훤히 넓어 보이는 방)', shortTitle: '화이트 미니멀', visualKey: 'white-minimal', image: './assets/tones/white-minimal.png', swatches: ['#FAF9F6', '#EAE5DC', '#2C2523'], toneId: 'white-minimal', scores: { dustRisk: 2 } },
-      { label: '내추럴 오크 (따뜻하고 포근한 원목 무드)', shortTitle: '내추럴 오크', visualKey: 'oak-natural', image: './assets/tones/oak-natural.png', swatches: ['#FAF6EE', '#CFA676', '#6D8658'], toneId: 'oak-natural', scores: { dustRisk: 3 } },
-      { label: '월넛 · 미드센추리 (짙은 월넛과 레트로 포인트)', shortTitle: '월넛 · 미드센추리', visualKey: 'walnut-vintage', image: './assets/tones/walnut-vintage.png', swatches: ['#F2EDE3', '#5E3F2E', '#D15B34'], toneId: 'walnut-vintage', scores: { dustRisk: 4, spaceStress: 3 } },
-      { label: '모노 · 스틸 (선이 반듯한 무채색·스틸 무드)', shortTitle: '모노 · 스틸', visualKey: 'steel-modern', image: './assets/tones/steel-modern.png', swatches: ['#F5F7F8', '#202326', '#2557B8'], toneId: 'steel-modern', scores: { dustRisk: 5, assemblyRisk: 2 } },
-      { label: '버터 · 파스텔 (연노랑·소라색의 생기 있는 방)', shortTitle: '버터 · 파스텔', visualKey: 'butter-pastel', image: './assets/tones/butter-pastel.png', swatches: ['#FFFDF4', '#F7DF8A', '#87A9D6'], toneId: 'butter-pastel', scores: { dustRisk: 3 } },
-      { label: '세이지 · 테라코타 (차분한 그린과 테라코타 무드)', shortTitle: '세이지 · 테라코타', visualKey: 'sage-terracotta', image: './assets/tones/sage-terracotta.png', swatches: ['#F5F3EC', '#889E81', '#C86D51'], toneId: 'sage-terracotta', scores: { dustRisk: 3 } }
+      { label: '화이트 미니멀 (밝고 훤히 넓어 보이는 방)', shortTitle: '화이트 미니멀', visualKey: 'white-minimal', swatches: ['#FAF9F6', '#EAE5DC', '#2C2523'], toneId: 'white-minimal', scores: { dustRisk: 2 } },
+      { label: '내추럴 오크 (따뜻하고 포근한 원목 무드)', shortTitle: '내추럴 오크', visualKey: 'oak-natural', swatches: ['#FAF6EE', '#CFA676', '#6D8658'], toneId: 'oak-natural', scores: { dustRisk: 3 } },
+      { label: '월넛 · 미드센추리 (짙은 월넛과 레트로 포인트)', shortTitle: '월넛 · 미드센추리', visualKey: 'walnut-vintage', swatches: ['#F2EDE3', '#5E3F2E', '#D15B34'], toneId: 'walnut-vintage', scores: { dustRisk: 4, spaceStress: 3 } },
+      { label: '모노 · 스틸 (선이 반듯한 무채색·스틸 무드)', shortTitle: '모노 · 스틸', visualKey: 'steel-modern', swatches: ['#F5F7F8', '#202326', '#2557B8'], toneId: 'steel-modern', scores: { dustRisk: 5, assemblyRisk: 2 } },
+      { label: '버터 · 파스텔 (연노랑·소라색의 생기 있는 방)', shortTitle: '버터 · 파스텔', visualKey: 'butter-pastel', swatches: ['#FFFDF4', '#F7DF8A', '#87A9D6'], toneId: 'butter-pastel', scores: { dustRisk: 3 } },
+      { label: '세이지 · 테라코타 (차분한 그린과 테라코타 무드)', shortTitle: '세이지 · 테라코타', visualKey: 'sage-terracotta', swatches: ['#F5F3EC', '#889E81', '#C86D51'], toneId: 'sage-terracotta', scores: { dustRisk: 3 } }
     ]
   },
   {
@@ -526,9 +526,9 @@ export const QUIZ_QUESTIONS = [
     reasonHint: '소재별 변형·먼지·열기 내구성 기준과 연결됩니다.',
     visualGrid: true,
     options: [
-      { label: '시원하고 깔끔한 스틸 · 유리 · 매트 화이트', shortTitle: '스틸 · 매트 화이트', visualKey: 'mat-steel', image: './assets/quiz/mat-steel.png', swatches: ['#FFFFFF', '#B6C0C9', '#2557B8'], materialPref: 'steel', scores: { assemblyRisk: 3 } },
-      { label: '따뜻하고 포근한 원목 · 오크 · 라탄', shortTitle: '내추럴 우드 · 라탄', visualKey: 'mat-wood', image: './assets/quiz/mat-wood.png', swatches: ['#F8F3E8', '#CFA676', '#B08655'], materialPref: 'wood', scores: { dustRisk: 3 } },
-      { label: '폭신한 패브릭 · 면 · 코튼 질감', shortTitle: '패브릭 · 코튼', visualKey: 'mat-fabric', image: './assets/quiz/mat-fabric.png', swatches: ['#FFFFFF', '#F2ECE1', '#DED6C8'], materialPref: 'fabric', scores: { fabricRisk: 5, dustRisk: 4 } }
+      { label: '시원하고 깔끔한 스틸 · 유리 · 매트 화이트', shortTitle: '스틸 · 매트 화이트', visualKey: 'mat-steel', swatches: ['#FFFFFF', '#B6C0C9', '#2557B8'], materialPref: 'steel', scores: { assemblyRisk: 3 } },
+      { label: '따뜻하고 포근한 원목 · 오크 · 라탄', shortTitle: '내추럴 우드 · 라탄', visualKey: 'mat-wood', swatches: ['#F8F3E8', '#CFA676', '#B08655'], materialPref: 'wood', scores: { dustRisk: 3 } },
+      { label: '폭신한 패브릭 · 면 · 코튼 질감', shortTitle: '패브릭 · 코튼', visualKey: 'mat-fabric', swatches: ['#FFFFFF', '#F2ECE1', '#DED6C8'], materialPref: 'fabric', scores: { fabricRisk: 5, dustRisk: 4 } }
     ]
   },
   {
@@ -550,9 +550,9 @@ export const QUIZ_QUESTIONS = [
     reasonHint: '조명 색온도에 맞춰 확산광 스탠드·전구 추천이 달라집니다.',
     visualGrid: true,
     options: [
-      { label: '천장 형광등 끄고 따뜻한 간접등·스탠드만 켜둠', shortTitle: '2700K 전구색 무드등', visualKey: 'light-mood', image: './assets/quiz/light-mood.png', swatches: ['#FFD07B', '#8A572A', '#1E1814'], lightingPref: 'mood', scores: { spaceStress: 2 } },
-      { label: '작업할 땐 환하게, 잘 때만 끔', shortTitle: '4000K 주백색 작업등', visualKey: 'light-bright', image: './assets/quiz/light-bright.png', swatches: ['#FFFDF5', '#F6F3EA', '#D6D2C7'], lightingPref: 'bright', scores: {} },
-      { label: '큰 신경 안 쓰고 기본 형광등 사용', shortTitle: '6500K 기본 주광등', visualKey: 'light-basic', image: './assets/quiz/light-basic.png', swatches: ['#EFF4FA', '#FFFFFF', '#C5D4E8'], lightingPref: 'basic', scores: {} }
+      { label: '천장 형광등 끄고 따뜻한 간접등·스탠드만 켜둠', shortTitle: '2700K 전구색 무드등', visualKey: 'light-mood', swatches: ['#FFD07B', '#8A572A', '#1E1814'], lightingPref: 'mood', scores: { spaceStress: 2 } },
+      { label: '작업할 땐 환하게, 잘 때만 끔', shortTitle: '4000K 주백색 작업등', visualKey: 'light-bright', swatches: ['#FFFDF5', '#F6F3EA', '#D6D2C7'], lightingPref: 'bright', scores: {} },
+      { label: '큰 신경 안 쓰고 기본 형광등 사용', shortTitle: '6500K 기본 주광등', visualKey: 'light-basic', swatches: ['#EFF4FA', '#FFFFFF', '#C5D4E8'], lightingPref: 'basic', scores: {} }
     ]
   },
   {
