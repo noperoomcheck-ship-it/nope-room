@@ -20,10 +20,10 @@ import {
   getItemGapHint,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './data/app-data.js?v=nope69';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope69';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope69';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope69';
+} from './data/app-data.js?v=nope70';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope70';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope70';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope70';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -44,12 +44,17 @@ const STORAGE_KEYS = {
 
 const state = {
   nickname: '',
+  quizDepth: 'quick',
   quizIndex: 0,
   quizAnswers: [],
   scannerMode: 'search',
   selectedFilter: '전체',
   selectedVerdict: 'ALL',
+  activePassRuleId: '',
+  scannerResultTitle: '',
   excludedTraits: new Set(),
+  excludeResultsExpanded: false,
+  lastExcludedCount: 0,
   matcherStyle: 'ALL',
   matcherTone: 'white-minimal',
   matcherCat: '책상·의자',
@@ -136,10 +141,39 @@ function getDisplayTraitRules(profileCtx = null) {
   return mergedIds.map((id) => NOPE_TRAIT_RULES.find((r) => r.id === id)).filter(Boolean);
 }
 
+function stripSafeTraitNegations(text) {
+  return String(text || '').replace(
+    /무타공|타공\s*불필요|타공판|타공\s*없|못질\s*없|전동드릴\s*없|전동드릴\s*있으면\s*\d+분|세탁\s*가능|물세탁\s*가능|분해\s*용이|재조립\s*용이|녹\s*없|녹\s*발생\s*없|녹\s*방지|떨어짐\s*없|꺼짐\s*방지|보강판|와\s*달리|과\s*달리|대비/g,
+    ' '
+  );
+}
+
+function getItemRiskText(item) {
+  return [
+    item.name,
+    item.category,
+    item.oneLiner,
+    item.checkLine,
+    ...(item.chips || []),
+    ...(item.checks || []),
+    ...(item.cautions || [])
+  ].filter(Boolean).join(' ');
+}
+
 function itemMatchesTraitRule(item, rule) {
   if (!rule) return false;
-  if (rule.depositMin && (item.specs?.deposit || 0) >= rule.depositMin) return true;
-  if (rule.matchRx && rule.matchRx.test(getItemSearchableText(item))) return true;
+  if (item.verdict === 'PASS' && rule.id !== 'open-dust' && rule.id !== 'floor-bulky') {
+    return false;
+  }
+  if (rule.id === 'open-dust' && /커버|도어|가림막/.test(item.name || '')) {
+    return false;
+  }
+  const baseBadgeText = `${item.name || ''} ${item.category || ''} ${(item.chips || []).join(' ')}`;
+  if (rule.depositMin && (item.specs?.deposit || 0) >= rule.depositMin && !/무타공|꼭꼬핀|자석/.test(baseBadgeText)) {
+    return true;
+  }
+  const cleanRiskTxt = stripSafeTraitNegations(getItemRiskText(item));
+  if (rule.matchRx && rule.matchRx.test(cleanRiskTxt)) return true;
   return false;
 }
 
@@ -153,6 +187,9 @@ function toggleExcludeTrait(traitId) {
   renderExcludeTraitsBars();
   if (scannerResults && !scannerResults.classList.contains('hidden')) {
     renderItems();
+  }
+  if (scannerCompare && !scannerCompare.classList.contains('hidden')) {
+    renderCompareView();
   }
 }
 
@@ -171,27 +208,51 @@ function renderExcludeTraitsBars() {
       return;
     }
     el.classList.remove('hidden');
-    const excludedTotal = activeCount
-      ? ITEMS_DB.filter((it) => [...state.excludedTraits].some((tid) => itemMatchesTraitRule(it, NOPE_TRAIT_RULES.find((r) => r.id === tid)))).length
-      : 0;
-    const statusText = activeCount
-      ? `피할 특징 제외 ON (${activeCount}개 · ${excludedTotal}종 걸러짐)`
-      : (isResultsBar ? '피할 특징 제외 필터 (눌러서 켜기)' : '내 방 피할 조건 제외 필터 (검색 시 자동 제외)');
+    const isCompact = isResultsBar && !state.excludeResultsExpanded;
+    el.classList.toggle('is-compact', isCompact);
+
+    let statusText = '';
+    if (isResultsBar) {
+      if (activeCount > 0) {
+        statusText = state.lastExcludedCount > 0
+          ? `🚫 제외 필터 ${activeCount}개 ON · 이 목록에서 ${state.lastExcludedCount}건 가려짐`
+          : `🚫 제외 필터 ${activeCount}개 ON (이 목록 해당 없음)`;
+      } else {
+        statusText = '피할 특징 제외 필터 OFF (눌러서 켜기)';
+      }
+    } else {
+      statusText = activeCount
+        ? `내 방 피할 조건 제외 (${activeCount}개 켜짐 · 검색 시 자동 제외)`
+        : '내 방 피할 조건 제외 필터 (검색 시 자동 제외)';
+    }
+
     el.innerHTML = `
       <div class="exclude-bar-head">
         <span class="exclude-bar-title">${statusText}</span>
-        ${activeCount ? `<button type="button" class="exclude-bar-clear">전체 끄기</button>` : ''}
+        <div class="exclude-bar-actions">
+          ${activeCount ? `<button type="button" class="exclude-bar-clear">전체 끄기</button>` : ''}
+          ${isResultsBar ? `<button type="button" class="exclude-bar-toggle">${state.excludeResultsExpanded ? '접기 ▲' : '조절 ▾'}</button>` : ''}
+        </div>
       </div>
-      <div class="exclude-chips-wrap">
-        ${rules.map((r) => {
-          const isOn = state.excludedTraits.has(r.id);
-          return `<button type="button" class="exclude-chip-btn ${isOn ? 'is-on' : ''}" data-ex-trait="${escapeHtml(r.id)}">${isOn ? '🚫 ' : ''}${escapeHtml(r.shortChip)}</button>`;
-        }).join('')}
-      </div>
+      ${isCompact ? '' : `
+        <div class="exclude-chips-wrap">
+          ${rules.map((r) => {
+            const isOn = state.excludedTraits.has(r.id);
+            return `<button type="button" class="exclude-chip-btn ${isOn ? 'is-on' : ''}" data-ex-trait="${escapeHtml(r.id)}">${isOn ? '🚫 ' : ''}${escapeHtml(r.shortChip)}</button>`;
+          }).join('')}
+        </div>
+      `}
     `;
     el.querySelectorAll('[data-ex-trait]').forEach((btn) => {
       btn.addEventListener('click', () => toggleExcludeTrait(btn.dataset.exTrait));
     });
+    const toggleBtn = el.querySelector('.exclude-bar-toggle');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        state.excludeResultsExpanded = !state.excludeResultsExpanded;
+        renderExcludeTraitsBars();
+      });
+    }
     const clearBtn = el.querySelector('.exclude-bar-clear');
     if (clearBtn) {
       clearBtn.addEventListener('click', () => {
@@ -200,6 +261,9 @@ function renderExcludeTraitsBars() {
         renderExcludeTraitsBars();
         if (scannerResults && !scannerResults.classList.contains('hidden')) {
           renderItems();
+        }
+        if (scannerCompare && !scannerCompare.classList.contains('hidden')) {
+          renderCompareView();
         }
       });
     }
@@ -409,6 +473,15 @@ nicknameInputEl.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') confirmNicknameAndStartQuestions();
 });
 
+document.querySelectorAll('.quiz-depth-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    state.quizDepth = btn.dataset.quizDepth === 'full' ? 'full' : 'quick';
+    document.querySelectorAll('.quiz-depth-btn').forEach((b) => {
+      b.classList.toggle('active', b === btn);
+    });
+  });
+});
+
 savedProfileBtn.addEventListener('click', () => {
   const saved = loadSavedRoomProfile();
   if (!saved) {
@@ -436,6 +509,7 @@ savedProfileBtn.addEventListener('click', () => {
     dynamicAlt: saved.dynamicAlt || null,
     analysisBasis: saved.analysisBasis || [],
     estimatedSavedWon: saved.estimatedSavedWon || 180000,
+    questionCount: saved.questionCount || 15,
     profile,
     dangerScore: saved.dangerScore
   });
@@ -461,7 +535,10 @@ function getFlattenedQuizAnswers() {
 
 function getActiveQuizQuestions() {
   const flat = getFlattenedQuizAnswers();
-  return QUIZ_QUESTIONS.filter((q) => !q.condition || q.condition(flat));
+  return QUIZ_QUESTIONS.filter((q) => {
+    if (state.quizDepth === 'quick' && q.quickKeep === false) return false;
+    return !q.condition || q.condition(flat);
+  });
 }
 
 let currentMultiSelected = new Set();
@@ -716,6 +793,8 @@ function computeSpaceMbti({ density, toneId, tasteId }) {
     id = 'minimalist';
   } else if (density === 'maximal') {
     id = 'maximal';
+  } else if (tasteId === 'moodlight') {
+    id = 'lighting';
   } else if (tasteId === 'plant' || toneId === 'sage-terracotta') {
     id = 'green';
   } else if (tasteId === 'tableware' || toneId === 'butter-pastel') {
@@ -729,7 +808,7 @@ function computeSpaceMbti({ density, toneId, tasteId }) {
 function finalizeRoomAnalysis() {
   const totals = { dustRisk: 0, fabricRisk: 0, smellRisk: 0, depositRisk: 0, assemblyRisk: 0, spaceStress: 0 };
   let pyeongLabel = '6~7평';
-  let wishId = 'spacious';
+  let wishId = '';
   let toneId = state.matcherTone || 'white-minimal';
   let tasteId = 'plant';
   let density = 'balanced';
@@ -818,6 +897,21 @@ function finalizeRoomAnalysis() {
       totals[k] = (totals[k] || 0) + v;
     });
   });
+
+  if (!wishId) {
+    if (tasteId === 'moodlight' || lightingPref === 'mood') wishId = 'moodlight';
+    else if (density === 'maximal') wishId = 'storage';
+    else if (tasteId === 'minimal' || density === 'minimal') wishId = 'spacious';
+    else wishId = 'easycare';
+  }
+  if (!worstFear) {
+    if (totals.depositRisk >= 16) worstFear = 'deposit';
+    else if (totals.dustRisk + totals.fabricRisk >= 28) worstFear = 'dust';
+    else if (totals.assemblyRisk >= 16) worstFear = 'trouble';
+    else worstFear = 'space';
+  }
+
+  const questionCount = state.quizAnswers.length || getActiveQuizQuestions().length;
 
   const ctx = {
     pyeongLabel, wishId, toneId, tasteId, density, contractLabel, optionLevel,
@@ -986,6 +1080,7 @@ function finalizeRoomAnalysis() {
     dynamicAvoid,
     dynamicAlt,
     recommendedTraitIds,
+    questionCount,
     profileId: profile.id,
     badge: profile.badge,
     dangerScore
@@ -1006,7 +1101,7 @@ function finalizeRoomAnalysis() {
 }
 
 function renderTasteSummaryStage(data) {
-  const { nickname, pyeongLabel, wishId, toneId, toneName, tasteId, density, mbtiId, activity, secondaryRisks, dynamicAvoid, dynamicAlt, analysisBasis, estimatedSavedWon, profile, dangerScore } = data;
+  const { nickname, pyeongLabel, wishId, toneId, toneName, tasteId, density, mbtiId, activity, secondaryRisks, dynamicAvoid, dynamicAlt, analysisBasis, estimatedSavedWon, questionCount = 15, profile, dangerScore } = data;
   const toneObj = ROOM_TONES.find((t) => t.id === toneId) || ROOM_TONES[0];
   const wishCat = (wishId && WISH_CATEGORIES[wishId]) || WISH_CATEGORIES.spacious;
   const spaceMbti = (mbtiId && SPACE_MBTI_TYPES.find((m) => m.id === mbtiId)) || computeSpaceMbti({ density, toneId, tasteId });
@@ -1063,7 +1158,7 @@ function renderTasteSummaryStage(data) {
   document.getElementById('taste-back-cover-btn').addEventListener('click', () => showHomeStage('cover'));
   document.getElementById('taste-retake-btn').addEventListener('click', startQuiz);
   document.getElementById('taste-to-verdict-btn').addEventListener('click', () => {
-    renderQuizResultView(profile, dangerScore, pyeongLabel, toneObj.name, nickname, spaceMbti.code, secondaryRisks, dynamicAvoid, dynamicAlt, analysisBasis, estimatedSavedWon);
+    renderQuizResultView(profile, dangerScore, pyeongLabel, toneObj.name, nickname, spaceMbti.code, secondaryRisks, dynamicAvoid, dynamicAlt, analysisBasis, estimatedSavedWon, questionCount);
   });
   document.getElementById('taste-to-matcher-btn').addEventListener('click', () => {
     state.matcherReturnOrigin = 'taste';
@@ -1072,7 +1167,7 @@ function renderTasteSummaryStage(data) {
   });
 }
 
-function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', toneName = '화이트 미니멀', nickname = '자취러', mbtiCode = '', secondaryRisks = [], dynamicAvoid = null, dynamicAlt = null, analysisBasis = [], estimatedSavedWon = 180000) {
+function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', toneName = '화이트 미니멀', nickname = '자취러', mbtiCode = '', secondaryRisks = [], dynamicAvoid = null, dynamicAlt = null, analysisBasis = [], estimatedSavedWon = 180000, questionCount = 15) {
   showHomeStage('result');
 
   const tips = profile.lifeTips || [];
@@ -1103,14 +1198,15 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
         </div>
       </div>
 
-      <div class="defense-stat-bar">
+      <div class="defense-stat-bar" style="margin-bottom:4px;">
         <span>NOPE 피하면 예상 손실 방어</span>
         <strong>약 ${savedMan}만 원 절약 (교체·보증금)</strong>
       </div>
+      <p class="defense-basis-note">원상복구 도배·수리 차감, 폐기 수수료 및 재구매 평균 비용 기준</p>
 
       ${analysisBasis && analysisBasis.length ? `
         <div class="report-basis-box">
-          <span class="report-basis-title">판정 근거 · 입력하신 내 방 30문항 핵심 조건</span>
+          <span class="report-basis-title">판정 근거 · 입력하신 내 방 ${questionCount}문항 핵심 조건</span>
           <div class="report-basis-grid" id="report-basis-grid">
             ${analysisBasis.slice(0, 4).map((b) => `<span class="report-basis-chip">${escapeHtml(b)}</span>`).join('')}
           </div>
@@ -1149,7 +1245,7 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
               </div>
               <div class="tag-row swap-tag-row">
                 ${traitRules.map((r) => `
-                  <button type="button" class="tag-alt swap-chip pass-trait-jump" data-pass-query="${escapeHtml(r.passQuery)}">${escapeHtml(r.passLabel)} <span class="swap-arrow">›</span></button>
+                  <button type="button" class="tag-alt swap-chip pass-trait-jump" data-pass-rule="${escapeHtml(r.id)}" data-pass-query="${escapeHtml(r.passQuery)}" data-pass-label="${escapeHtml(r.passLabel)}">${escapeHtml(r.passLabel)} <span class="swap-arrow">›</span></button>
                 `).join('')}
               </div>
             </div>
@@ -1264,14 +1360,20 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
 
   quizResultEl.querySelectorAll('.pass-trait-jump').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const passQ = btn.dataset.passQuery || '';
+      const passRuleId = btn.dataset.passRule || '';
+      const passLabel = btn.dataset.passLabel || btn.dataset.passQuery || '대안 추천';
       switchTab('scanner');
       setScannerMode('search');
-      if (passQ) {
-        searchInput.value = passQ;
-        renderItems();
-        openScannerResults(`추천 · ${passQ}`);
-      }
+      state.activePassRuleId = passRuleId;
+      state.selectedFilter = { label: passLabel, type: 'pass_rule', value: passRuleId };
+      state.selectedVerdict = 'ALL';
+      document.querySelectorAll('#verdict-filter-bar .vfilter-btn').forEach((b) => {
+        b.classList.toggle('active', b.dataset.verdict === 'ALL');
+      });
+      searchInput.value = '';
+      customOutEl.innerHTML = '';
+      openScannerResults(`추천 · ${passLabel}`);
+      renderItems();
     });
   });
 
@@ -1704,15 +1806,21 @@ function verdictMeta(verdict) {
 function openScannerResults(label) {
   scannerGate.classList.add('hidden');
   scannerResults.classList.remove('hidden');
-  document.getElementById('scanner-active-label').textContent = label;
+  if (label) {
+    state.scannerResultTitle = label;
+  }
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 document.getElementById('scanner-reset-btn').addEventListener('click', () => {
   scannerResults.classList.add('hidden');
   scannerGate.classList.remove('hidden');
+  state.activePassRuleId = '';
+  state.scannerResultTitle = '';
+  state.lastExcludedCount = 0;
   searchInput.value = '';
   customOutEl.innerHTML = '';
+  renderExcludeTraitsBars();
 });
 
 function renderCategoryChips() {
@@ -1730,10 +1838,11 @@ function renderCategoryChips() {
       b.textContent = f.label;
       b.addEventListener('click', () => {
         state.selectedFilter = f;
+        state.activePassRuleId = '';
         searchInput.value = '';
         customOutEl.innerHTML = '';
-        renderItems();
         openScannerResults(f.label);
+        renderItems();
       });
       chipsWrap.appendChild(b);
     });
@@ -1796,8 +1905,10 @@ function getPersonalFitAlerts(item, rawProfile) {
 
   const isNoNail = savedProfile.contractType === 'no-nail';
   const isPinOnly = savedProfile.contractType === 'pin-ok';
-  const hasWallOrDepositRisk = (item.specs && item.specs.deposit >= 3)
-    || /타공|못질|벽걸이|코맨드|시트지|점착|실크벽지|벽\s*고정|압축봉/.test(txt);
+  const riskTxtForWall = stripSafeTraitNegations(getItemRiskText(item));
+  const isExplicitNoDrill = /무타공|꼭꼬핀|자석/.test(`${item.name || ''} ${item.category || ''} ${chipTxt}`);
+  const hasWallOrDepositRisk = ((item.specs && item.specs.deposit >= 3) && !isExplicitNoDrill)
+    || /(^|[^무])타공(?!판)|못질|벽걸이|코맨드|시트지|점착|실크벽지.{0,8}뜯|벽\s*고정|압축봉\s*(무너|함몰)/.test(riskTxtForWall);
 
   if ((isNoNail || isPinOnly) && hasWallOrDepositRisk) {
     alerts.push({
@@ -2481,7 +2592,11 @@ function findDirectAndSimilarItems(rawQuery) {
   const compactQ = q.replace(/\s+/g, '');
   const tokens = q.split(/\s+/).filter((t) => t.length >= 2);
 
+  const activePassRule = state.activePassRuleId
+    ? NOPE_TRAIT_RULES.find((r) => r.id === state.activePassRuleId)
+    : null;
   const activeExcludeRules = [...state.excludedTraits]
+    .filter((id) => id !== state.activePassRuleId)
     .map((id) => NOPE_TRAIT_RULES.find((r) => r.id === id))
     .filter(Boolean);
   let excludedByTraitsCount = 0;
@@ -2491,7 +2606,11 @@ function findDirectAndSimilarItems(rawQuery) {
       return false;
     }
     const f = state.selectedFilter;
-    if (!q && f && f.type === 'brand') {
+    if (!q && activePassRule && activePassRule.passRx) {
+      if (item.verdict === 'NOPE') return false;
+      const passHay = `${item.brand} ${item.name} ${item.category} ${item.oneLiner || ''} ${item.goodLine || ''} ${(item.chips || []).join(' ')} ${(item.pros || []).join(' ')}`;
+      if (!activePassRule.passRx.test(passHay)) return false;
+    } else if (!q && f && f.type === 'brand') {
       const brands = f.value.split('|');
       if (!brands.some((b) => item.brand.includes(b))) return false;
     } else if (!q && f && f.type === 'cat') {
@@ -2516,6 +2635,11 @@ function findDirectAndSimilarItems(rawQuery) {
     }
     return true;
   });
+
+  if (!q && activePassRule) {
+    const scoreRank = { PASS: 0, WARN: 1, NOPE: 2 };
+    direct.sort((a, b) => scoreRank[a.verdict] - scoreRank[b.verdict]);
+  }
 
   let similar = [];
   let inferredCat = q ? inferCategoryFromQuery(compactQ) : '';
@@ -2552,10 +2676,11 @@ function renderItems() {
   const q = searchInput.value.trim();
   const f = state.selectedFilter;
   const { direct, similar, inferredCat, excludedByTraitsCount } = findDirectAndSimilarItems(q);
+  state.lastExcludedCount = excludedByTraitsCount;
 
   const activeLabelEl = document.getElementById('scanner-active-label');
   if (activeLabelEl) {
-    const baseTitle = q ? `"${q}" 검색` : (f && f.label ? f.label : `전체 ${ITEMS_DB.length}종`);
+    const baseTitle = state.scannerResultTitle || (q ? `"${q}" 검색` : (f && f.label ? f.label : `전체 ${ITEMS_DB.length}종`));
     const exNote = excludedByTraitsCount ? ` · 제외 ${excludedByTraitsCount}건` : '';
     activeLabelEl.textContent = `${baseTitle} (${direct.length}건${similar.length ? ` + 유사 ${similar.length}건` : ''}${exNote})`;
   }
@@ -2938,6 +3063,7 @@ async function runScannerSearch() {
 
   state.quickRefineCat = '';
   state.quickRefineFeatures = [];
+  state.activePassRuleId = '';
 
   const looksLikeUrl = /^https?:\/\//i.test(rawInput);
   const urlInfo = looksLikeUrl ? extractUrlClientFallback(rawInput) : { isUrl: false, url: '', extractedQuery: rawInput };
@@ -2959,9 +3085,9 @@ async function runScannerSearch() {
   });
 
   if (hasExact) {
-    renderItems();
     customOutEl.innerHTML = '';
-    openScannerResults(`SCAN · ${rawInput}`);
+    openScannerResults(`"${rawInput}" 검색`);
+    renderItems();
     return;
   }
 
@@ -3024,6 +3150,7 @@ async function runScannerSearch() {
   }
 
   // Temporarily populate searchInput with inferred query/name for similar-item matching
+  openScannerResults(`SCAN · ${rawInput || analyzedItem.name}`);
   const savedSearchVal = searchInput.value;
   if (urlInfo.isUrl || !rawInput) {
     searchInput.value = analyzedItem.name || analyzedItem.category || '';
@@ -3045,7 +3172,6 @@ async function runScannerSearch() {
     needsRefineChips,
     baseFallbackText: fallbackText
   });
-  openScannerResults(`SCAN · ${rawInput || analyzedItem.name}`);
 }
 
 if (analyzeBtn) analyzeBtn.addEventListener('click', runScannerSearch);
@@ -3072,10 +3198,28 @@ let activeCompareB = '';
 let comparePickerTarget = null;
 let compareSearchQuery = '';
 let compareSearchCat = 'ALL';
+let compareUseExclude = true;
 
-function getSurveyCompareRecommendations(savedProfile, excludeIds = []) {
+function getActiveCompareExcludeRules() {
+  if (!compareUseExclude || !state.excludedTraits.size) return [];
+  return [...state.excludedTraits]
+    .map((id) => NOPE_TRAIT_RULES.find((r) => r.id === id))
+    .filter(Boolean);
+}
+
+function getSurveyCompareRecommendations(savedProfile, excludeIds = [], targetCategory = '') {
   const excluded = new Set(excludeIds.filter(Boolean));
-  const candidates = ITEMS_DB.filter((it) => !excluded.has(it.id) && it.verdict !== 'NOPE');
+  const activeExcludeRules = getActiveCompareExcludeRules();
+  const pool = ITEMS_DB.filter((it) => {
+    if (excluded.has(it.id) || it.verdict === 'NOPE') return false;
+    if (activeExcludeRules.some((r) => itemMatchesTraitRule(it, r))) return false;
+    return true;
+  });
+
+  const baseCandidates = targetCategory
+    ? pool.filter((it) => it.category === targetCategory)
+    : pool;
+  const candidates = baseCandidates.length >= 2 ? baseCandidates : pool;
 
   const scored = candidates.map((it) => {
     const alerts = savedProfile ? getPersonalFitAlerts(it, savedProfile) : [];
@@ -3088,7 +3232,9 @@ function getSurveyCompareRecommendations(savedProfile, excludeIds = []) {
     const score = verdictPts + bonus + (toneHit ? 6 : 0) - riskPenalty;
 
     let reason = it.goodLine || it.oneLiner || '';
-    if (savedProfile) {
+    if (targetCategory && it.category === targetCategory) {
+      reason = `${targetCategory} 대안 · ${it.verdict === 'PASS' ? '내구성·유지관리 안정' : '조건 확인 후 비교'}`;
+    } else if (savedProfile) {
       if (toneHit && savedProfile.toneName) {
         reason = `'${savedProfile.toneName}' 톤 맞춤 · ${it.verdict === 'PASS' ? '내 방 조건 안정' : '체크 항목 양호'}`;
       } else if (dangerCnt === 0 && warnCnt === 0) {
@@ -3099,6 +3245,9 @@ function getSurveyCompareRecommendations(savedProfile, excludeIds = []) {
   });
 
   scored.sort((a, b) => b.score - a.score);
+  if (targetCategory) {
+    return scored.slice(0, 4);
+  }
   const picked = [];
   const usedCats = new Set();
   for (const entry of scored) {
@@ -3119,27 +3268,37 @@ function getSurveyCompareRecommendations(savedProfile, excludeIds = []) {
 function getFilteredCompareItems() {
   const q = compareSearchQuery.trim().toLowerCase();
   const compactQ = q.replace(/\s+/g, '');
+  const activeExcludeRules = getActiveCompareExcludeRules();
+  let hiddenByExclude = 0;
+
   const list = ITEMS_DB.filter((it) => {
     if (compareSearchCat !== 'ALL' && it.category !== compareSearchCat) return false;
-    if (!q) return true;
-    const hay = `${it.name} ${it.brand} ${it.category} ${it.oneLiner || ''} ${(it.chips || []).join(' ')}`.toLowerCase();
-    return hay.includes(q) || (compactQ && hay.replace(/\s+/g, '').includes(compactQ));
+    if (q) {
+      const hay = `${it.name} ${it.brand} ${it.category} ${it.oneLiner || ''} ${(it.chips || []).join(' ')}`.toLowerCase();
+      if (!(hay.includes(q) || (compactQ && hay.replace(/\s+/g, '').includes(compactQ)))) return false;
+    }
+    if (activeExcludeRules.some((r) => itemMatchesTraitRule(it, r))) {
+      hiddenByExclude += 1;
+      return false;
+    }
+    return true;
   });
-  return list;
+  return { items: list, hiddenByExclude };
 }
 
 function renderComparePickerList() {
   const listEl = document.getElementById('compare-picker-list');
   const countEl = document.getElementById('compare-picker-count');
   if (!listEl) return;
-  const items = getFilteredCompareItems();
+  const { items, hiddenByExclude } = getFilteredCompareItems();
   const selectedId = comparePickerTarget === 'A' ? activeCompareA : activeCompareB;
   const otherId = comparePickerTarget === 'A' ? activeCompareB : activeCompareA;
 
   if (countEl) {
+    const exNote = hiddenByExclude ? ` · NOPE 제외 ${hiddenByExclude}종` : '';
     countEl.textContent = compareSearchQuery.trim()
-      ? `검색 결과 ${items.length}종`
-      : `총 ${items.length}종`;
+      ? `검색 결과 ${items.length}종${exNote}`
+      : `총 ${items.length}종${exNote}`;
   }
 
   if (!items.length) {
@@ -3205,10 +3364,7 @@ function renderCompareView() {
   const itemB = ITEMS_DB.find((it) => it.id === activeCompareB) || null;
   const hasBoth = Boolean(itemA && itemB);
   const savedProfile = loadSavedRoomProfile();
-
-  if (!comparePickerTarget && !hasBoth) {
-    comparePickerTarget = !itemA ? 'A' : 'B';
-  }
+  const pickedAnchor = itemA || itemB || null;
 
   const slotCardHtml = (slot, item) => {
     const isPicking = comparePickerTarget === slot;
@@ -3243,8 +3399,13 @@ function renderCompareView() {
     <div id="compare-picker-panel" class="compare-picker-panel">
       <div class="compare-picker-head">
         <strong>제품 ${comparePickerTarget} ${(!itemA && comparePickerTarget === 'A') || (!itemB && comparePickerTarget === 'B') ? '검색해서 고르기' : '바꾸기'} <span id="compare-picker-count" class="compare-picker-count"></span></strong>
-        ${hasBoth ? `<button type="button" id="compare-picker-close" class="btn-ghost btn-sm" style="padding:2px 6px;">닫기 ✕</button>` : ''}
+        <button type="button" id="compare-picker-close" class="btn-ghost btn-sm" style="padding:2px 6px;">닫기 ✕</button>
       </div>
+      ${state.excludedTraits.size > 0 ? `
+        <div class="compare-picker-tools">
+          <button type="button" id="compare-exclude-toggle" class="compare-filter-pill ${compareUseExclude ? 'is-on' : ''}">${compareUseExclude ? '🚫 내 NOPE 제외 반영 중' : 'NOPE 제외 끄고 전체 보기'}</button>
+        </div>
+      ` : ''}
       <div class="compare-search-box">
         <input id="compare-search-input" type="text" value="${escapeHtml(compareSearchQuery)}" placeholder="제품명 · 브랜드 · 키워드 검색 (예: 데스커, 러그, 행거)" autocomplete="off" />
         ${compareSearchQuery ? '<button type="button" id="compare-search-clear" class="compare-search-clear" aria-label="검색어 지우기">✕</button>' : ''}
@@ -3321,16 +3482,19 @@ function renderCompareView() {
       </div>
     `;
   } else {
-    const recos = getSurveyCompareRecommendations(savedProfile, [activeCompareA, activeCompareB]);
+    const targetCategory = pickedAnchor ? pickedAnchor.category : '';
+    const recos = getSurveyCompareRecommendations(savedProfile, [activeCompareA, activeCompareB], targetCategory);
     const targetSlot = !itemA ? 'A' : 'B';
-    const surveyTitle = savedProfile
-      ? `${escapeHtml(savedProfile.nickname || '내')}님 방 설문 기반 추천 가구`
-      : '인기 비교 추천 가구 (설문하면 내 방 맞춤 추천)';
+    const surveyTitle = targetCategory
+      ? `'${escapeHtml(pickedAnchor.name)}' 비교 추천 (${escapeHtml(targetCategory)})`
+      : (savedProfile
+        ? `${escapeHtml(savedProfile.nickname || '내')}님 방 설문 기반 추천 가구`
+        : '인기 비교 추천 가구 (설문하면 내 방 맞춤 추천)');
     bodyHtml = `
       <div class="compare-reco-section">
         <div class="compare-reco-head">
           <div>
-            <span class="micro-label">${savedProfile ? 'PERSONAL SURVEY PICK' : 'POPULAR PICKS'}</span>
+            <span class="micro-label">${targetCategory ? 'SAME-CATEGORY MATCH' : (savedProfile ? 'PERSONAL SURVEY PICK' : 'POPULAR PICKS')}</span>
             <h3 class="compare-reco-section-title">${surveyTitle}</h3>
           </div>
           ${!savedProfile ? `<button type="button" id="compare-go-survey-btn" class="btn-ghost btn-sm" style="color:var(--accent);font-weight:800;">1분 설문 →</button>` : ''}
@@ -3369,18 +3533,27 @@ function renderCompareView() {
   `;
 
   document.getElementById('compare-pick-btn-a').addEventListener('click', () => {
-    comparePickerTarget = comparePickerTarget === 'A' && hasBoth ? null : 'A';
+    comparePickerTarget = comparePickerTarget === 'A' ? null : 'A';
     compareSearchQuery = '';
+    if (!activeCompareA && itemB) compareSearchCat = itemB.category;
     renderCompareView();
   });
   document.getElementById('compare-pick-btn-b').addEventListener('click', () => {
-    comparePickerTarget = comparePickerTarget === 'B' && hasBoth ? null : 'B';
+    comparePickerTarget = comparePickerTarget === 'B' ? null : 'B';
     compareSearchQuery = '';
+    if (!activeCompareB && itemA) compareSearchCat = itemA.category;
     renderCompareView();
   });
 
   if (comparePickerTarget) {
     renderComparePickerList();
+    const cmpExcludeBtn = document.getElementById('compare-exclude-toggle');
+    if (cmpExcludeBtn) {
+      cmpExcludeBtn.addEventListener('click', () => {
+        compareUseExclude = !compareUseExclude;
+        renderCompareView();
+      });
+    }
     const cmpSearchInput = document.getElementById('compare-search-input');
     if (cmpSearchInput) {
       cmpSearchInput.addEventListener('input', (e) => {
@@ -3563,7 +3736,7 @@ function surveyFitBonus(item, savedProfile) {
   const txt = `${item.name} ${item.oneLiner} ${(item.chips || []).join(' ')}`;
   if (savedProfile.wishId === 'storage' && /수납|서랍|책장|벙커|행거|카트/.test(txt)) bonus += 3;
   if ((savedProfile.wishId === 'spacious' || savedProfile.pyeongLabel === '4~5평 이하') && /슬림|콤팩트|틈새|미니|저상|도어후크|선반/.test(txt)) bonus += 3;
-  if (savedProfile.wishId === 'moodlight' && /조명|무드|유리|원목|확산광/.test(txt)) bonus += 3;
+  if ((savedProfile.wishId === 'moodlight' || savedProfile.tasteId === 'moodlight') && /조명|무드|유리|원목|확산광|스탠드|전구/.test(txt)) bonus += 3;
   if (savedProfile.wishId === 'easycare' && /세탁|완제품|방수|시공|무조립/.test(txt)) bonus += 3;
   return bonus;
 }
@@ -3726,7 +3899,7 @@ function renderToneMatcher() {
   });
 
   // Sort 10% accent point items to place the user's survey taste preference FIRST
-  const tasteKindMap = { plant: '조경 · 식물', object: '오브제 · 소품', tableware: '식기 · 컵' };
+  const tasteKindMap = { plant: '조경 · 식물', object: '오브제 · 소품', moodlight: '오브제 · 소품', tableware: '식기 · 컵' };
   const preferredKind = savedProfile && tasteKindMap[savedProfile.tasteId];
   const orderedAccents = [...activeTone.accents].sort((a, b) => {
     if (a.kind === preferredKind && b.kind !== preferredKind) return -1;
@@ -5034,8 +5207,8 @@ function handleDeepLinks() {
     if (target) {
       switchTab('scanner');
       state.selectedFilter = { label: target.category, type: 'cat', value: target.category };
-      renderItems();
       openScannerResults(target.category);
+      renderItems();
       openDetailSheet(target);
       return;
     }
@@ -5669,6 +5842,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope69').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope70').catch(() => {});
   }
 }

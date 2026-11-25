@@ -1,12 +1,12 @@
 // NOPE! v9 — 223종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
-import { ITEMS_DB } from './products-db.js?v=nope69';
+import { ITEMS_DB } from './products-db.js?v=nope70';
 import {
   STYLE_MOODS,
   ROOM_TONES,
   TARGET_CATEGORIES,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './mood-palettes.js?v=nope69';
+} from './mood-palettes.js?v=nope70';
 export {
   ITEMS_DB,
   STYLE_MOODS,
@@ -23,8 +23,9 @@ export const NOPE_TRAIT_RULES = [
     shortChip: '세탁 불가 털·패브릭 제외',
     passLabel: '물세탁 가능 단모 · 커버 분리형',
     passQuery: '워셔블',
+    passRx: /워셔블|단모|사이잘룩|커버\s*분리|물세탁|이지클린/,
     desc: '털이 길거나 커버가 분리되지 않아 음료·먼지·반려동물 털 관리가 힘든 소재',
-    matchRx: /샤기|장모|부클레|비분리|세탁\s*불가|물세탁\s*불가|부분\s*클리닝|코듀로이.*세탁/
+    matchRx: /장모\s*샤기|샤기\s*러그|부클레.*소파|비분리|세탁\s*불가|물세탁\s*불가|부분\s*클리닝|코듀로이.*세탁/
   },
   {
     id: 'wall-damage',
@@ -32,8 +33,9 @@ export const NOPE_TRAIT_RULES = [
     shortChip: '벽 타공·접착 테이프 제외',
     passLabel: '꼭꼬핀 · 압착 거치 등 무타공 방식',
     passQuery: '무타공',
+    passRx: /무타공|꼭꼬핀|자석|문걸이|논슬립|압축/,
     desc: '못질이나 강한 접착 테이프 때문에 퇴실할 때 도배·수리비를 물기 쉬운 설치 방식',
-    matchRx: /타공|못질|칼블럭|나사\s*고정|실크벽지.*뜯|시트지|점착|접착\s*테이프|코맨드/,
+    matchRx: /(^|[^무])타공(?!판)|못질|칼블럭|나사\s*고정|실크벽지.{0,8}뜯|점착식|접착\s*테이프|3M\s*코맨드|코맨드\s*스트립/,
     depositMin: 4
   },
   {
@@ -42,8 +44,9 @@ export const NOPE_TRAIT_RULES = [
     shortChip: '문 없는 오픈 수납 제외',
     passLabel: '먼지 가리는 도어형 · 지퍼 커버 수납',
     passQuery: '도어',
+    passRx: /도어|가림막|불투명|서랍|리빙박스|옷장/,
     desc: '옷이나 짐이 그대로 노출돼 2주 만에 먼지가 쌓이고 방이 어수선해 보이는 구조',
-    matchRx: /오픈.*행거|오픈.*선반|파이프\s*행거|와이어\s*선반|우드\s*블라인드|알루미늄\s*블라인드/
+    matchRx: /오픈\s*파이프|오픈.*행거|오픈\s*선반|와이어\s*선반|우드\s*블라인드|알루미늄\s*블라인드/
   },
   {
     id: 'heavy-diy',
@@ -51,8 +54,9 @@ export const NOPE_TRAIT_RULES = [
     shortChip: '어려운 조립·무거운 가구 제외',
     passLabel: '조립 없는 완제품 · 방문 설치 가구',
     passQuery: '완제품',
+    passRx: /완제품|무조립|조립\s*없|기사\s*방문|기사\s*시공|공구\s*없|20분/,
     desc: '전동드릴 없인 조립이 버겁거나 분해하면 나사 구멍이 헐거워져 이사 때 버리기 쉬운 제품',
-    matchRx: /전동드릴|분해.*불가|재조립|말름|브림네스|헬메르|알렉스|에케트|마켓비\s*MKB|조립\s*난이도/
+    matchRx: /전동드릴\s*필수|분해.*불가|재조립.*(불가|어려)|말름|브림네스|헬메르|알렉스|에케트|마켓비\s*MKB|조립\s*난이도\s*(상|높)/
   },
   {
     id: 'weak-board',
@@ -60,6 +64,7 @@ export const NOPE_TRAIT_RULES = [
     shortChip: '속 빈 약한 상판 제외',
     passLabel: '속이 꽉 찬 18T 목재 + 철제 프레임',
     passQuery: '두닷',
+    passRx: /두닷|데스커|일룸|18T|22T|LPM|스틸\s*프레임/,
     desc: '겉만 시트지이고 속은 골판지 벌집이라 무거운 모니터·집게 거치 시 푹 꺼지는 가구',
     matchRx: /종이\s*벌집|허니콤|라그캅텐|모니터암\s*금지|상판\s*꺼짐/
   },
@@ -69,6 +74,7 @@ export const NOPE_TRAIT_RULES = [
     shortChip: '바닥 자리 큰 가구 제외',
     passLabel: '문 뒤 걸이 · 틈새 밀착 슬림 가구',
     passQuery: '슬림',
+    passRx: /슬림|도어후크|문걸이|틈새|저상|콤팩트|폴딩/,
     desc: '좁은 원룸이나 복층에서 방문 열림이나 걷는 통로를 막기 쉬운 제품',
     matchRx: /리클라이너|스탠드\s*전신거울|깊이\s*55cm|공간\s*차지|뒷공간|코너\s*책상/
   },
@@ -78,8 +84,9 @@ export const NOPE_TRAIT_RULES = [
     shortChip: '녹·흡착 추락 위험 제외',
     passLabel: '녹 안 스는 스텐304 · 빨아 쓰는 매트',
     passQuery: '스텐304',
+    passRx: /스텐304|SUS304|소프트\s*규조토|실리콘|물빠짐/,
     desc: '습한 욕실에서 흡착판이 툭 떨어지거나 물때·곰팡이·녹이 빨리 생기는 소재',
-    matchRx: /흡착|하드\s*규조토|물곰팡이|녹\s*발생|물기.*변색/
+    matchRx: /흡착\s*욕실|흡착식|흡착\s*선반|하드\s*규조토|물곰팡이|녹\s*발생|물기.*변색/
   },
   {
     id: 'tension-fall',
@@ -87,8 +94,9 @@ export const NOPE_TRAIT_RULES = [
     shortChip: '약한 압축봉 고정 제외',
     passLabel: '바닥에서 받쳐주는 튼튼한 선반 · 옷장',
     passQuery: '서랍',
+    passRx: /서랍|책장|옷장|스틸\s*모듈|캐비닛/,
     desc: '옷·짐 무게나 석고보드 천장 유격 때문에 기울어지거나 쿵 쓰러질 위험이 있는 구조',
-    matchRx: /압축\s*가벽|천장\s*고정|압축봉.*무너|석고보드.*함몰/
+    matchRx: /압축\s*가벽|압축봉\s*행거|압축봉.*무너|석고보드.*함몰/
   }
 ];
 
@@ -344,6 +352,12 @@ export const SPACE_MBTI_TYPES = [
     code: 'F-MOD · 선이 반듯한 모더너',
     headline: '군더더기 없는 직선과 정돈된 분위기를 좋아하는 타입',
     summary: '알록달록한 장식보다 모노 스틸·화이트처럼 선이 깔끔하게 떨어지는 실용적 공간에서 집중력과 안정감을 느껴요. 전선과 생활용품을 케이스에 깔끔히 숨겨주면 만족도가 두 배로 올라갑니다.'
+  },
+  {
+    id: 'lighting',
+    code: 'L-GLW · 은은한 빛 분위기 수집가',
+    headline: '따뜻한 단스탠드와 간접 불빛으로 방 무드를 완성하는 타입',
+    summary: '큰 가구는 담백하게 두고 천장 형광등을 끈 뒤, 2700K 전구색 단스탠드나 집게 조명 하나로 공간의 감도를 끌어올리는 타입이에요. 눈부심 없는 갓 조명과 콘센트 동선만 맞춰도 집이 카페처럼 변합니다.'
   }
 ];
 
@@ -364,6 +378,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q2',
+    quickKeep: false,
     chapter: 'STEP 1 · 공간·구조',
     title: '현관문·방문 앞과 침대 사이 통로 폭은 어떤가요?',
     reasonHint: '보행 폭 60cm가 안 나오면 스탠드 거울·의자 다리가 바로 NOPE!가 됩니다.',
@@ -375,6 +390,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q3',
+    quickKeep: false,
     chapter: 'STEP 1 · 공간·구조',
     title: '방의 천장 높이와 창문 크기는 어떤 편인가요?',
     reasonHint: '압축봉 행거·블라인드·커튼 길이와 결로 관리 난이도가 달라져요.',
@@ -386,6 +402,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q4',
+    quickKeep: false,
     chapter: 'STEP 1 · 공간·구조',
     title: '세탁기와 빨래 건조 공간은 어디에 있나요?',
     reasonHint: '실내 건조가 잦으면 패브릭·러그·수납장 습기 곰팡이 위험이 올라갑니다.',
@@ -397,6 +414,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q5',
+    quickKeep: false,
     chapter: 'STEP 1 · 공간·구조',
     title: '현재 방에 기본 옵션 가구가 얼마나 있나요?',
     reasonHint: '무옵션이면 대형 가구 조립·운반 리스크까지, 풀옵션이면 소품·수납 위주로 판독해요.',
@@ -455,6 +473,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q10',
+    quickKeep: false,
     chapter: 'STEP 2 · 환경·계약',
     title: '평소 방의 채광과 맞통풍 환기 상태는?',
     reasonHint: '환기가 안 되는 방은 패브릭·하드 규조토·접이식 매트리스에 곰팡이가 생겨요.',
@@ -466,6 +485,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q11',
+    quickKeep: false,
     chapter: 'STEP 2 · 환경·계약',
     title: '외부 소음이나 창문 우풍(단열)은 어떤 편인가요?',
     reasonHint: '외풍·소음이 크면 블라인드 대신 두꺼운 형상기억 암막커튼+문풍지가 필수예요.',
@@ -477,6 +497,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q12',
+    quickKeep: false,
     chapter: 'STEP 2 · 환경·계약',
     title: '향후 이 집에서 얼마나 거주할 계획인가요?',
     reasonHint: '1~2년 내 이사 예정이면 분해 시 망가지는 PB/수납침대는 NOPE!입니다.',
@@ -516,6 +537,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q15',
+    quickKeep: false,
     chapter: 'STEP 3 · 생활·관리',
     title: '방 안에서 배달음식이나 요리를 얼마나 자주 먹나요?',
     reasonHint: '주방 미분리 원룸에서 잦은 조리는 세탁 불가 패브릭 소파·부클레에 치명적이에요.',
@@ -527,6 +549,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q16',
+    quickKeep: false,
     chapter: 'STEP 3 · 생활·관리',
     title: '평소 청소기·물걸레질은 얼마나 자주 하시나요?',
     reasonHint: '주 1회 이하라면 오픈 선반·우드 블라인드·샤기 러그는 2주 만에 먼지 지옥이 돼요.',
@@ -549,6 +572,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q18',
+    quickKeep: false,
     chapter: 'STEP 3 · 생활·관리',
     title: '선반·행거가 오픈돼서 물건이 보이면 스트레스를 받나요?',
     reasonHint: '시각적 피로가 크면 오픈 행거 대신 도어형 수납장·불투명 박스만 추천합니다.',
@@ -573,6 +597,7 @@ export const QUIZ_QUESTIONS = [
   // ==================== STEP 4. 취향 · 색감 · 조명 (20~25) ====================
   {
     id: 'q20',
+    quickKeep: false,
     chapter: 'STEP 4 · 취향·무드',
     title: '내 방을 꾸밀 때 가장 바라는 1순위 목표는?',
     reasonHint: '톤 매처 추천 순위와 방 배색 비율 가중치를 결정해요.',
@@ -600,6 +625,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q22',
+    quickKeep: false,
     chapter: 'STEP 4 · 취향·무드',
     title: '가장 끌리는 가구·소품 질감은?',
     reasonHint: '소재별 변형·먼지·열기 내구성 기준과 연결됩니다.',
@@ -625,6 +651,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q24',
+    quickKeep: false,
     chapter: 'STEP 4 · 취향·무드',
     title: '선호하는 저녁 조명 빛 톤을 골라보세요',
     reasonHint: '조명 색온도에 맞춰 확산광 스탠드·전구 추천이 달라집니다.',
@@ -677,6 +704,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q28',
+    quickKeep: false,
     chapter: 'STEP 5 · 구매·예산',
     title: '품목 1개당 생각 중인 현실 예산대는?',
     reasonHint: '5만 원 이하 초저가 구간엔 시트지 들뜸·얇은 철제·흡착 낙하 함정이 집중돼 있어요.',
@@ -699,6 +727,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: 'q30',
+    quickKeep: false,
     chapter: 'STEP 5 · 구매·예산',
     title: '가구 산 뒤 가장 피하고 싶은 상황은?',
     reasonHint: '최종 처방전 타입과 최우선 경고 1순위를 결정합니다.',
