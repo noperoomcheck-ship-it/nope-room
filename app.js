@@ -4,6 +4,7 @@ import {
   TASTE_INSIGHTS,
   SPACE_MBTI_TYPES,
   WISH_CATEGORIES,
+  NOPE_TRAIT_RULES,
   ITEM_SWAP_REASONS,
   ITEMS_DB,
   STYLE_MOODS,
@@ -19,10 +20,10 @@ import {
   getItemGapHint,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './data/app-data.js?v=nope68';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope68';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope68';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope68';
+} from './data/app-data.js?v=nope69';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope69';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope69';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope69';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -37,7 +38,8 @@ const STORAGE_KEYS = {
   wishlist: 'nope_wishlist_v1',
   defenseIds: 'nope_defense_ids_v1',
   account: 'nope_account_v1',
-  pwaDismissed: 'nope_pwa_dismissed_v1'
+  pwaDismissed: 'nope_pwa_dismissed_v1',
+  excludeTraits: 'nope_exclude_traits_v1'
 };
 
 const state = {
@@ -47,6 +49,7 @@ const state = {
   scannerMode: 'search',
   selectedFilter: '전체',
   selectedVerdict: 'ALL',
+  excludedTraits: new Set(),
   matcherStyle: 'ALL',
   matcherTone: 'white-minimal',
   matcherCat: '책상·의자',
@@ -82,6 +85,125 @@ function saveRoomBaseState(baseId) {
   } catch {
     // ignore storage errors
   }
+}
+
+function loadExcludedTraits() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.excludeTraits) || 'null');
+    if (Array.isArray(raw)) {
+      state.excludedTraits = new Set(raw.filter((id) => NOPE_TRAIT_RULES.some((r) => r.id === id)));
+      return;
+    }
+  } catch {
+    // ignore storage errors
+  }
+  state.excludedTraits = new Set();
+}
+
+function saveExcludedTraits() {
+  try {
+    localStorage.setItem(STORAGE_KEYS.excludeTraits, JSON.stringify([...state.excludedTraits]));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function computeRecommendedTraitIds(ctx = {}) {
+  const ids = new Set();
+  if (ctx.hasPet || ctx.hasAllergy || ctx.smallWasher || (ctx.dustRisk || 0) >= 24) ids.add('no-wash-fabric');
+  if (ctx.isTenant && (ctx.wallMaterial === 'silk' || (ctx.depositRisk || 0) >= 16 || (ctx.targetItems || []).includes('wall_window'))) ids.add('wall-damage');
+  if ((ctx.dustRisk || 0) >= 20 || ctx.visualClutterSensitive || (ctx.targetItems || []).includes('hanger')) ids.add('open-dust');
+  if (ctx.diySkill === 'none' || ctx.noElevator || ctx.frequentMover) ids.add('heavy-diy');
+  if (ctx.heavyDeskLoad || ctx.budgetTier === 'low') ids.add('weak-board');
+  if (ctx.isDuplex || ctx.narrowPath || ctx.needsFloorSpace || ctx.isCouple) ids.add('floor-bulky');
+  if (ctx.hasMoistureRisk || ctx.needsIndoorDrying || ctx.isGroundFloor) ids.add('rust-suction');
+  if ((ctx.targetItems || []).includes('hanger') || ctx.ceilingLow || ctx.worstFear === 'trouble') ids.add('tension-fall');
+
+  if (ids.size === 0) {
+    ids.add('wall-damage');
+    ids.add('weak-board');
+    ids.add('no-wash-fabric');
+  }
+  return [...ids].slice(0, 5);
+}
+
+function getDisplayTraitRules(profileCtx = null) {
+  const ctx = profileCtx || loadSavedRoomProfile();
+  const ids = (ctx && Array.isArray(ctx.recommendedTraitIds) && ctx.recommendedTraitIds.length)
+    ? ctx.recommendedTraitIds
+    : (ctx ? computeRecommendedTraitIds(ctx) : NOPE_TRAIT_RULES.slice(0, 5).map((r) => r.id));
+  const mergedIds = [...new Set([...ids, ...state.excludedTraits])];
+  return mergedIds.map((id) => NOPE_TRAIT_RULES.find((r) => r.id === id)).filter(Boolean);
+}
+
+function itemMatchesTraitRule(item, rule) {
+  if (!rule) return false;
+  if (rule.depositMin && (item.specs?.deposit || 0) >= rule.depositMin) return true;
+  if (rule.matchRx && rule.matchRx.test(getItemSearchableText(item))) return true;
+  return false;
+}
+
+function toggleExcludeTrait(traitId) {
+  if (state.excludedTraits.has(traitId)) {
+    state.excludedTraits.delete(traitId);
+  } else {
+    state.excludedTraits.add(traitId);
+  }
+  saveExcludedTraits();
+  renderExcludeTraitsBars();
+  if (scannerResults && !scannerResults.classList.contains('hidden')) {
+    renderItems();
+  }
+}
+
+function renderExcludeTraitsBars() {
+  const rules = getDisplayTraitRules();
+  const activeCount = state.excludedTraits.size;
+  const targets = [
+    document.getElementById('scanner-gate-exclude-bar'),
+    document.getElementById('exclude-traits-bar')
+  ].filter(Boolean);
+
+  targets.forEach((el) => {
+    const isResultsBar = el.id === 'exclude-traits-bar';
+    if (!rules.length) {
+      el.classList.add('hidden');
+      return;
+    }
+    el.classList.remove('hidden');
+    const excludedTotal = activeCount
+      ? ITEMS_DB.filter((it) => [...state.excludedTraits].some((tid) => itemMatchesTraitRule(it, NOPE_TRAIT_RULES.find((r) => r.id === tid)))).length
+      : 0;
+    const statusText = activeCount
+      ? `피할 특징 제외 ON (${activeCount}개 · ${excludedTotal}종 걸러짐)`
+      : (isResultsBar ? '피할 특징 제외 필터 (눌러서 켜기)' : '내 방 피할 조건 제외 필터 (검색 시 자동 제외)');
+    el.innerHTML = `
+      <div class="exclude-bar-head">
+        <span class="exclude-bar-title">${statusText}</span>
+        ${activeCount ? `<button type="button" class="exclude-bar-clear">전체 끄기</button>` : ''}
+      </div>
+      <div class="exclude-chips-wrap">
+        ${rules.map((r) => {
+          const isOn = state.excludedTraits.has(r.id);
+          return `<button type="button" class="exclude-chip-btn ${isOn ? 'is-on' : ''}" data-ex-trait="${escapeHtml(r.id)}">${isOn ? '🚫 ' : ''}${escapeHtml(r.shortChip)}</button>`;
+        }).join('')}
+      </div>
+    `;
+    el.querySelectorAll('[data-ex-trait]').forEach((btn) => {
+      btn.addEventListener('click', () => toggleExcludeTrait(btn.dataset.exTrait));
+    });
+    const clearBtn = el.querySelector('.exclude-bar-clear');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        state.excludedTraits.clear();
+        saveExcludedTraits();
+        renderExcludeTraitsBars();
+        if (scannerResults && !scannerResults.classList.contains('hidden')) {
+          renderItems();
+        }
+      });
+    }
+  });
 }
 
 async function copyTextToClipboard(text, toastMsg = '복사 완료!') {
@@ -779,6 +901,33 @@ function finalizeRoomAnalysis() {
   const dynamicAvoid = [...avoidSet].slice(0, 5);
   const dynamicAlt = [...altSet].slice(0, 5);
 
+  const recommendedTraitIds = computeRecommendedTraitIds({
+    ...totals,
+    hasPet,
+    hasAllergy,
+    smallWasher,
+    isTenant,
+    wallMaterial,
+    targetItems,
+    visualClutterSensitive,
+    diySkill,
+    noElevator,
+    frequentMover,
+    heavyDeskLoad,
+    budgetTier,
+    isDuplex,
+    narrowPath,
+    needsFloorSpace,
+    isCouple,
+    hasMoistureRisk,
+    needsIndoorDrying,
+    isGroundFloor,
+    ceilingLow,
+    worstFear
+  });
+  state.excludedTraits = new Set(recommendedTraitIds);
+  saveExcludedTraits();
+
   state.matcherTone = toneId;
   state.scaleMode = postureMode;
   saveScaleState();
@@ -836,6 +985,7 @@ function finalizeRoomAnalysis() {
     estimatedSavedWon,
     dynamicAvoid,
     dynamicAlt,
+    recommendedTraitIds,
     profileId: profile.id,
     badge: profile.badge,
     dangerScore
@@ -848,6 +998,7 @@ function finalizeRoomAnalysis() {
   }
   updateSavedProfileBadge();
   renderScannerProfileNudge();
+  renderExcludeTraitsBars();
   renderCycleAlarms();
   renderChecklist();
 
@@ -967,22 +1118,44 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
         </div>
       ` : ''}
 
-      <div class="verdict-swap-stack">
-        <div class="verdict-swap-box is-nope">
-          <div class="verdict-swap-top">
-            <span class="verdict-swap-head">✕ NOPE! 내 방엔 피할 품목</span>
-            <span class="swap-tap-hint">눌러서 이유 보기 ›</span>
+      ${(() => {
+        const traitRules = getDisplayTraitRules(loadSavedRoomProfile());
+        return `
+          <div class="verdict-swap-stack">
+            <div class="verdict-swap-box is-nope">
+              <div class="verdict-swap-top">
+                <span class="verdict-swap-head">✕ 내 방에선 이런 특징은 NOPE!</span>
+              </div>
+              <p class="trait-sub-note">켜둔 특징은 상품 검색할 때 자동으로 제외해 드려요. (눌러서 ON/OFF)</p>
+              <div class="trait-toggle-list" id="report-trait-list">
+                ${traitRules.map((r) => {
+                  const isOn = state.excludedTraits.has(r.id);
+                  return `
+                    <button type="button" class="trait-toggle-btn ${isOn ? 'is-on' : 'is-off'}" data-report-trait="${escapeHtml(r.id)}">
+                      <div class="trait-toggle-top">
+                        <strong>${escapeHtml(r.nopeLabel)}</strong>
+                        <span class="trait-state-pill">${isOn ? '제외 ON' : '제외 OFF'}</span>
+                      </div>
+                      <p class="trait-toggle-desc">${escapeHtml(r.desc)}</p>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+            <div class="verdict-swap-box is-pass">
+              <div class="verdict-swap-top">
+                <span class="verdict-swap-head">✓ 대신 이런 특징이 있는 가구가 좋아요</span>
+                <span class="swap-tap-hint">눌러서 찾아보기 ›</span>
+              </div>
+              <div class="tag-row swap-tag-row">
+                ${traitRules.map((r) => `
+                  <button type="button" class="tag-alt swap-chip pass-trait-jump" data-pass-query="${escapeHtml(r.passQuery)}">${escapeHtml(r.passLabel)} <span class="swap-arrow">›</span></button>
+                `).join('')}
+              </div>
+            </div>
           </div>
-          <div class="tag-row swap-tag-row">${avoidList.map((i) => `<button type="button" class="tag-avoid swap-chip swap-btn" data-swap-label="${escapeHtml(i)}">${escapeHtml(i)} <span class="swap-arrow">›</span></button>`).join('')}</div>
-        </div>
-        <div class="verdict-swap-box is-pass">
-          <div class="verdict-swap-top">
-            <span class="verdict-swap-head">✓ PASS 대신 추천하는 대안</span>
-            <span class="swap-tap-hint">눌러서 이유 보기 ›</span>
-          </div>
-          <div class="tag-row swap-tag-row">${altList.map((i) => `<button type="button" class="tag-alt swap-chip swap-btn" data-swap-label="${escapeHtml(i)}">${escapeHtml(i)} <span class="swap-arrow">›</span></button>`).join('')}</div>
-        </div>
-      </div>
+        `;
+      })()}
 
       ${tips.length ? `
         <div class="life-tips-box">
@@ -1076,23 +1249,29 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
     });
   }
 
-  quizResultEl.querySelectorAll('.swap-btn').forEach((btn) => {
+  quizResultEl.querySelectorAll('[data-report-trait]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const label = btn.dataset.swapLabel;
-      const entry = ITEM_SWAP_REASONS[label];
-      if (entry && entry.dbId) {
-        const dbItem = ITEMS_DB.find((it) => it.id === entry.dbId);
-        if (dbItem) {
-          openDetailSheet(dbItem);
-          return;
-        }
+      const tid = btn.dataset.reportTrait;
+      toggleExcludeTrait(tid);
+      const isOn = state.excludedTraits.has(tid);
+      btn.classList.toggle('is-on', isOn);
+      btn.classList.toggle('is-off', !isOn);
+      const pill = btn.querySelector('.trait-state-pill');
+      if (pill) pill.textContent = isOn ? '제외 ON' : '제외 OFF';
+      showToast(isOn ? '검색 시 이 특징 가구를 제외할게요' : '제외 필터를 껐어요');
+    });
+  });
+
+  quizResultEl.querySelectorAll('.pass-trait-jump').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const passQ = btn.dataset.passQuery || '';
+      switchTab('scanner');
+      setScannerMode('search');
+      if (passQ) {
+        searchInput.value = passQ;
+        renderItems();
+        openScannerResults(`추천 · ${passQ}`);
       }
-      if (entry) {
-        openDetailSheet(entry);
-        return;
-      }
-      const fuzzy = ITEMS_DB.find((it) => it.name.includes(label) || label.includes(it.name));
-      if (fuzzy) openDetailSheet(fuzzy);
     });
   });
 
@@ -2302,6 +2481,11 @@ function findDirectAndSimilarItems(rawQuery) {
   const compactQ = q.replace(/\s+/g, '');
   const tokens = q.split(/\s+/).filter((t) => t.length >= 2);
 
+  const activeExcludeRules = [...state.excludedTraits]
+    .map((id) => NOPE_TRAIT_RULES.find((r) => r.id === id))
+    .filter(Boolean);
+  let excludedByTraitsCount = 0;
+
   const direct = ITEMS_DB.filter((item) => {
     if (state.selectedVerdict !== 'ALL' && item.verdict !== state.selectedVerdict) {
       return false;
@@ -2317,12 +2501,20 @@ function findDirectAndSimilarItems(rawQuery) {
       if (rx && !rx.test(getItemSearchableText(item))) return false;
     }
 
-    if (!q) return true;
-    const hay = `${item.brand} ${item.name} ${item.category} ${item.chips.join(' ')} ${item.oneLiner} ${item.altName || ''}`.toLowerCase();
-    const compactHay = hay.replace(/\s+/g, '');
-    return hay.includes(q)
-      || compactHay.includes(compactQ)
-      || (tokens.length > 0 && tokens.some((tok) => hay.includes(tok)));
+    if (q) {
+      const hay = `${item.brand} ${item.name} ${item.category} ${item.chips.join(' ')} ${item.oneLiner} ${item.altName || ''}`.toLowerCase();
+      const compactHay = hay.replace(/\s+/g, '');
+      const matched = hay.includes(q)
+        || compactHay.includes(compactQ)
+        || (tokens.length > 0 && tokens.some((tok) => hay.includes(tok)));
+      if (!matched) return false;
+    }
+
+    if (activeExcludeRules.some((rule) => itemMatchesTraitRule(item, rule))) {
+      excludedByTraitsCount += 1;
+      return false;
+    }
+    return true;
   });
 
   let similar = [];
@@ -2337,13 +2529,14 @@ function findDirectAndSimilarItems(rawQuery) {
       .filter((item) => {
         if (directIds.has(item.id)) return false;
         if (state.selectedVerdict !== 'ALL' && item.verdict !== state.selectedVerdict) return false;
+        if (activeExcludeRules.some((rule) => itemMatchesTraitRule(item, rule))) return false;
         return inferredCat !== '자취 가구·소품' ? item.category === inferredCat : item.verdict === 'PASS';
       })
       .sort((a, b) => scoreRank[a.verdict] - scoreRank[b.verdict])
       .slice(0, 6);
   }
 
-  return { direct, similar, inferredCat };
+  return { direct, similar, inferredCat, excludedByTraitsCount };
 }
 
 function bindCardClicks(container, dataset) {
@@ -2358,13 +2551,15 @@ function bindCardClicks(container, dataset) {
 function renderItems() {
   const q = searchInput.value.trim();
   const f = state.selectedFilter;
-  const { direct, similar, inferredCat } = findDirectAndSimilarItems(q);
+  const { direct, similar, inferredCat, excludedByTraitsCount } = findDirectAndSimilarItems(q);
 
   const activeLabelEl = document.getElementById('scanner-active-label');
   if (activeLabelEl) {
     const baseTitle = q ? `"${q}" 검색` : (f && f.label ? f.label : `전체 ${ITEMS_DB.length}종`);
-    activeLabelEl.textContent = `${baseTitle} (${direct.length}건${similar.length ? ` + 유사 ${similar.length}건` : ''})`;
+    const exNote = excludedByTraitsCount ? ` · 제외 ${excludedByTraitsCount}건` : '';
+    activeLabelEl.textContent = `${baseTitle} (${direct.length}건${similar.length ? ` + 유사 ${similar.length}건` : ''}${exNote})`;
   }
+  renderExcludeTraitsBars();
 
   let html = '';
   if (direct.length > 0) {
@@ -2379,10 +2574,29 @@ function renderItems() {
       ${similar.map(renderYukaCard).join('')}
     `;
   } else if (direct.length === 0 && !q) {
-    html = `<div class="card"><p class="text-secondary" style="margin:0;">선택한 조건에 맞는 상품이 없습니다.</p></div>`;
+    if (excludedByTraitsCount > 0) {
+      html = `
+        <div class="card">
+          <p style="margin:0 0 6px;font-weight:700;">설정한 NOPE 제외 필터로 ${excludedByTraitsCount}개 상품이 가려졌어요.</p>
+          <p class="text-secondary" style="margin:0 0 12px;font-size:13px;">위에서 제외 칩을 끄거나, 아래 버튼으로 제외 필터를 해제해 볼 수 있어요.</p>
+          <button type="button" class="btn btn-secondary" id="empty-clear-exclude-btn">제외 필터 모두 끄기 (${state.excludedTraits.size}개)</button>
+        </div>
+      `;
+    } else {
+      html = `<div class="card"><p class="text-secondary" style="margin:0;">선택한 조건에 맞는 상품이 없습니다.</p></div>`;
+    }
   }
 
   itemsListEl.innerHTML = html;
+  const emptyClearBtn = document.getElementById('empty-clear-exclude-btn');
+  if (emptyClearBtn) {
+    emptyClearBtn.addEventListener('click', () => {
+      state.excludedTraits.clear();
+      saveExcludedTraits();
+      renderExcludeTraitsBars();
+      renderItems();
+    });
+  }
   bindCardClicks(itemsListEl, [...direct, ...similar]);
 }
 
@@ -5430,6 +5644,8 @@ updateWishlistBadge();
 updateAuthBadge();
 recoverSupabaseSessionFromHash();
 loadRoomBaseState();
+loadExcludedTraits();
+renderExcludeTraitsBars();
 loadScaleState();
 updateScaleInputsUI();
 renderScaleQuizHint();
@@ -5453,6 +5669,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope68').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope69').catch(() => {});
   }
 }

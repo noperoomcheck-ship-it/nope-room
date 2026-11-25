@@ -2850,6 +2850,121 @@ input[type="range"] { width: 100%; accent-color: var(--ink); cursor: pointer; }
   color: var(--ink-secondary);
   cursor: pointer;
 }
+.trait-sub-note {
+  margin: 4px 0 10px;
+  font-size: 12px;
+  color: var(--ink-secondary);
+  line-height: 1.4;
+  word-break: keep-all;
+}
+.trait-toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.trait-toggle-btn {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1.5px solid rgba(225, 29, 72, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 10px 11px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+.trait-toggle-btn.is-on {
+  background: rgba(225, 29, 72, 0.055);
+  border-color: var(--accent);
+}
+.trait-toggle-btn.is-off {
+  opacity: 0.68;
+  border-color: var(--hairline);
+}
+.trait-toggle-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.trait-toggle-top strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+  word-break: keep-all;
+}
+.trait-state-pill {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.trait-toggle-btn.is-on .trait-state-pill {
+  background: var(--accent);
+  color: #FFFFFF;
+}
+.trait-toggle-btn.is-off .trait-state-pill {
+  background: var(--surface-muted);
+  color: var(--ink-secondary);
+}
+.trait-toggle-desc {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--ink-secondary);
+  word-break: keep-all;
+}
+.exclude-traits-bar {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.exclude-bar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.exclude-bar-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.exclude-bar-clear {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-tertiary);
+  cursor: pointer;
+}
+.exclude-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.exclude-chip-btn {
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  border: 1px solid var(--hairline);
+  background: var(--bg);
+  color: var(--ink-secondary);
+  transition: all 140ms ease;
+}
+.exclude-chip-btn.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #FFFFFF;
+}
 .compare-reco-title {
   display: block;
   font-size: 15px;

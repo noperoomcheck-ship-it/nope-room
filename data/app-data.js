@@ -1,12 +1,12 @@
 // NOPE! v9 — 223종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
-import { ITEMS_DB } from './products-db.js?v=nope68';
+import { ITEMS_DB } from './products-db.js?v=nope69';
 import {
   STYLE_MOODS,
   ROOM_TONES,
   TARGET_CATEGORIES,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './mood-palettes.js?v=nope68';
+} from './mood-palettes.js?v=nope69';
 export {
   ITEMS_DB,
   STYLE_MOODS,
@@ -15,6 +15,82 @@ export {
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
 };
+
+export const NOPE_TRAIT_RULES = [
+  {
+    id: 'no-wash-fabric',
+    nopeLabel: '물세탁 안 되는 털·천 소파/러그',
+    shortChip: '세탁 불가 털·패브릭 제외',
+    passLabel: '물세탁 가능 단모 · 커버 분리형',
+    passQuery: '워셔블',
+    desc: '털이 길거나 커버가 분리되지 않아 음료·먼지·반려동물 털 관리가 힘든 소재',
+    matchRx: /샤기|장모|부클레|비분리|세탁\s*불가|물세탁\s*불가|부분\s*클리닝|코듀로이.*세탁/
+  },
+  {
+    id: 'wall-damage',
+    nopeLabel: '벽 뚫기 · 벽지 뜯기는 접착 훅',
+    shortChip: '벽 타공·접착 테이프 제외',
+    passLabel: '꼭꼬핀 · 압착 거치 등 무타공 방식',
+    passQuery: '무타공',
+    desc: '못질이나 강한 접착 테이프 때문에 퇴실할 때 도배·수리비를 물기 쉬운 설치 방식',
+    matchRx: /타공|못질|칼블럭|나사\s*고정|실크벽지.*뜯|시트지|점착|접착\s*테이프|코맨드/,
+    depositMin: 4
+  },
+  {
+    id: 'open-dust',
+    nopeLabel: '문 없어 먼지 쌓이는 오픈 행거·선반',
+    shortChip: '문 없는 오픈 수납 제외',
+    passLabel: '먼지 가리는 도어형 · 지퍼 커버 수납',
+    passQuery: '도어',
+    desc: '옷이나 짐이 그대로 노출돼 2주 만에 먼지가 쌓이고 방이 어수선해 보이는 구조',
+    matchRx: /오픈.*행거|오픈.*선반|파이프\s*행거|와이어\s*선반|우드\s*블라인드|알루미늄\s*블라인드/
+  },
+  {
+    id: 'heavy-diy',
+    nopeLabel: '무겁고 부품 많은 셀프 조립 가구',
+    shortChip: '어려운 조립·무거운 가구 제외',
+    passLabel: '조립 없는 완제품 · 방문 설치 가구',
+    passQuery: '완제품',
+    desc: '전동드릴 없인 조립이 버겁거나 분해하면 나사 구멍이 헐거워져 이사 때 버리기 쉬운 제품',
+    matchRx: /전동드릴|분해.*불가|재조립|말름|브림네스|헬메르|알렉스|에케트|마켓비\s*MKB|조립\s*난이도/
+  },
+  {
+    id: 'weak-board',
+    nopeLabel: '속 빈 종이심재 · 모니터암에 꺼지는 상판',
+    shortChip: '속 빈 약한 상판 제외',
+    passLabel: '속이 꽉 찬 18T 목재 + 철제 프레임',
+    passQuery: '두닷',
+    desc: '겉만 시트지이고 속은 골판지 벌집이라 무거운 모니터·집게 거치 시 푹 꺼지는 가구',
+    matchRx: /종이\s*벌집|허니콤|라그캅텐|모니터암\s*금지|상판\s*꺼짐/
+  },
+  {
+    id: 'floor-bulky',
+    nopeLabel: '바닥 자리 많이 차지하는 부피 큰 가구',
+    shortChip: '바닥 자리 큰 가구 제외',
+    passLabel: '문 뒤 걸이 · 틈새 밀착 슬림 가구',
+    passQuery: '슬림',
+    desc: '좁은 원룸이나 복층에서 방문 열림이나 걷는 통로를 막기 쉬운 제품',
+    matchRx: /리클라이너|스탠드\s*전신거울|깊이\s*55cm|공간\s*차지|뒷공간|코너\s*책상/
+  },
+  {
+    id: 'rust-suction',
+    nopeLabel: '물기 녹 · 습기 떨어짐 주의 욕실템',
+    shortChip: '녹·흡착 추락 위험 제외',
+    passLabel: '녹 안 스는 스텐304 · 빨아 쓰는 매트',
+    passQuery: '스텐304',
+    desc: '습한 욕실에서 흡착판이 툭 떨어지거나 물때·곰팡이·녹이 빨리 생기는 소재',
+    matchRx: /흡착|하드\s*규조토|물곰팡이|녹\s*발생|물기.*변색/
+  },
+  {
+    id: 'tension-fall',
+    nopeLabel: '짐 무거우면 무너지기 쉬운 천장 압축봉',
+    shortChip: '약한 압축봉 고정 제외',
+    passLabel: '바닥에서 받쳐주는 튼튼한 선반 · 옷장',
+    passQuery: '서랍',
+    desc: '옷·짐 무게나 석고보드 천장 유격 때문에 기울어지거나 쿵 쓰러질 위험이 있는 구조',
+    matchRx: /압축\s*가벽|천장\s*고정|압축봉.*무너|석고보드.*함몰/
+  }
+];
 
 export const ITEM_SWAP_REASONS = {
   '하드 규조토 매트': { dbId: 'hard-diatomite' },
@@ -215,8 +291,12 @@ export const TASTE_INSIGHTS = {
     detail: '무난한 가구들 사이에 싱그러운 초록 잎과 흙 화분 하나를 둬서 방에 생기를 불어넣는 스타일이에요.'
   },
   object: {
-    label: '은은한 조명 · 소품 감성 취향',
-    detail: '큰 가구는 담백하게 비워두고, 따뜻한 불빛의 단스탠드와 만졌을 때 기분 좋은 오브제로 밤 분위기를 채우는 스타일이에요.'
+    label: '포근한 러그 · 패브릭 촉감 취향',
+    detail: '발에 닿는 도톰한 러그나 원목·천 소재처럼 손끝에 닿을 때 기분 좋은 포근한 질감을 중시하는 스타일이에요.'
+  },
+  moodlight: {
+    label: '은은한 단스탠드 · 간접 불빛 취향',
+    detail: '큰 가구는 담백하게 두고, 형광등을 끈 뒤 따뜻한 단스탠드·간접등 불빛으로 밤 분위기를 채우는 스타일이에요.'
   },
   tableware: {
     label: '예쁜 컵 · 그릇 · 색감 취향',
@@ -537,7 +617,8 @@ export const QUIZ_QUESTIONS = [
     reasonHint: '공간 MBTI 성격 유형과 추천 소품을 매칭해 드려요.',
     options: [
       { label: '초록 식물 · 흙 화분 (생기 있는 자연 느낌)', tasteId: 'plant', scores: { spaceStress: 2 } },
-      { label: '은은한 단스탠드 · 만졌을 때 포근한 소재감', tasteId: 'object', scores: { spaceStress: 2 } },
+      { label: '만졌을 때 기분 좋은 포근한 러그 · 패브릭 촉감', tasteId: 'object', scores: { spaceStress: 2 } },
+      { label: '은은한 단스탠드 · 따뜻한 간접 무드등 불빛', tasteId: 'moodlight', scores: { spaceStress: 2 } },
       { label: '예쁜 머그컵 · 유리잔 · 톡톡 튀는 컬러 소품', tasteId: 'tableware', scores: { dustRisk: 1 } },
       { label: '장식 없이 훤히 비워진 깔끔함 그 자체', tasteId: 'minimal', scores: { spaceStress: 1 } }
     ]
@@ -788,7 +869,7 @@ export const QUIZ_RESULTS = [
   {
     id: 'warm-lighting-curator',
     code: 'TYPE 12',
-    condition: (s, ctx) => ctx.lightingPref === 'mood' && (ctx.wishId === 'moodlight' || ctx.tasteId === 'object'),
+    condition: (s, ctx) => ctx.lightingPref === 'mood' && (ctx.wishId === 'moodlight' || ctx.tasteId === 'moodlight' || ctx.tasteId === 'object'),
     badge: '간접조명·질감 큐레이터형',
     tagline: '눈 시린 저가 네온등·공간 차지하는 큰 스탠드 대신 빛과 촉감 균형이 중요한 타입',
     top3: ['눈 부신 LED 네온·싸구려 아크릴 제외', '2700~3000K 전구색 집게·단스탠드', '침대/책상 옆 최소 면적 배치'],
