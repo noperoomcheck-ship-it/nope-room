@@ -20,10 +20,11 @@ import {
   getItemGapHint,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './data/app-data.js?v=nope73';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope73';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope73';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope73';
+} from './data/app-data.js?v=nope74';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope74';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope74';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope74';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope74';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -39,7 +40,8 @@ const STORAGE_KEYS = {
   defenseIds: 'nope_defense_ids_v1',
   account: 'nope_account_v1',
   pwaDismissed: 'nope_pwa_dismissed_v1',
-  excludeTraits: 'nope_exclude_traits_v1'
+  excludeTraits: 'nope_exclude_traits_v1',
+  analytics: 'nope_analytics_v1'
 };
 
 const state = {
@@ -71,6 +73,76 @@ const state = {
   timerRemainingSec: 0,
   timerLabel: '',
   timerPaused: false
+};
+
+function initAnalytics() {
+  const gaId = (ANALYTICS_CONFIG.gaMeasurementId || '').trim();
+  if (gaId && !window.gtag) {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    window.gtag('config', gaId, { send_page_view: true });
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
+    document.head.appendChild(s);
+  }
+  if (ANALYTICS_CONFIG.vercelWebAnalytics && !window.__vaLoaded) {
+    window.__vaLoaded = true;
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    const vs = document.createElement('script');
+    vs.defer = true;
+    vs.src = '/_vercel/insights/script.js';
+    document.head.appendChild(vs);
+  }
+}
+
+function loadAnalyticsStore() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.analytics) || 'null');
+    if (raw && typeof raw === 'object') {
+      return {
+        counts: raw.counts || {},
+        searchMisses: raw.searchMisses || {},
+        outboundShops: raw.outboundShops || {},
+        events: Array.isArray(raw.events) ? raw.events : []
+      };
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return { counts: {}, searchMisses: {}, outboundShops: {}, events: [] };
+}
+
+function trackEvent(eventName, params = {}) {
+  try {
+    if (typeof window.gtag === 'function' && ANALYTICS_CONFIG.gaMeasurementId) {
+      window.gtag('event', eventName, params);
+    }
+    if (typeof window.va === 'function' && ANALYTICS_CONFIG.vercelWebAnalytics) {
+      window.va('event', { name: eventName, data: params });
+    }
+    if (ANALYTICS_CONFIG.localLogEnabled) {
+      const store = loadAnalyticsStore();
+      store.counts[eventName] = (store.counts[eventName] || 0) + 1;
+      if (eventName === 'product_search' && params.mode !== 'db' && params.query) {
+        const key = String(params.query).slice(0, 40);
+        store.searchMisses[key] = (store.searchMisses[key] || 0) + 1;
+      }
+      if (eventName === 'outbound_shop_click' && params.shop) {
+        store.outboundShops[params.shop] = (store.outboundShops[params.shop] || 0) + 1;
+      }
+      store.events.unshift({ name: eventName, params, ts: Date.now() });
+      store.events = store.events.slice(0, 80);
+      localStorage.setItem(STORAGE_KEYS.analytics, JSON.stringify(store));
+    }
+  } catch {
+    // non-fatal telemetry failure
+  }
+}
+
+window.getNopeMetrics = function () {
+  return loadAnalyticsStore();
 };
 
 function loadRoomBaseState() {
@@ -178,11 +250,14 @@ function itemMatchesTraitRule(item, rule) {
 }
 
 function toggleExcludeTrait(traitId) {
+  let enabled = false;
   if (state.excludedTraits.has(traitId)) {
     state.excludedTraits.delete(traitId);
   } else {
     state.excludedTraits.add(traitId);
+    enabled = true;
   }
+  trackEvent('exclude_filter_toggle', { trait: traitId, enabled });
   saveExcludedTraits();
   renderExcludeTraitsBars();
   if (scannerResults && !scannerResults.classList.contains('hidden')) {
@@ -288,6 +363,7 @@ async function copyTextToClipboard(text, toastMsg = '복사 완료!') {
     ta.remove();
   }
   showToast(toastMsg);
+  trackEvent('share_action', { channel: 'copy_link', label: toastMsg });
 }
 
 function escapeHtml(str) {
@@ -358,6 +434,7 @@ function switchTab(tabName) {
     }
     window.scrollTo({ top: 0, behavior: 'instant' });
   });
+  trackEvent('tab_switch', { tab: tabName });
 }
 
 document.querySelectorAll('.nav-tab').forEach((btn) => {
@@ -464,6 +541,7 @@ function confirmNicknameAndStartQuestions() {
   state.nickname = raw;
   state.quizIndex = 0;
   state.quizAnswers = [];
+  trackEvent('quiz_start', { depth: state.quizDepth });
   showHomeStage('quiz');
   renderQuizStep();
 }
@@ -1099,6 +1177,15 @@ function finalizeRoomAnalysis() {
   renderExcludeTraitsBars();
   renderCycleAlarms();
   renderChecklist();
+
+  trackEvent('quiz_complete', {
+    depth: state.quizDepth,
+    questions: questionCount,
+    mbti: spaceMbti.id,
+    profile: profile.id,
+    danger_score: dangerScore,
+    taste: tasteId
+  });
 
   renderTasteSummaryStage({ ...savedData, profile });
 }
@@ -2238,6 +2325,11 @@ function buildPairingReason(item, pairedItems, primaryTone) {
 // Yuka Level 2 Bottom Sheet (Crisp 1-line summary + App Pairing + Coupang/Ohouse Dual Links)
 function openDetailSheet(item) {
   recordDefenseInspect(item);
+  trackEvent('product_detail_open', {
+    id: item.id,
+    verdict: item.verdict,
+    category: item.category
+  });
   const v = verdictMeta(item.verdict);
   const urls = buildShopUrls(item.altSearchKeyword, item.id);
   const isPass = item.verdict === 'PASS';
@@ -3091,6 +3183,11 @@ async function runScannerSearch() {
     customOutEl.innerHTML = '';
     openScannerResults(`"${rawInput}" 검색`);
     renderItems();
+    trackEvent('product_search', {
+      query: rawInput,
+      mode: 'db',
+      excluded_count: state.lastExcludedCount
+    });
     return;
   }
 
@@ -3150,6 +3247,11 @@ async function runScannerSearch() {
   if (analyzedItem) {
     saveLocalAutoItem(analyzedItem);
     refreshAutoCollectedItems();
+    trackEvent('product_search', {
+      query: urlInfo.isUrl ? urlInfo.host : rawInput,
+      mode: urlInfo.isUrl ? 'url' : 'synthetic',
+      excluded_count: state.lastExcludedCount
+    });
   }
 
   // Temporarily populate searchInput with inferred query/name for similar-item matching
@@ -3630,6 +3732,11 @@ function renderCompareView() {
     const sA = calcRank(itemA, alertsA);
     const sB = calcRank(itemB, alertsB);
     const winner = sA === sB ? null : (sA > sB ? itemA : itemB);
+    trackEvent('compare_complete', {
+      a_id: itemA.id,
+      b_id: itemB.id,
+      winner_id: winner ? winner.id : 'tie'
+    });
 
     document.getElementById('compare-open-a').addEventListener('click', () => openDetailSheet(itemA));
     document.getElementById('compare-open-b').addEventListener('click', () => openDetailSheet(itemB));
@@ -5834,6 +5941,25 @@ renderChecklist();
 refreshAutoCollectedItems();
 handleDeepLinks();
 initPwaInstallPrompt();
+initAnalytics();
+trackEvent('app_open', { path: location.pathname, has_profile: Boolean(savedInitProfile) });
+
+document.addEventListener('click', (e) => {
+  const link = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+  if (!link) return;
+  const href = link.getAttribute('href') || '';
+  if (!/^https?:\/\//i.test(href)) return;
+  let shop = 'external';
+  if (/coupang\.com|coupa\.ng/i.test(href)) shop = 'coupang';
+  else if (/ohou\.se/i.test(href)) shop = 'ohouse';
+  else if (/kurly\.com/i.test(href)) shop = 'kurly';
+  if (shop !== 'external') {
+    trackEvent('outbound_shop_click', {
+      shop,
+      label: (link.textContent || '').trim().slice(0, 30)
+    });
+  }
+});
 
 if ('serviceWorker' in navigator) {
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -5845,6 +5971,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope73').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope74').catch(() => {});
   }
 }

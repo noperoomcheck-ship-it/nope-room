@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nope-v73';
+const CACHE_NAME = 'nope-v74';
 const ASSETS = [
   './',
   './index.html',
@@ -10,10 +10,12 @@ const ASSETS = [
   './data/mood-palettes.js',
   './data/affiliate-links.js',
   './data/supabase-config.js',
+  './data/analytics-config.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/apple-touch-icon.png'
+  './icons/apple-touch-icon.png',
+  './icons/og-share.png'
 ];
 
 self.addEventListener('install', (event) => {
