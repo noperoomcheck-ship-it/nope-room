@@ -22,11 +22,11 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope76';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope76';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope76';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope76';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope76';
+} from './data/app-data.js?v=nope77';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope77';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope77';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope77';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope77';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -63,7 +63,6 @@ const state = {
   matcherTone: 'white-minimal',
   matcherCat: '책상·의자',
   matcherRoomBase: 'clean-white',
-  matcherBudget: '30',
   matcherReturnOrigin: 'search',
   quickRefineCat: '',
   quickRefineFeatures: [],
@@ -4005,105 +4004,6 @@ function surveyFitBonus(item, savedProfile) {
   return bonus;
 }
 
-const MATCHER_BUDGET_SPECS = {
-  '10': {
-    id: '10',
-    shortLabel: '10만 원대 입문',
-    targetMax: 13.5,
-    perItemMax: 5.5,
-    desc: '큰 가구 교체 없이 조명·패브릭·무타공 소품으로 분위기 전환'
-  },
-  '30': {
-    id: '30',
-    shortLabel: '30만 원대 정석',
-    targetMax: 36,
-    perItemMax: 18,
-    desc: '내 방 톤에 맞춘 책상·수납·조명·매트 실속 조합'
-  },
-  '50': {
-    id: '50',
-    shortLabel: '50만 원대 풀세트',
-    targetMax: 62,
-    perItemMax: 38,
-    desc: '무옵션 방에서도 오래 쓰는 튼튼한 핵심 가구 한 번에 세팅'
-  }
-};
-
-function buildMatcherBudgetBundle({ toneId, budgetId, savedProfile }) {
-  const spec = MATCHER_BUDGET_SPECS[budgetId] || MATCHER_BUDGET_SPECS['30'];
-  const activeExcludeRules = [...state.excludedTraits]
-    .map((id) => NOPE_TRAIT_RULES.find((r) => r.id === id))
-    .filter(Boolean);
-
-  const isFullOption = Boolean(savedProfile && savedProfile.optionLevel === 'full');
-  const preferredOrder = (budgetId === '10' || isFullOption)
-    ? ['조명·거울', '무타공·욕실', '수납·행거', '소파·침대·매트', '식탁·주방·생활', '책상·의자']
-    : ['책상·의자', '수납·행거', '소파·침대·매트', '조명·거울', '식탁·주방·생활', '무타공·욕실'];
-
-  const pool = ITEMS_DB.filter((it) => {
-    if (it.verdict === 'NOPE') return false;
-    if (activeExcludeRules.some((r) => itemMatchesTraitRule(it, r))) return false;
-    const range = parsePriceTierManWon(it.priceTier);
-    const mid = range ? (range[0] + range[1]) / 2 : 3;
-    if (mid > spec.perItemMax) return false;
-    if (isFullOption && budgetId !== '50' && /책상|침대\s*프레임/.test(it.name || '')) return false;
-    return true;
-  }).map((it) => {
-    const range = parsePriceTierManWon(it.priceTier) || [2, 4];
-    const mid = (range[0] + range[1]) / 2;
-    const toneHit = Array.isArray(it.tones) && it.tones.includes(toneId);
-    const verdictPts = it.verdict === 'PASS' ? 16 : 4;
-    const fitBonus = surveyFitBonus(it, savedProfile);
-    const catIdx = preferredOrder.indexOf(it.category);
-    const catBoost = catIdx >= 0 ? (6 - catIdx) : 0;
-    const priceFit = budgetId === '50' ? (mid >= 8 ? 5 : 1) : (budgetId === '10' ? (mid <= 3.5 ? 5 : 1) : (mid >= 4 && mid <= 16 ? 5 : 2));
-    return {
-      item: it,
-      range,
-      mid,
-      score: verdictPts + (toneHit ? 10 : 0) + fitBonus + catBoost + priceFit
-    };
-  }).sort((a, b) => b.score - a.score);
-
-  const chosen = [];
-  const usedCats = new Set();
-  let sumMid = 0;
-
-  for (const cand of pool) {
-    if (chosen.length >= 4) break;
-    if (usedCats.has(cand.item.category)) continue;
-    if (chosen.length >= 2 && sumMid + cand.mid > spec.targetMax) continue;
-    chosen.push(cand);
-    usedCats.add(cand.item.category);
-    sumMid += cand.mid;
-  }
-
-  if (chosen.length < 3) {
-    for (const cand of pool) {
-      if (chosen.length >= 3) break;
-      if (chosen.some((c) => c.item.id === cand.item.id)) continue;
-      if (sumMid + cand.mid > spec.targetMax + 4) continue;
-      chosen.push(cand);
-      sumMid += cand.mid;
-    }
-  }
-
-  let totalMin = 0;
-  let totalMax = 0;
-  chosen.forEach((c) => {
-    totalMin += c.range[0];
-    totalMax += c.range[1];
-  });
-
-  const wishSet = new Set(loadWishlist().map((w) => w.id));
-  const allSaved = chosen.length > 0 && chosen.every((c) => wishSet.has(c.item.id));
-  const totalText = chosen.length
-    ? `약 ${formatManWonValue(totalMin)}~${formatManWonValue(totalMax)} 원`
-    : '예산 내 조합 계산 중';
-
-  return { spec, entries: chosen, totalText, allSaved };
-}
-
 function renderToneMatcher() {
   const savedProfile = loadSavedRoomProfile();
   const wishCat = savedProfile && savedProfile.wishId ? WISH_CATEGORIES[savedProfile.wishId] : null;
@@ -4271,12 +4171,6 @@ function renderToneMatcher() {
   });
 
   const isDifferentFromSaved = savedProfile && savedProfile.toneId && savedProfile.toneId !== activeTone.id;
-  const activeBudgetId = MATCHER_BUDGET_SPECS[state.matcherBudget] ? state.matcherBudget : '30';
-  const budgetBundle = buildMatcherBudgetBundle({
-    toneId: activeTone.id,
-    budgetId: activeBudgetId,
-    savedProfile
-  });
   syncBox.innerHTML = `
     <div class="matcher-profile-summary">
       ${savedProfile
@@ -4372,43 +4266,6 @@ function renderToneMatcher() {
       ${primaryMatches.length ? primaryMatches.map(renderYukaCard).join('') : `<div class="card"><p class="text-secondary" style="margin:0;">해당 조건의 추천 가구를 준비 중입니다.</p></div>`}
     </div>
 
-    <div class="bundle-pack-card" id="matcher-budget-bundle">
-      <div class="bundle-pack-head">
-        <div>
-          <span class="bundle-pack-kicker">ONE-CLICK ROOM SET · ${escapeHtml(activeTone.name)}</span>
-          <strong class="bundle-pack-title">예산별 원룸 꾸러미</strong>
-        </div>
-        ${savedProfile && savedProfile.optionLevel === 'full' ? `<span class="verdict-pill v-pass" style="font-size:10px;">풀옵션 맞춤</span>` : ''}
-      </div>
-      <div class="bundle-budget-tabs" role="tablist" aria-label="꾸러미 예산 선택">
-        ${Object.values(MATCHER_BUDGET_SPECS).map((sp) => `
-          <button type="button" class="bundle-budget-btn ${sp.id === activeBudgetId ? 'active' : ''}" data-bundle-budget="${sp.id}">${escapeHtml(sp.shortLabel)}</button>
-        `).join('')}
-      </div>
-      <p class="bundle-desc-note">${escapeHtml(budgetBundle.spec.desc)}</p>
-      <div class="bundle-items-list">
-        ${budgetBundle.entries.map(({ item: bItem }) => {
-          const bvm = verdictMeta(bItem.verdict);
-          return `
-            <button type="button" class="bundle-item-row" data-bundle-item="${escapeHtml(bItem.id)}">
-              <div class="bundle-item-main">
-                <span class="verdict-pill ${bvm.cls}" style="font-size:10px;padding:2px 6px;">${bvm.text}</span>
-                <strong>${escapeHtml(bItem.name)}</strong>
-              </div>
-              <span class="bundle-item-price">${escapeHtml(bItem.priceTier)} ›</span>
-            </button>
-          `;
-        }).join('')}
-      </div>
-      <div class="bundle-pack-footer">
-        <span class="bundle-total-label">꾸러미 ${budgetBundle.entries.length}종 예상 합계</span>
-        <strong class="bundle-total-val">${escapeHtml(budgetBundle.totalText)}</strong>
-      </div>
-      ${budgetBundle.allSaved
-        ? `<button type="button" id="bundle-open-wishlist-btn" class="btn-secondary btn-full">♥ 내 방 찜 보드에 모두 담김 (확인하기 →)</button>`
-        : `<button type="button" id="bundle-add-all-btn" class="btn-primary btn-full">♡ 이 꾸러미 ${budgetBundle.entries.length}종 한 번에 담기</button>`}
-    </div>
-
     <div class="matcher-section-head">
       <strong>함께 두면 완성되는 궁합 가구</strong>
     </div>
@@ -4481,44 +4338,6 @@ function renderToneMatcher() {
 
   bindCardClicks(document.getElementById('matcher-primary-list'), primaryMatches);
   bindCardClicks(document.getElementById('matcher-companion-list'), pickedCompanions);
-
-  matcherOutput.querySelectorAll('.bundle-budget-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      state.matcherBudget = btn.dataset.bundleBudget;
-      renderToneMatcher();
-    });
-  });
-  matcherOutput.querySelectorAll('.bundle-item-row').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const target = ITEMS_DB.find((it) => it.id === btn.dataset.bundleItem);
-      if (target) openDetailSheet(target);
-    });
-  });
-  const bundleAddBtn = document.getElementById('bundle-add-all-btn');
-  if (bundleAddBtn) {
-    bundleAddBtn.addEventListener('click', () => {
-      const current = loadWishlist();
-      const existingIds = new Set(current.map((w) => w.id));
-      let addedCount = 0;
-      const toAdd = [];
-      budgetBundle.entries.forEach(({ item: bItem }) => {
-        if (!existingIds.has(bItem.id)) {
-          toAdd.push(bItem);
-          addedCount += 1;
-        }
-      });
-      if (toAdd.length) {
-        saveWishlist([...toAdd, ...current].slice(0, 40));
-      }
-      trackEvent('bundle_add_all', { tone: activeTone.id, budget: activeBudgetId, count: addedCount });
-      showToast(addedCount ? `꾸러미 ${addedCount}종을 내 방 찜에 담았어요!` : '이미 모두 찜 목록에 담겨 있어요');
-      renderToneMatcher();
-    });
-  }
-  const bundleOpenWishBtn = document.getElementById('bundle-open-wishlist-btn');
-  if (bundleOpenWishBtn) {
-    bundleOpenWishBtn.addEventListener('click', () => openAccountSheet('wishlist'));
-  }
 
   const retakeBtn = document.getElementById('matcher-retake-btn');
   if (retakeBtn) {
@@ -6305,6 +6124,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope76').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope77').catch(() => {});
   }
 }
