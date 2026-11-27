@@ -4589,3 +4589,23 @@ input[type="range"] { width: 100%; accent-color: var(--ink); cursor: pointer; }
   color: var(--fg-neutral);
 }
 .deep-check-ul li { margin-bottom: 5px; }
+.trend-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.trend-pill {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+.trend-pill.is-new {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--safe);
+}
+.trend-pill.is-issue {
+  background: rgba(225, 29, 72, 0.12);
+  color: var(--accent);
+}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nope-v88';
+const CACHE_NAME = 'nope-v89';
 const ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const ASSETS = [
   './data/affiliate-links.js',
   './data/supabase-config.js',
   './data/analytics-config.js',
+  './data/brand-trends.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
