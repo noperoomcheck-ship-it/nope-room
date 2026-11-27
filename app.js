@@ -22,11 +22,11 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope78';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope78';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope78';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope78';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope78';
+} from './data/app-data.js?v=nope79';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope79';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope79';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope79';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope79';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -63,6 +63,8 @@ const state = {
   matcherTone: 'white-minimal',
   matcherCat: '책상·의자',
   matcherRoomBase: 'clean-white',
+  matcherTab: 'items',
+  reportTab: 'avoid',
   matcherReturnOrigin: 'search',
   quickRefineCat: '',
   quickRefineFeatures: [],
@@ -1263,24 +1265,26 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
   showHomeStage('result');
 
   const tips = profile.lifeTips || [];
-  const avoidList = (dynamicAvoid && dynamicAvoid.length) ? dynamicAvoid : (profile.avoidItems || []);
-  const altList = (dynamicAlt && dynamicAlt.length) ? dynamicAlt : (profile.altItems || []);
   const savedMan = Math.round((estimatedSavedWon || 180000) / 10000);
+  const currentSaved = loadSavedRoomProfile();
+  const traitRules = getDisplayTraitRules(currentSaved);
+  const showRescueBanner = Boolean(currentSaved && (currentSaved.optionLevel === 'full' || currentSaved.optionLevel === 'partial'));
+  const activeReportTab = ['avoid', 'pass', 'tips'].includes(state.reportTab) ? state.reportTab : 'avoid';
 
   quizResultEl.innerHTML = `
     <div class="step-back-bar">
-      <button id="result-back-taste-btn" class="btn-ghost btn-sm">← 직전 페이지 (취향 분석)</button>
+      <button id="result-back-taste-btn" class="btn-ghost btn-sm">← 취향 분석</button>
       <button id="result-retake-btn" class="btn-ghost btn-sm">다시 테스트 ↺</button>
     </div>
     <div class="card">
       <div class="result-score-row">
         <div>
-          <span class="micro-label">${escapeHtml(nickname)}님의 ROOM REPORT · ${escapeHtml(pyeongLabel)}</span>
+          <span class="micro-label">${escapeHtml(nickname)}님의 방 리포트 · ${escapeHtml(pyeongLabel)}</span>
           <h2>${escapeHtml(profile.badge)}</h2>
           <p class="text-secondary" style="margin-top:4px;">${escapeHtml(profile.tagline)}</p>
           ${secondaryRisks && secondaryRisks.length ? `
             <div class="secondary-risk-row">
-              ${secondaryRisks.map((r) => `<span class="secondary-risk-pill">+ ${escapeHtml(r)}</span>`).join('')}
+              ${secondaryRisks.slice(0, 2).map((r) => `<span class="secondary-risk-pill">+ ${escapeHtml(r)}</span>`).join('')}
             </div>
           ` : ''}
         </div>
@@ -1291,72 +1295,70 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
       </div>
 
       <div class="defense-stat-bar" style="margin-bottom:4px;">
-        <span>NOPE 피하면 예상 손실 방어</span>
-        <strong>약 ${savedMan}만 원 절약 (교체·보증금)</strong>
+        <span>예상 손실 방어</span>
+        <strong>약 ${savedMan}만 원 절약</strong>
       </div>
-      <p class="defense-basis-note">원상복구 도배·수리 차감, 폐기 수수료 및 재구매 평균 비용 기준</p>
+      <p class="defense-basis-note">원상복구 도배·폐기·재구매 평균 비용 기준</p>
 
       ${analysisBasis && analysisBasis.length ? `
-        <div class="report-basis-box">
-          <span class="report-basis-title">판정 근거 · 입력하신 내 방 ${questionCount}문항 핵심 조건</span>
+        <button type="button" id="toggle-basis-btn" class="seed-disclosure-btn">
+          <span>판정 근거 · ${questionCount}문항 조건 (${analysisBasis.length}개)</span>
+          <strong id="toggle-basis-arrow">보기 ▾</strong>
+        </button>
+        <div id="report-basis-wrap" class="report-basis-box hidden" style="margin-top:0;margin-bottom:10px;">
           <div class="report-basis-grid" id="report-basis-grid">
-            ${analysisBasis.slice(0, 4).map((b) => `<span class="report-basis-chip">${escapeHtml(b)}</span>`).join('')}
+            ${analysisBasis.map((b) => `<span class="report-basis-chip">${escapeHtml(b)}</span>`).join('')}
           </div>
-          ${analysisBasis.length > 4 ? `<button type="button" id="toggle-basis-btn" class="report-more-btn">판정 근거 +${analysisBasis.length - 4}개 더보기</button>` : ''}
         </div>
       ` : ''}
 
-      ${(() => {
-        const currentSaved = loadSavedRoomProfile();
-        const traitRules = getDisplayTraitRules(currentSaved);
-        const showRescueBanner = Boolean(currentSaved && (currentSaved.optionLevel === 'full' || currentSaved.optionLevel === 'partial'));
-        return `
-          <div class="verdict-swap-stack">
-            <div class="verdict-swap-box is-nope">
-              <div class="verdict-swap-top">
-                <span class="verdict-swap-head">✕ 내 방에선 이런 특징은 NOPE!</span>
-              </div>
-              <p class="trait-sub-note">켜둔 특징은 상품 검색할 때 자동으로 제외해 드려요. (눌러서 ON/OFF)</p>
-              <div class="trait-toggle-list" id="report-trait-list">
-                ${traitRules.map((r) => {
-                  const isOn = state.excludedTraits.has(r.id);
-                  return `
-                    <button type="button" class="trait-toggle-btn ${isOn ? 'is-on' : 'is-off'}" data-report-trait="${escapeHtml(r.id)}">
-                      <div class="trait-toggle-top">
-                        <strong>${escapeHtml(r.nopeLabel)}</strong>
-                        <span class="trait-state-pill">${isOn ? '제외 ON' : '제외 OFF'}</span>
-                      </div>
-                      <p class="trait-toggle-desc">${escapeHtml(r.desc)}</p>
-                    </button>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-            <div class="verdict-swap-box is-pass">
-              <div class="verdict-swap-top">
-                <span class="verdict-swap-head">✓ 대신 이런 특징이 있는 가구가 좋아요</span>
-                <span class="swap-tap-hint">눌러서 찾아보기 ›</span>
-              </div>
-              <div class="tag-row swap-tag-row">
-                ${traitRules.map((r) => `
-                  <button type="button" class="tag-alt swap-chip pass-trait-jump" data-pass-rule="${escapeHtml(r.id)}" data-pass-query="${escapeHtml(r.passQuery)}" data-pass-label="${escapeHtml(r.passLabel)}">${escapeHtml(r.passLabel)} <span class="swap-arrow">›</span></button>
-                `).join('')}
-              </div>
-            </div>
-            ${showRescueBanner ? `
-              <button type="button" id="report-rescue-jump-btn" class="report-rescue-banner">
-                <span>이미 옵션 가구가 있나요? 버리지 않고 1~2만 원으로 보완하기</span>
-                <strong>보완 처방 보기 →</strong>
-              </button>
-            ` : ''}
-          </div>
-        `;
-      })()}
+      <div class="seed-segmented" id="report-seg-bar" role="tablist" aria-label="리포트 상세 보기">
+        <button type="button" class="seed-seg-btn ${activeReportTab === 'avoid' ? 'active' : ''}" data-rep-tab="avoid">피할 특징</button>
+        <button type="button" class="seed-seg-btn ${activeReportTab === 'pass' ? 'active' : ''}" data-rep-tab="pass">대안 추천</button>
+        <button type="button" class="seed-seg-btn ${activeReportTab === 'tips' ? 'active' : ''}" data-rep-tab="tips">팁 · 공유</button>
+      </div>
 
-      ${tips.length ? `
-        <div class="life-tips-box">
-          <span class="life-tips-kicker">자취생활 팁! · ${escapeHtml(profile.badge)} 맞춤</span>
-          <div class="life-tips-list" id="life-tips-list">
+      <div class="seed-seg-panel ${activeReportTab === 'avoid' ? '' : 'hidden'}" data-rep-panel="avoid">
+        <p class="trait-sub-note" style="margin-top:0;">켜둔 특징은 상품 검색 시 자동으로 제외됩니다.</p>
+        <div class="seed-list" id="report-trait-list">
+          ${traitRules.map((r) => {
+            const isOn = state.excludedTraits.has(r.id);
+            return `
+              <button type="button" class="seed-list-item ${isOn ? 'is-on' : 'is-off'}" data-report-trait="${escapeHtml(r.id)}">
+                <div class="seed-list-main">
+                  <span class="seed-list-title">${escapeHtml(r.nopeLabel)}</span>
+                  <span class="seed-list-sub">${escapeHtml(r.desc)}</span>
+                </div>
+                <span class="trait-state-pill" style="${isOn ? 'background:var(--accent);color:#fff;' : 'background:var(--surface-muted);color:var(--ink-secondary);'}">${isOn ? '제외 ON' : '제외 OFF'}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="seed-seg-panel ${activeReportTab === 'pass' ? '' : 'hidden'}" data-rep-panel="pass">
+        <div class="seed-list">
+          ${traitRules.map((r) => `
+            <button type="button" class="seed-list-item pass-trait-jump" data-pass-rule="${escapeHtml(r.id)}" data-pass-query="${escapeHtml(r.passQuery)}" data-pass-label="${escapeHtml(r.passLabel)}">
+              <div class="seed-list-main">
+                <span class="seed-list-title" style="color:var(--safe);">✓ ${escapeHtml(r.passLabel)}</span>
+                <span class="seed-list-sub">${escapeHtml(r.shortChip.replace(/ 제외$/, ''))} 대안 모아보기</span>
+              </div>
+              <strong style="color:var(--safe);font-size:13px;">보기 ›</strong>
+            </button>
+          `).join('')}
+        </div>
+        ${showRescueBanner ? `
+          <button type="button" id="report-rescue-jump-btn" class="report-rescue-banner">
+            <span>이미 옵션 가구가 있나요? 1~2만 원으로 보완하기</span>
+            <strong>보완법 →</strong>
+          </button>
+        ` : ''}
+      </div>
+
+      <div class="seed-seg-panel ${activeReportTab === 'tips' ? '' : 'hidden'}" data-rep-panel="tips">
+        ${tips.length ? `
+          <div class="life-tips-list" id="life-tips-list" style="margin-bottom:12px;">
             ${tips.slice(0, 2).map((tip) => {
               const tipUrls = tip.itemKeyword ? buildShopUrls(tip.itemKeyword) : null;
               return `
@@ -1376,62 +1378,39 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
               `;
             }).join('')}
           </div>
-          ${tips.length > 2 ? `<button type="button" id="toggle-tips-btn" class="report-more-btn">추가 팁 +${tips.length - 2}개 더보기</button>` : ''}
-          ${tips.some((t) => t.itemKeyword) && AFFILIATE_CONFIG.coupangEnabled ? `<p class="ftc-affiliate-note" style="margin-top:10px;">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
+          ${tips.some((t) => t.itemKeyword) && AFFILIATE_CONFIG.coupangEnabled ? `<p class="ftc-affiliate-note" style="margin:0 0 10px;">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
+        ` : ''}
+        <div class="sheet-share-row">
+          <button id="share-report-link-btn" class="btn-share-chip is-kakao" type="button">${KAKAO_LOGO_SVG}<span>카톡 결과 공유</span></button>
+          <button id="share-story-btn" class="btn-share-chip is-story" type="button">${INSTA_LOGO_SVG}<span>인스타 스토리</span></button>
         </div>
-      ` : ''}
+      </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
-      <button id="share-report-link-btn" class="btn-share-chip is-kakao" style="width:100%;justify-content:center;padding:12px 14px;">${KAKAO_LOGO_SVG}<span>카톡으로 내 방 결과 링크 공유하기</span></button>
-      <button id="share-story-btn" class="btn-accent btn-full btn-insta">
-        <svg class="insta-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/>
-          <circle cx="12" cy="12" r="4.2"/>
-          <circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/>
-        </svg>
-        <span>스토리 공유 (처방전 저장)</span>
-      </button>
+    <div style="margin-top:12px;">
       <button id="go-scanner-from-result" class="btn-primary btn-full">내 방 톤 맞춤 가구 보기 →</button>
     </div>
   `;
+
+  quizResultEl.querySelectorAll('[data-rep-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.reportTab = btn.dataset.repTab;
+      quizResultEl.querySelectorAll('[data-rep-tab]').forEach((b) => b.classList.toggle('active', b === btn));
+      quizResultEl.querySelectorAll('[data-rep-panel]').forEach((p) => {
+        p.classList.toggle('hidden', p.dataset.repPanel !== state.reportTab);
+      });
+    });
+  });
 
   const toggleBasisBtn = document.getElementById('toggle-basis-btn');
   if (toggleBasisBtn) {
     let basisExpanded = false;
     toggleBasisBtn.addEventListener('click', () => {
       basisExpanded = !basisExpanded;
-      const list = basisExpanded ? analysisBasis : analysisBasis.slice(0, 4);
-      document.getElementById('report-basis-grid').innerHTML = list.map((b) => `<span class="report-basis-chip">${escapeHtml(b)}</span>`).join('');
-      toggleBasisBtn.textContent = basisExpanded ? '접기 ▲' : `판정 근거 +${analysisBasis.length - 4}개 더보기`;
-    });
-  }
-
-  const toggleTipsBtn = document.getElementById('toggle-tips-btn');
-  if (toggleTipsBtn) {
-    let tipsExpanded = false;
-    toggleTipsBtn.addEventListener('click', () => {
-      tipsExpanded = !tipsExpanded;
-      const list = tipsExpanded ? tips : tips.slice(0, 2);
-      document.getElementById('life-tips-list').innerHTML = list.map((tip) => {
-        const tipUrls = tip.itemKeyword ? buildShopUrls(tip.itemKeyword) : null;
-        return `
-          <div class="life-tip-item">
-            <strong>${escapeHtml(tip.title)}</strong>
-            <p>${escapeHtml(tip.desc)}</p>
-            ${tipUrls ? `
-              <div class="life-tip-shop-row">
-                <span class="life-tip-item-name">추천 · ${escapeHtml(tip.itemLabel)}</span>
-                <div class="life-tip-links">
-                  <a href="${tipUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">쿠팡 →</a>
-                  <a href="${tipUrls.kurly}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill is-kurly">컬리 →</a>
-                </div>
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
-      toggleTipsBtn.textContent = tipsExpanded ? '추가 팁 접기 ▲' : `추가 팁 +${tips.length - 2}개 더보기`;
+      const wrap = document.getElementById('report-basis-wrap');
+      const arrow = document.getElementById('toggle-basis-arrow');
+      if (wrap) wrap.classList.toggle('hidden', !basisExpanded);
+      if (arrow) arrow.textContent = basisExpanded ? '접기 ▲' : '보기 ▾';
     });
   }
 
@@ -2526,63 +2505,70 @@ function openDetailSheet(item) {
       `;
     })()}
 
-    ${gapHint ? `
-      <div class="sheet-gap-hint">
-        <span class="sheet-gap-hint-badge">1초 틈새</span>
-        <span>${escapeHtml(gapHint)}</span>
-      </div>
-    ` : ''}
+    <button type="button" id="sheet-extras-toggle" class="seed-disclosure-btn">
+      <span>궁합 가구 · 숨은 비용 · 결과 공유 더보기</span>
+      <strong id="sheet-extras-arrow">열기 ▾</strong>
+    </button>
 
-    <div class="sheet-pair-section">
-      <div class="pair-head-row">
-        <strong class="pair-head-title">함께 두면 어울리는 궁합 가구</strong>
-        <span class="pair-tone-badge">${escapeHtml(primaryTone)} 톤</span>
-      </div>
-      <div class="pair-grid">
-        ${pairedItems.map((p) => {
-          const pv = verdictMeta(p.verdict);
-          return `
-            <button class="pair-mini-card" data-pair-id="${escapeHtml(p.id)}">
-              <div><span class="verdict-pill ${pv.cls}" style="font-size:10px;padding:2px 6px;">${pv.text}</span></div>
-              <div class="pair-mini-title">${escapeHtml(p.name)}</div>
-              <div class="pair-mini-meta">${escapeHtml(p.category)} · ${escapeHtml(p.priceTier)} →</div>
-            </button>
-          `;
-        }).join('')}
-      </div>
-    </div>
+    <div id="sheet-extras-body" class="seed-detail-extras hidden">
+      ${gapHint ? `
+        <div class="sheet-gap-hint">
+          <span class="sheet-gap-hint-badge">1초 틈새</span>
+          <span>${escapeHtml(gapHint)}</span>
+        </div>
+      ` : ''}
 
-    <div class="sheet-prep-box">
-      <div class="prep-head-row">
-        <strong class="prep-head-title">숨은 준비물 · 체감 비용</strong>
-        <span class="prep-cost-pill">${escapeHtml(prepInfo.totalCostLine)}</span>
+      <div class="sheet-pair-section">
+        <div class="pair-head-row">
+          <strong class="pair-head-title">함께 두면 어울리는 궁합 가구</strong>
+          <span class="pair-tone-badge">${escapeHtml(primaryTone)} 톤</span>
+        </div>
+        <div class="pair-grid">
+          ${pairedItems.map((p) => {
+            const pv = verdictMeta(p.verdict);
+            return `
+              <button class="pair-mini-card" data-pair-id="${escapeHtml(p.id)}">
+                <div><span class="verdict-pill ${pv.cls}" style="font-size:10px;padding:2px 6px;">${pv.text}</span></div>
+                <div class="pair-mini-title">${escapeHtml(p.name)}</div>
+                <div class="pair-mini-meta">${escapeHtml(p.category)} · ${escapeHtml(p.priceTier)} →</div>
+              </button>
+            `;
+          }).join('')}
+        </div>
       </div>
-      <div class="prep-kit-list">
-        ${prepInfo.kits.map((kit) => {
-          const kitUrls = buildShopUrls(kit.keyword);
-          return `
-            <div class="prep-kit-row">
-              <div class="prep-kit-info">
-                <strong>${escapeHtml(kit.title)}</strong>
-                <span class="prep-kit-price">${escapeHtml(kit.estCost)}</span>
+
+      <div class="sheet-prep-box">
+        <div class="prep-head-row">
+          <strong class="prep-head-title">숨은 준비물 · 체감 비용</strong>
+          <span class="prep-cost-pill">${escapeHtml(prepInfo.totalCostLine)}</span>
+        </div>
+        <div class="prep-kit-list">
+          ${prepInfo.kits.map((kit) => {
+            const kitUrls = buildShopUrls(kit.keyword);
+            return `
+              <div class="prep-kit-row">
+                <div class="prep-kit-info">
+                  <strong>${escapeHtml(kit.title)}</strong>
+                  <span class="prep-kit-price">${escapeHtml(kit.estCost)}</span>
+                </div>
+                <div class="prep-kit-links">
+                  <a href="${kitUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill is-primary-shop">쿠팡 보기 →</a>
+                  <a href="${kitUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">오늘의집 →</a>
+                </div>
               </div>
-              <div class="prep-kit-links">
-                <a href="${kitUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill is-primary-shop">쿠팡 보기 →</a>
-                <a href="${kitUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">오늘의집 →</a>
-              </div>
-            </div>
-          `;
-        }).join('')}
+            `;
+          }).join('')}
+        </div>
       </div>
-    </div>
 
-    <div class="sheet-share-box">
-      <div class="sheet-share-head">
-        <strong>이 판독 결과 공유하기</strong>
-      </div>
-      <div class="sheet-share-row">
-        <button type="button" id="sheet-copy-share-btn" class="btn-share-chip is-kakao">${KAKAO_LOGO_SVG}<span>카톡 공유</span></button>
-        <button type="button" id="sheet-story-share-btn" class="btn-share-chip is-story">${INSTA_LOGO_SVG}<span>인스타 스토리</span></button>
+      <div class="sheet-share-box">
+        <div class="sheet-share-head">
+          <strong>이 판독 결과 공유하기</strong>
+        </div>
+        <div class="sheet-share-row">
+          <button type="button" id="sheet-copy-share-btn" class="btn-share-chip is-kakao">${KAKAO_LOGO_SVG}<span>카톡 공유</span></button>
+          <button type="button" id="sheet-story-share-btn" class="btn-share-chip is-story">${INSTA_LOGO_SVG}<span>인스타 스토리</span></button>
+        </div>
       </div>
     </div>
 
@@ -2642,6 +2628,17 @@ function openDetailSheet(item) {
   syncBodyScrollLock();
   sheetPanel.scrollTop = 0;
   document.getElementById('close-sheet-btn').addEventListener('click', closeDetailSheet);
+  const extrasToggleBtn = document.getElementById('sheet-extras-toggle');
+  if (extrasToggleBtn) {
+    let extrasOpen = false;
+    extrasToggleBtn.addEventListener('click', () => {
+      extrasOpen = !extrasOpen;
+      const body = document.getElementById('sheet-extras-body');
+      const arrow = document.getElementById('sheet-extras-arrow');
+      if (body) body.classList.toggle('hidden', !extrasOpen);
+      if (arrow) arrow.textContent = extrasOpen ? '접기 ▲' : '열기 ▾';
+    });
+  }
   if (canRescue) {
     sheetPanel.querySelectorAll('.sheet-solution-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -3599,24 +3596,8 @@ function renderComparePickerList() {
 }
 
 function renderCompareView() {
-  const chipsEl = document.getElementById('compare-preset-chips');
   const outEl = document.getElementById('compare-output');
-  if (!chipsEl || !outEl) return;
-
-  chipsEl.innerHTML = COMPARE_PRESETS.map((p) => {
-    const isActive = activeCompareA === p.a && activeCompareB === p.b;
-    return `<button type="button" class="chip" style="${isActive ? 'background:var(--ink);color:#FFFFFF;' : ''}" data-cmp-a="${escapeHtml(p.a)}" data-cmp-b="${escapeHtml(p.b)}">${escapeHtml(p.label)}</button>`;
-  }).join('');
-
-  chipsEl.querySelectorAll('button').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      activeCompareA = btn.dataset.cmpA;
-      activeCompareB = btn.dataset.cmpB;
-      comparePickerTarget = null;
-      compareSearchQuery = '';
-      renderCompareView();
-    });
-  });
+  if (!outEl) return;
 
   const itemA = ITEMS_DB.find((it) => it.id === activeCompareA) || null;
   const itemB = ITEMS_DB.find((it) => it.id === activeCompareB) || null;
@@ -3763,21 +3744,20 @@ function renderCompareView() {
           </div>
           ${!savedProfile ? `<button type="button" id="compare-go-survey-btn" class="btn-ghost btn-sm" style="color:var(--accent);font-weight:800;">1분 설문 →</button>` : ''}
         </div>
-        <div class="compare-reco-grid">
+        <div class="seed-list">
           ${recos.map(({ item, reason }) => {
             const vm = verdictMeta(item.verdict);
             return `
-              <div class="compare-reco-card">
-                <div class="compare-reco-top">
-                  <span class="verdict-pill ${vm.cls}" style="font-size:10px;padding:2px 6px;">${vm.text}</span>
-                  <span class="compare-reco-meta">${escapeHtml(item.category)} · ${escapeHtml(item.priceTier)}</span>
-                </div>
-                <strong class="compare-reco-name" data-cmp-detail="${escapeHtml(item.id)}">${escapeHtml(item.name)}</strong>
-                <p class="compare-reco-reason">${escapeHtml(reason)}</p>
-                <div class="compare-reco-btns">
-                  <button type="button" class="btn-primary btn-sm" data-add-slot="${targetSlot}" data-add-id="${escapeHtml(item.id)}">비교에 담기</button>
-                  <button type="button" class="btn-secondary btn-sm" data-cmp-detail="${escapeHtml(item.id)}">스펙</button>
-                </div>
+              <div class="seed-list-item" style="cursor:default;">
+                <button type="button" class="seed-list-main" data-cmp-detail="${escapeHtml(item.id)}" style="background:none;border:0;padding:0;text-align:left;cursor:pointer;font-family:inherit;">
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+                    <span class="verdict-pill ${vm.cls}" style="font-size:10px;padding:2px 6px;">${vm.text}</span>
+                    <span class="compare-reco-meta">${escapeHtml(item.category)} · ${escapeHtml(item.priceTier)}</span>
+                  </div>
+                  <span class="seed-list-title">${escapeHtml(item.name)}</span>
+                  <span class="seed-list-sub">${escapeHtml(reason)}</span>
+                </button>
+                <button type="button" class="btn-primary btn-sm" data-add-slot="${targetSlot}" data-add-id="${escapeHtml(item.id)}" style="flex-shrink:0;">비교 담기</button>
               </div>
             `;
           }).join('')}
@@ -4192,118 +4172,132 @@ function renderToneMatcher() {
     </div>
   `;
 
+  const activeMatcherTab = ['items', 'rescue', 'tips'].includes(state.matcherTab) ? state.matcherTab : 'items';
+
   matcherOutput.innerHTML = `
-    <div class="tone-sense-card">
-      <div class="tone-sense-head">
-        <strong>${escapeHtml(activeTone.name)} 톤 감각 가이드</strong>
+    <div class="seed-segmented" id="matcher-seg-bar" role="tablist" aria-label="톤 매처 보기 전환">
+      <button type="button" class="seed-seg-btn ${activeMatcherTab === 'items' ? 'active' : ''}" data-mt-tab="items">맞춤 가구</button>
+      <button type="button" class="seed-seg-btn ${activeMatcherTab === 'rescue' ? 'active' : ''}" data-mt-tab="rescue">바탕 보완</button>
+      <button type="button" class="seed-seg-btn ${activeMatcherTab === 'tips' ? 'active' : ''}" data-mt-tab="tips">소품 · 팁</button>
+    </div>
+
+    <div class="seed-seg-panel ${activeMatcherTab === 'items' ? '' : 'hidden'}" data-mt-panel="items">
+      <div class="matcher-section-head">
+        <strong>${escapeHtml(activeTone.name)} 톤 맞춤 · ${escapeHtml(TARGET_CATEGORIES.find((c) => c.id === state.matcherCat)?.label || state.matcherCat)}</strong>
       </div>
-      <div class="tone-sense-grid">
-        <div class="tone-sense-row">
-          <span class="sense-key">60·30·10 배색</span>
-          <span class="sense-val">${escapeHtml(activeTone.ratioRule)}</span>
-        </div>
-        ${activeTone.kelvin ? `
-          <div class="tone-sense-row">
-            <span class="sense-key">추천 조명 빛</span>
-            <span class="sense-val">${escapeHtml(activeTone.kelvin)}</span>
-          </div>
-        ` : ''}
-        ${activeTone.materialMatch ? `
-          <div class="tone-sense-row">
-            <span class="sense-key">소재 조합</span>
-            <span class="sense-val">${escapeHtml(activeTone.materialMatch)}</span>
-          </div>
-        ` : ''}
-        ${activeTone.avoidTrap ? `
-          <div class="tone-sense-row is-trap">
-            <span class="sense-key">실패 피하기</span>
-            <span class="sense-val">${escapeHtml(activeTone.avoidTrap)}</span>
-          </div>
-        ` : ''}
+      <div class="cards-stack" id="matcher-primary-list">
+        ${primaryMatches.length ? primaryMatches.map(renderYukaCard).join('') : `<div class="card"><p class="text-secondary" style="margin:0;">해당 조건의 추천 가구를 준비 중입니다.</p></div>`}
+      </div>
+
+      <div class="matcher-section-head">
+        <strong>함께 두면 어울리는 궁합 가구</strong>
+      </div>
+      <div class="cards-stack" id="matcher-companion-list">
+        ${pickedCompanions.map(renderYukaCard).join('')}
       </div>
     </div>
 
-    <div class="base-rescue-card ${state.matcherRoomBase === 'clean-white' ? 'is-clean' : ''}">
-      <div class="base-rescue-head">
-        <span class="base-rescue-kicker">내 방 바탕 중화 처방 · ${escapeHtml(baseRescue.baseLabel)}</span>
-      </div>
-      <p class="base-rescue-title">${escapeHtml(baseRescue.headline)}</p>
-      <div class="base-rescue-avoid">
-        <strong>피할 실수</strong>${escapeHtml(baseRescue.avoidLine)}
-      </div>
-      <ul class="base-rescue-steps">
-        ${baseRescue.coverSteps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}
-      </ul>
-      ${rescueProducts.length ? `
-        <div class="base-rescue-products">
-          ${rescueProducts.map((rp) => {
-            const rpv = verdictMeta(rp.verdict);
+    <div class="seed-seg-panel ${activeMatcherTab === 'rescue' ? '' : 'hidden'}" data-mt-panel="rescue">
+      <div class="base-rescue-card ${state.matcherRoomBase === 'clean-white' ? 'is-clean' : ''}" style="margin-bottom:14px;">
+        <div class="base-rescue-head">
+          <span class="base-rescue-kicker">내 방 바탕 보완 · ${escapeHtml(baseRescue.baseLabel)}</span>
+        </div>
+        <p class="base-rescue-title">${escapeHtml(baseRescue.headline)}</p>
+        <div class="base-rescue-avoid">
+          <strong>피할 실수</strong>${escapeHtml(baseRescue.avoidLine)}
+        </div>
+        <ul class="base-rescue-steps">
+          ${baseRescue.coverSteps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}
+        </ul>
+        ${rescueProducts.length ? `
+          <div class="base-rescue-products">
+            ${rescueProducts.map((rp) => {
+              const rpv = verdictMeta(rp.verdict);
+              return `
+                <button type="button" class="pair-mini-card base-rescue-prod-btn" data-rescue-id="${escapeHtml(rp.id)}">
+                  <div><span class="verdict-pill ${rpv.cls}" style="font-size:10px;padding:2px 6px;">${rpv.text}</span></div>
+                  <div class="pair-mini-title">${escapeHtml(rp.name)}</div>
+                  <div class="pair-mini-meta">${escapeHtml(rp.priceTier)} →</div>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        ` : ''}
+        <div class="base-rescue-links">
+          ${baseRescue.coverKeywords.map((ck) => {
+            const ckUrls = buildShopUrls(ck.keyword);
             return `
-              <button type="button" class="pair-mini-card base-rescue-prod-btn" data-rescue-id="${escapeHtml(rp.id)}">
-                <div><span class="verdict-pill ${rpv.cls}" style="font-size:10px;padding:2px 6px;">${rpv.text}</span></div>
-                <div class="pair-mini-title">${escapeHtml(rp.name)}</div>
-                <div class="pair-mini-meta">${escapeHtml(rp.priceTier)} →</div>
-              </button>
+              <div class="base-rescue-link-row">
+                <span class="base-rescue-link-label">${escapeHtml(ck.label)}</span>
+                <div class="life-tip-links">
+                  <a href="${ckUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">쿠팡 →</a>
+                  <a href="${ckUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">오늘의집 →</a>
+                </div>
+              </div>
             `;
           }).join('')}
         </div>
-      ` : ''}
-      <div class="base-rescue-links">
-        ${baseRescue.coverKeywords.map((ck) => {
-          const ckUrls = buildShopUrls(ck.keyword);
+        ${AFFILIATE_CONFIG.coupangEnabled ? `<p class="ftc-affiliate-note">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
+      </div>
+    </div>
+
+    <div class="seed-seg-panel ${activeMatcherTab === 'tips' ? '' : 'hidden'}" data-mt-panel="tips">
+      <div class="tone-sense-card" style="margin-bottom:14px;">
+        <div class="tone-sense-head">
+          <strong>${escapeHtml(activeTone.name)} 톤 감각 가이드</strong>
+        </div>
+        <div class="tone-sense-grid">
+          <div class="tone-sense-row">
+            <span class="sense-key">60·30·10 배색</span>
+            <span class="sense-val">${escapeHtml(activeTone.ratioRule)}</span>
+          </div>
+          ${activeTone.kelvin ? `
+            <div class="tone-sense-row">
+              <span class="sense-key">추천 조명 빛</span>
+              <span class="sense-val">${escapeHtml(activeTone.kelvin)}</span>
+            </div>
+          ` : ''}
+          ${activeTone.materialMatch ? `
+            <div class="tone-sense-row">
+              <span class="sense-key">소재 조합</span>
+              <span class="sense-val">${escapeHtml(activeTone.materialMatch)}</span>
+            </div>
+          ` : ''}
+          ${activeTone.avoidTrap ? `
+            <div class="tone-sense-row is-trap">
+              <span class="sense-key">실패 피하기</span>
+              <span class="sense-val">${escapeHtml(activeTone.avoidTrap)}</span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+
+      <div class="matcher-section-head">
+        <strong>10% 포인트 소품 · 조경·식기·오브제</strong>
+      </div>
+      <div class="cards-stack">
+        ${orderedAccents.map((acc) => {
+          const links = buildShopUrls(acc.keyword);
+          const isPref = acc.kind === preferredKind;
           return `
-            <div class="base-rescue-link-row">
-              <span class="base-rescue-link-label">${escapeHtml(ck.label)}</span>
-              <div class="life-tip-links">
-                <a href="${ckUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">쿠팡 →</a>
-                <a href="${ckUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">오늘의집 →</a>
+            <div class="accent-card">
+              <div class="accent-top">
+                <span class="accent-kind">${escapeHtml(acc.kind)}${isPref ? ' · 내 설문 픽!' : ''}</span>
+                <span class="accent-point-pill">
+                  <span class="accent-dot" style="background:${acc.pointColor};"></span>
+                  ${escapeHtml(acc.pointLabel)}
+                </span>
+              </div>
+              <div class="accent-title">${escapeHtml(acc.name)}</div>
+              <p class="accent-tip">${escapeHtml(acc.tip)}</p>
+              <div class="accent-links">
+                <a href="${links.coupang}" target="_blank" rel="noopener noreferrer" class="accent-link-pill">쿠팡 보기 →</a>
+                <a href="${links.ohouse}" target="_blank" rel="noopener noreferrer" class="accent-link-pill">오늘의집 보기 →</a>
               </div>
             </div>
           `;
         }).join('')}
       </div>
-      ${AFFILIATE_CONFIG.coupangEnabled ? `<p class="ftc-affiliate-note">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
-    </div>
-
-    <div class="matcher-section-head">
-      <strong>${escapeHtml(activeTone.name)} 톤 맞춤 · ${escapeHtml(TARGET_CATEGORIES.find((c) => c.id === state.matcherCat)?.label || state.matcherCat)}</strong>
-    </div>
-    <div class="cards-stack" id="matcher-primary-list">
-      ${primaryMatches.length ? primaryMatches.map(renderYukaCard).join('') : `<div class="card"><p class="text-secondary" style="margin:0;">해당 조건의 추천 가구를 준비 중입니다.</p></div>`}
-    </div>
-
-    <div class="matcher-section-head">
-      <strong>함께 두면 완성되는 궁합 가구</strong>
-    </div>
-    <div class="cards-stack" id="matcher-companion-list">
-      ${pickedCompanions.map(renderYukaCard).join('')}
-    </div>
-
-    <div class="matcher-section-head">
-      <strong>10% 포인트 소품 · 조경·식기·오브제</strong>
-    </div>
-    <div class="cards-stack">
-      ${orderedAccents.map((acc) => {
-        const links = buildShopUrls(acc.keyword);
-        const isPref = acc.kind === preferredKind;
-        return `
-          <div class="accent-card">
-            <div class="accent-top">
-              <span class="accent-kind">${escapeHtml(acc.kind)}${isPref ? ' · 내 설문 픽!' : ''}</span>
-              <span class="accent-point-pill">
-                <span class="accent-dot" style="background:${acc.pointColor};"></span>
-                ${escapeHtml(acc.pointLabel)}
-              </span>
-            </div>
-            <div class="accent-title">${escapeHtml(acc.name)}</div>
-            <p class="accent-tip">${escapeHtml(acc.tip)}</p>
-            <div class="accent-links">
-              <a href="${links.coupang}" target="_blank" rel="noopener noreferrer" class="accent-link-pill">쿠팡 보기 →</a>
-              <a href="${links.ohouse}" target="_blank" rel="noopener noreferrer" class="accent-link-pill">오늘의집 보기 →</a>
-            </div>
-          </div>
-        `;
-      }).join('')}
     </div>
 
     <div class="matcher-share-bar">
@@ -4313,6 +4307,16 @@ function renderToneMatcher() {
       </div>
     </div>
   `;
+
+  matcherOutput.querySelectorAll('[data-mt-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.matcherTab = btn.dataset.mtTab;
+      matcherOutput.querySelectorAll('[data-mt-tab]').forEach((b) => b.classList.toggle('active', b === btn));
+      matcherOutput.querySelectorAll('[data-mt-panel]').forEach((p) => {
+        p.classList.toggle('hidden', p.dataset.mtPanel !== state.matcherTab);
+      });
+    });
+  });
 
   matcherOutput.querySelectorAll('.base-rescue-prod-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -6074,7 +6078,22 @@ function initPwaInstallPrompt() {
   });
 }
 
+function initAppSplash() {
+  const splash = document.getElementById('app-splash');
+  if (!splash) return;
+  const params = new URLSearchParams(location.search);
+  const hasDeepLink = Boolean(params.get('type') || params.get('compare') || params.get('item') || params.get('tab'));
+  const dismiss = () => {
+    if (splash.classList.contains('is-leaving')) return;
+    splash.classList.add('is-leaving');
+    setTimeout(() => splash.classList.add('hidden'), 300);
+  };
+  splash.addEventListener('click', dismiss);
+  setTimeout(dismiss, hasDeepLink ? 220 : 680);
+}
+
 // ---------------- Boot ----------------
+initAppSplash();
 const savedInitProfile = loadSavedRoomProfile();
 if (savedInitProfile && savedInitProfile.toneId) {
   state.matcherTone = savedInitProfile.toneId;
@@ -6130,6 +6149,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope78').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope79').catch(() => {});
   }
 }
