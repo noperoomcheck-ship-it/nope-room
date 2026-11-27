@@ -19,12 +19,14 @@ import {
   GAP_STORAGE_ZONES,
   getItemGapHint,
   ROOM_BASE_OPTIONS,
-  getRoomBaseRescue
-} from './data/app-data.js?v=nope75';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope75';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope75';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope75';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope75';
+  getRoomBaseRescue,
+  ALT_ITEM_MAP,
+  RESCUE_PATCH_RULES
+} from './data/app-data.js?v=nope76';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope76';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope76';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope76';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope76';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -61,6 +63,7 @@ const state = {
   matcherTone: 'white-minimal',
   matcherCat: '책상·의자',
   matcherRoomBase: 'clean-white',
+  matcherBudget: '30',
   matcherReturnOrigin: 'search',
   quickRefineCat: '',
   quickRefineFeatures: [],
@@ -1305,7 +1308,9 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
       ` : ''}
 
       ${(() => {
-        const traitRules = getDisplayTraitRules(loadSavedRoomProfile());
+        const currentSaved = loadSavedRoomProfile();
+        const traitRules = getDisplayTraitRules(currentSaved);
+        const showRescueBanner = Boolean(currentSaved && (currentSaved.optionLevel === 'full' || currentSaved.optionLevel === 'partial'));
         return `
           <div class="verdict-swap-stack">
             <div class="verdict-swap-box is-nope">
@@ -1339,6 +1344,12 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
                 `).join('')}
               </div>
             </div>
+            ${showRescueBanner ? `
+              <button type="button" id="report-rescue-jump-btn" class="report-rescue-banner">
+                <span>이미 옵션 가구가 있나요? 버리지 않고 1~2만 원으로 보완하기</span>
+                <strong>보완 처방 보기 →</strong>
+              </button>
+            ` : ''}
           </div>
         `;
       })()}
@@ -1466,6 +1477,24 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
       renderItems();
     });
   });
+
+  const reportRescueBtn = document.getElementById('report-rescue-jump-btn');
+  if (reportRescueBtn) {
+    reportRescueBtn.addEventListener('click', () => {
+      switchTab('scanner');
+      setScannerMode('search');
+      state.activePassRuleId = '';
+      state.selectedFilter = { label: '기존 가구 살리기', type: 'rescue', value: 'rescue', isTheme: true };
+      state.selectedVerdict = 'ALL';
+      document.querySelectorAll('#verdict-filter-bar .vfilter-btn').forEach((b) => {
+        b.classList.toggle('active', b.dataset.verdict === 'ALL');
+      });
+      searchInput.value = '';
+      customOutEl.innerHTML = '';
+      openScannerResults('기존 가구 살리기 (1~2만 원 보완)');
+      renderItems();
+    });
+  }
 
   document.getElementById('share-story-btn').addEventListener('click', () => {
     exportEditorialStoryCard(profile, dangerScore, nickname, toneName);
@@ -1860,6 +1889,7 @@ const FILTER_GROUPS = [
   {
     caption: '라이프스타일 테마',
     chips: [
+      { label: '기존 가구 살리기', type: 'rescue', value: 'rescue', isTheme: true },
       { label: '데스크테리어', type: 'theme', value: 'deskterior', isTheme: true },
       { label: '플랜테리어', type: 'theme', value: 'planterior', isTheme: true },
       { label: '홈카페·주방', type: 'theme', value: 'homecafe', isTheme: true },
@@ -2308,6 +2338,56 @@ function getToneLabel(toneId) {
   return found ? found.name : '화이트 · 리넨';
 }
 
+function buildItemRescuePatch(item) {
+  if (!item) return RESCUE_PATCH_RULES[RESCUE_PATCH_RULES.length - 1];
+  const hay = [
+    item.name,
+    item.category,
+    item.oneLiner,
+    item.checkLine,
+    ...(item.chips || []),
+    ...(item.checks || []),
+    ...(item.cautions || [])
+  ].filter(Boolean).join(' ');
+  const matched = RESCUE_PATCH_RULES.find((r) => r.matchRx && r.matchRx.test(hay));
+  if (matched) return matched;
+  return {
+    id: 'general-patch',
+    symptom: item.checkLine || item.oneLiner || '사용 환경에 따라 긁힘·먼지·흔들림이 생길 수 있음',
+    costSaving: '새 가구 교체 없이 약 5천~1.5만 원 소품으로 불편 보완 가능',
+    steps: [
+      '바닥·벽과 맞닿는 면에는 펠트·실리콘 보호 패드를 먼저 붙여 원상복구 감점을 막으세요.',
+      '흔들림·먼지 노출이 걱정되는 구간만 소형 정리함·방수 패드로 덮어 관리 부담을 줄이세요.'
+    ],
+    kits: [
+      { title: '가구 다리 찍힘방지 펠트·논슬립 패드', estCost: '약 4~8천 원', keyword: '가구 다리 보호 펠트 패드' },
+      { title: '수평 조절 웨지 · 불투명 정리함', estCost: '약 6~1.2만 원', keyword: '가구 수평 패드 불투명 수납함' }
+    ]
+  };
+}
+
+function resolveAltCompareItem(item) {
+  if (!item || !item.id) return null;
+  const mappedId = ALT_ITEM_MAP[item.id];
+  if (mappedId) {
+    const found = ITEMS_DB.find((x) => x.id === mappedId);
+    if (found && found.id !== item.id) return found;
+  }
+  const sameCatPairs = (item.pairIds || [])
+    .map((pid) => ITEMS_DB.find((x) => x.id === pid))
+    .filter((x) => x && x.id !== item.id && x.category === item.category && x.verdict !== 'NOPE');
+  if (sameCatPairs.length) return sameCatPairs[0];
+
+  const rankRisk = (x) => (x.specs?.dust || 3) + (x.specs?.deposit || 3) + (x.specs?.trouble || 3);
+  const candidates = ITEMS_DB
+    .filter((x) => x.id !== item.id && x.category === item.category && x.verdict !== 'NOPE')
+    .sort((a, b) => {
+      if (a.verdict !== b.verdict) return a.verdict === 'PASS' ? -1 : 1;
+      return rankRisk(a) - rankRisk(b);
+    });
+  return candidates[0] || null;
+}
+
 function buildPairingReason(item, pairedItems, primaryTone) {
   const cats = [...new Set(pairedItems.map((p) => p.category.split('·')[0]))].join('·');
   if (item.category === '책상·의자') {
@@ -2378,6 +2458,9 @@ function openDetailSheet(item) {
   const fitAlerts = getPersonalFitAlerts(item, savedProfile);
   const prepInfo = getHiddenPrepInfo(item, savedProfile);
   const gapHint = getItemGapHint(item);
+  const canRescue = !isPass;
+  const rescuePatch = canRescue ? buildItemRescuePatch(item) : null;
+  const altCompareItem = canRescue ? resolveAltCompareItem(item) : null;
 
   sheetPanel.innerHTML = `
     <div class="sheet-grabber" aria-hidden="true"></div>
@@ -2504,21 +2587,90 @@ function openDetailSheet(item) {
       </div>
     </div>
 
-    <div class="sheet-alt-box ${altBoxCls}">
+    ${canRescue ? `
+      <div class="sheet-solution-tabs" role="tablist" aria-label="해결 방식 선택">
+        <button type="button" class="sheet-solution-btn active" data-sol-tab="alt">새로 살 때: 추천 대안</button>
+        <button type="button" class="sheet-solution-btn" data-sol-tab="rescue">이미 내 방에 있어요 (보완법)</button>
+      </div>
+    ` : ''}
+
+    <div id="sheet-sol-alt" class="sheet-alt-box ${altBoxCls}">
       <span class="sheet-alt-kicker">${altLabel}</span>
       <strong class="sheet-alt-name">${escapeHtml(item.altName)}</strong>
       <div class="dual-link-row">
         <a href="${urls.coupang}" target="_blank" rel="noopener noreferrer" class="${primaryBtnCls}" style="padding:13px 12px;font-size:14px;font-weight:800;">쿠팡에서 보기 →</a>
         <a href="${urls.ohouse}" target="_blank" rel="noopener noreferrer" class="btn-ohouse">오늘의집 보기 →</a>
       </div>
+      ${altCompareItem ? `
+        <button type="button" id="sheet-alt-compare-btn" class="btn-alt-compare">
+          ⚖️ '${escapeHtml(altCompareItem.name)}'과 A vs B 바로 비교 →
+        </button>
+      ` : ''}
       ${urls.hasCoupangAffiliate ? `<p class="ftc-affiliate-note">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
     </div>
+
+    ${rescuePatch ? `
+      <div id="sheet-sol-rescue" class="sheet-rescue-box hidden">
+        <span class="sheet-rescue-kicker">교체 비용 0원 · 기존 가구 살리기</span>
+        <strong class="sheet-rescue-title">${escapeHtml(rescuePatch.symptom)}</strong>
+        <span class="sheet-rescue-saving">${escapeHtml(rescuePatch.costSaving)}</span>
+        <ul class="sheet-rescue-steps">
+          ${rescuePatch.steps.map((st) => `<li>${escapeHtml(st)}</li>`).join('')}
+        </ul>
+        <div class="prep-kit-list">
+          ${rescuePatch.kits.map((kit) => {
+            const kUrls = buildShopUrls(kit.keyword);
+            return `
+              <div class="prep-kit-row">
+                <div class="prep-kit-info">
+                  <strong>${escapeHtml(kit.title)}</strong>
+                  <span class="prep-kit-price">${escapeHtml(kit.estCost)}</span>
+                </div>
+                <div class="prep-kit-links">
+                  <a href="${kUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill is-primary-shop">쿠팡 →</a>
+                  <a href="${kUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">오늘의집 →</a>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        ${AFFILIATE_CONFIG.coupangEnabled ? `<p class="ftc-affiliate-note" style="margin-top:8px;">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
+      </div>
+    ` : ''}
   `;
 
   sheetBackdrop.classList.remove('hidden');
   syncBodyScrollLock();
   sheetPanel.scrollTop = 0;
   document.getElementById('close-sheet-btn').addEventListener('click', closeDetailSheet);
+  if (canRescue) {
+    sheetPanel.querySelectorAll('.sheet-solution-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.solTab;
+        sheetPanel.querySelectorAll('.sheet-solution-btn').forEach((b) => b.classList.toggle('active', b === btn));
+        const altBox = document.getElementById('sheet-sol-alt');
+        const rescueBox = document.getElementById('sheet-sol-rescue');
+        if (altBox) altBox.classList.toggle('hidden', mode !== 'alt');
+        if (rescueBox) rescueBox.classList.toggle('hidden', mode !== 'rescue');
+        if (mode === 'rescue') {
+          trackEvent('rescue_patch_view', { id: item.id, rule: rescuePatch ? rescuePatch.id : 'general' });
+        }
+      });
+    });
+  }
+  const altCompareBtn = document.getElementById('sheet-alt-compare-btn');
+  if (altCompareBtn && altCompareItem) {
+    altCompareBtn.addEventListener('click', () => {
+      trackEvent('compare_shortcut', { from_id: item.id, alt_id: altCompareItem.id });
+      closeDetailSheet();
+      activeCompareA = item.id;
+      activeCompareB = altCompareItem.id;
+      comparePickerTarget = null;
+      compareSearchQuery = '';
+      switchTab('scanner');
+      setScannerMode('compare');
+    });
+  }
   const copyShareBtn = document.getElementById('sheet-copy-share-btn');
   if (copyShareBtn) {
     copyShareBtn.addEventListener('click', () => {
@@ -2713,6 +2865,8 @@ function findDirectAndSimilarItems(rawQuery) {
     } else if (!q && f && f.type === 'theme') {
       const rx = THEME_MATCHERS[f.value];
       if (rx && !rx.test(getItemSearchableText(item))) return false;
+    } else if (!q && f && f.type === 'rescue') {
+      if (item.verdict === 'PASS') return false;
     }
 
     if (q) {
@@ -3851,6 +4005,105 @@ function surveyFitBonus(item, savedProfile) {
   return bonus;
 }
 
+const MATCHER_BUDGET_SPECS = {
+  '10': {
+    id: '10',
+    shortLabel: '10만 원대 입문',
+    targetMax: 13.5,
+    perItemMax: 5.5,
+    desc: '큰 가구 교체 없이 조명·패브릭·무타공 소품으로 분위기 전환'
+  },
+  '30': {
+    id: '30',
+    shortLabel: '30만 원대 정석',
+    targetMax: 36,
+    perItemMax: 18,
+    desc: '내 방 톤에 맞춘 책상·수납·조명·매트 실속 조합'
+  },
+  '50': {
+    id: '50',
+    shortLabel: '50만 원대 풀세트',
+    targetMax: 62,
+    perItemMax: 38,
+    desc: '무옵션 방에서도 오래 쓰는 튼튼한 핵심 가구 한 번에 세팅'
+  }
+};
+
+function buildMatcherBudgetBundle({ toneId, budgetId, savedProfile }) {
+  const spec = MATCHER_BUDGET_SPECS[budgetId] || MATCHER_BUDGET_SPECS['30'];
+  const activeExcludeRules = [...state.excludedTraits]
+    .map((id) => NOPE_TRAIT_RULES.find((r) => r.id === id))
+    .filter(Boolean);
+
+  const isFullOption = Boolean(savedProfile && savedProfile.optionLevel === 'full');
+  const preferredOrder = (budgetId === '10' || isFullOption)
+    ? ['조명·거울', '무타공·욕실', '수납·행거', '소파·침대·매트', '식탁·주방·생활', '책상·의자']
+    : ['책상·의자', '수납·행거', '소파·침대·매트', '조명·거울', '식탁·주방·생활', '무타공·욕실'];
+
+  const pool = ITEMS_DB.filter((it) => {
+    if (it.verdict === 'NOPE') return false;
+    if (activeExcludeRules.some((r) => itemMatchesTraitRule(it, r))) return false;
+    const range = parsePriceTierManWon(it.priceTier);
+    const mid = range ? (range[0] + range[1]) / 2 : 3;
+    if (mid > spec.perItemMax) return false;
+    if (isFullOption && budgetId !== '50' && /책상|침대\s*프레임/.test(it.name || '')) return false;
+    return true;
+  }).map((it) => {
+    const range = parsePriceTierManWon(it.priceTier) || [2, 4];
+    const mid = (range[0] + range[1]) / 2;
+    const toneHit = Array.isArray(it.tones) && it.tones.includes(toneId);
+    const verdictPts = it.verdict === 'PASS' ? 16 : 4;
+    const fitBonus = surveyFitBonus(it, savedProfile);
+    const catIdx = preferredOrder.indexOf(it.category);
+    const catBoost = catIdx >= 0 ? (6 - catIdx) : 0;
+    const priceFit = budgetId === '50' ? (mid >= 8 ? 5 : 1) : (budgetId === '10' ? (mid <= 3.5 ? 5 : 1) : (mid >= 4 && mid <= 16 ? 5 : 2));
+    return {
+      item: it,
+      range,
+      mid,
+      score: verdictPts + (toneHit ? 10 : 0) + fitBonus + catBoost + priceFit
+    };
+  }).sort((a, b) => b.score - a.score);
+
+  const chosen = [];
+  const usedCats = new Set();
+  let sumMid = 0;
+
+  for (const cand of pool) {
+    if (chosen.length >= 4) break;
+    if (usedCats.has(cand.item.category)) continue;
+    if (chosen.length >= 2 && sumMid + cand.mid > spec.targetMax) continue;
+    chosen.push(cand);
+    usedCats.add(cand.item.category);
+    sumMid += cand.mid;
+  }
+
+  if (chosen.length < 3) {
+    for (const cand of pool) {
+      if (chosen.length >= 3) break;
+      if (chosen.some((c) => c.item.id === cand.item.id)) continue;
+      if (sumMid + cand.mid > spec.targetMax + 4) continue;
+      chosen.push(cand);
+      sumMid += cand.mid;
+    }
+  }
+
+  let totalMin = 0;
+  let totalMax = 0;
+  chosen.forEach((c) => {
+    totalMin += c.range[0];
+    totalMax += c.range[1];
+  });
+
+  const wishSet = new Set(loadWishlist().map((w) => w.id));
+  const allSaved = chosen.length > 0 && chosen.every((c) => wishSet.has(c.item.id));
+  const totalText = chosen.length
+    ? `약 ${formatManWonValue(totalMin)}~${formatManWonValue(totalMax)} 원`
+    : '예산 내 조합 계산 중';
+
+  return { spec, entries: chosen, totalText, allSaved };
+}
+
 function renderToneMatcher() {
   const savedProfile = loadSavedRoomProfile();
   const wishCat = savedProfile && savedProfile.wishId ? WISH_CATEGORIES[savedProfile.wishId] : null;
@@ -4018,6 +4271,12 @@ function renderToneMatcher() {
   });
 
   const isDifferentFromSaved = savedProfile && savedProfile.toneId && savedProfile.toneId !== activeTone.id;
+  const activeBudgetId = MATCHER_BUDGET_SPECS[state.matcherBudget] ? state.matcherBudget : '30';
+  const budgetBundle = buildMatcherBudgetBundle({
+    toneId: activeTone.id,
+    budgetId: activeBudgetId,
+    savedProfile
+  });
   syncBox.innerHTML = `
     <div class="matcher-profile-summary">
       ${savedProfile
@@ -4113,6 +4372,43 @@ function renderToneMatcher() {
       ${primaryMatches.length ? primaryMatches.map(renderYukaCard).join('') : `<div class="card"><p class="text-secondary" style="margin:0;">해당 조건의 추천 가구를 준비 중입니다.</p></div>`}
     </div>
 
+    <div class="bundle-pack-card" id="matcher-budget-bundle">
+      <div class="bundle-pack-head">
+        <div>
+          <span class="bundle-pack-kicker">ONE-CLICK ROOM SET · ${escapeHtml(activeTone.name)}</span>
+          <strong class="bundle-pack-title">예산별 원룸 꾸러미</strong>
+        </div>
+        ${savedProfile && savedProfile.optionLevel === 'full' ? `<span class="verdict-pill v-pass" style="font-size:10px;">풀옵션 맞춤</span>` : ''}
+      </div>
+      <div class="bundle-budget-tabs" role="tablist" aria-label="꾸러미 예산 선택">
+        ${Object.values(MATCHER_BUDGET_SPECS).map((sp) => `
+          <button type="button" class="bundle-budget-btn ${sp.id === activeBudgetId ? 'active' : ''}" data-bundle-budget="${sp.id}">${escapeHtml(sp.shortLabel)}</button>
+        `).join('')}
+      </div>
+      <p class="bundle-desc-note">${escapeHtml(budgetBundle.spec.desc)}</p>
+      <div class="bundle-items-list">
+        ${budgetBundle.entries.map(({ item: bItem }) => {
+          const bvm = verdictMeta(bItem.verdict);
+          return `
+            <button type="button" class="bundle-item-row" data-bundle-item="${escapeHtml(bItem.id)}">
+              <div class="bundle-item-main">
+                <span class="verdict-pill ${bvm.cls}" style="font-size:10px;padding:2px 6px;">${bvm.text}</span>
+                <strong>${escapeHtml(bItem.name)}</strong>
+              </div>
+              <span class="bundle-item-price">${escapeHtml(bItem.priceTier)} ›</span>
+            </button>
+          `;
+        }).join('')}
+      </div>
+      <div class="bundle-pack-footer">
+        <span class="bundle-total-label">꾸러미 ${budgetBundle.entries.length}종 예상 합계</span>
+        <strong class="bundle-total-val">${escapeHtml(budgetBundle.totalText)}</strong>
+      </div>
+      ${budgetBundle.allSaved
+        ? `<button type="button" id="bundle-open-wishlist-btn" class="btn-secondary btn-full">♥ 내 방 찜 보드에 모두 담김 (확인하기 →)</button>`
+        : `<button type="button" id="bundle-add-all-btn" class="btn-primary btn-full">♡ 이 꾸러미 ${budgetBundle.entries.length}종 한 번에 담기</button>`}
+    </div>
+
     <div class="matcher-section-head">
       <strong>함께 두면 완성되는 궁합 가구</strong>
     </div>
@@ -4185,6 +4481,44 @@ function renderToneMatcher() {
 
   bindCardClicks(document.getElementById('matcher-primary-list'), primaryMatches);
   bindCardClicks(document.getElementById('matcher-companion-list'), pickedCompanions);
+
+  matcherOutput.querySelectorAll('.bundle-budget-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.matcherBudget = btn.dataset.bundleBudget;
+      renderToneMatcher();
+    });
+  });
+  matcherOutput.querySelectorAll('.bundle-item-row').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = ITEMS_DB.find((it) => it.id === btn.dataset.bundleItem);
+      if (target) openDetailSheet(target);
+    });
+  });
+  const bundleAddBtn = document.getElementById('bundle-add-all-btn');
+  if (bundleAddBtn) {
+    bundleAddBtn.addEventListener('click', () => {
+      const current = loadWishlist();
+      const existingIds = new Set(current.map((w) => w.id));
+      let addedCount = 0;
+      const toAdd = [];
+      budgetBundle.entries.forEach(({ item: bItem }) => {
+        if (!existingIds.has(bItem.id)) {
+          toAdd.push(bItem);
+          addedCount += 1;
+        }
+      });
+      if (toAdd.length) {
+        saveWishlist([...toAdd, ...current].slice(0, 40));
+      }
+      trackEvent('bundle_add_all', { tone: activeTone.id, budget: activeBudgetId, count: addedCount });
+      showToast(addedCount ? `꾸러미 ${addedCount}종을 내 방 찜에 담았어요!` : '이미 모두 찜 목록에 담겨 있어요');
+      renderToneMatcher();
+    });
+  }
+  const bundleOpenWishBtn = document.getElementById('bundle-open-wishlist-btn');
+  if (bundleOpenWishBtn) {
+    bundleOpenWishBtn.addEventListener('click', () => openAccountSheet('wishlist'));
+  }
 
   const retakeBtn = document.getElementById('matcher-retake-btn');
   if (retakeBtn) {
@@ -5971,6 +6305,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope75').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope76').catch(() => {});
   }
 }

@@ -1,12 +1,12 @@
 // NOPE! v9 — 235종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
-import { ITEMS_DB } from './products-db.js?v=nope75';
+import { ITEMS_DB } from './products-db.js?v=nope76';
 import {
   STYLE_MOODS,
   ROOM_TONES,
   TARGET_CATEGORIES,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './mood-palettes.js?v=nope75';
+} from './mood-palettes.js?v=nope76';
 export {
   ITEMS_DB,
   STYLE_MOODS,
@@ -1297,3 +1297,124 @@ export const HIDDEN_PREP_KITS = {
     keyword: '미니 줄자 틈새 수납함'
   }
 };
+
+export const ALT_ITEM_MAP = {
+  'ikea-lagkapten': 'dodot-quattro-air',
+  'shaggy-rug': 'sisal-look-rug',
+  'wood-blind': 'pin-sheer-curtain',
+  'alumi-slim-blind': 'pin-sheer-curtain',
+  'suction-corner-rack': 'ss304-tension-bath-rod',
+  'hard-diatomite': 'soft-diatomite-mat',
+  'ikea-malm': 'muji-pp-drawer',
+  'mongbijou-boucle': 'ikea-klippan',
+  'ikea-soderhamn': 'ikea-klippan',
+  'recliner-1p': 'ikea-klippan',
+  'full-stand-mirror': 'door-hook-mirror',
+  'acrylic-wave-mirror': 'ikea-nissedal-mirror',
+  '3m-command': 'daiso-kkokkopin',
+  'ikea-mosslanda-shelf': 'daiso-kkokkopin',
+  'ikea-mulig': 'muji-pp-drawer',
+  'marketb-quattro-hanger': 'muji-pp-drawer',
+  'door-hook-hanger': 'door-hook-mirror'
+};
+
+export const RESCUE_PATCH_RULES = [
+  {
+    id: 'thin-desk',
+    matchRx: /허니콤|종이\s*벌집|라그캅텐|라크|소프시스|상판\s*꺼짐|리프트업|보조테이블|비에르크오센/,
+    symptom: '속이 빈 약한 상판이나 1자 다리 구조라 모니터암·타이핑 시 꺼지거나 흔들리기 쉬움',
+    costSaving: '새 책상(15만 원+) 대신 약 5천~1.5만 원으로 보강 가능',
+    steps: [
+      '모니터암 클램프 위·아래에 스틸 상판 보강판을 끼워 하중을 넓게 분산하세요.',
+      '흔들리는 다리 아래엔 수평 조절 펠트 패드와 PVC 데스크매트를 깔아 들뜸·눌림을 막으세요.'
+    ],
+    kits: [
+      { title: '모니터암 스틸 상판 보강판', estCost: '약 5~8천 원', keyword: '모니터암 상판 보강판' },
+      { title: '수평 조절 펠트 패드 · PVC 데스크매트', estCost: '약 5~9천 원', keyword: '가구 수평 조절 패드 데스크매트' }
+    ]
+  },
+  {
+    id: 'open-hanger',
+    matchRx: /행거|오픈\s*선반|파이프|와이어|요낙셀|스피드랙|메쉬|북타워/,
+    symptom: '앞이 트인 구조라 2주 만에 먼지가 쌓이고 잡동사니가 보여 방이 어수선해지기 쉬움',
+    costSaving: '새 옷장(25만 원+) 대신 약 1~2만 원으로 먼지·시선 차단',
+    steps: [
+      '자주 안 입는 외투는 지퍼형 방진 의류 커버로 한 번에 감싸 먼지를 막으세요.',
+      '선반 칸마다 같은 색 불투명 뚜껑 리빙박스를 넣으면 도어형 옷장처럼 깔끔해집니다.'
+    ],
+    kits: [
+      { title: '지퍼형 투명창 방진 의류 커버', estCost: '약 7천~1.2만 원', keyword: '지퍼형 행거 커버 의류' },
+      { title: '같은 톤 불투명 뚜껑 리빙박스', estCost: '약 1~1.8만 원', keyword: '불투명 뚜껑 리빙박스' }
+    ]
+  },
+  {
+    id: 'fabric-care',
+    matchRx: /부클레|샤기|장모|비분리|소파|빈백|토퍼|좌식|러그|뒤블링에/,
+    symptom: '통세탁이 안 되거나 털·먼지가 박히고 밀려서 음료 얼룩과 위생 관리가 힘든 상태',
+    costSaving: '교체 없이 약 1~2만 원 방수·논슬립 레이어로 1년 이상 더 깔끔히 유지',
+    steps: [
+      '소파·좌식 의자 위에 통세탁 가능한 생활방수 패드/소파 커버를 덮어 얼룩을 원천 차단하세요.',
+      '밀리거나 뭉치는 러그 밑에는 논슬립 미끄럼 방지 패드를 대고 1주에 1번 돌돌이로 정리하세요.'
+    ],
+    kits: [
+      { title: '통세탁 가능 생활방수 소파·방석 커버', estCost: '약 1~1.8만 원', keyword: '생활방수 소파 패드 워셔블 커버' },
+      { title: '러그·매트 논슬립 미끄럼 방지 패드', estCost: '약 5~9천 원', keyword: '러그 논슬립 미끄럼방지 패드' }
+    ]
+  },
+  {
+    id: 'wall-film',
+    matchRx: /코맨드|시트지|점착|모스란다|벽선반|블라인드|실크벽지|타공|포스터/,
+    symptom: '접착 테이프·무리한 벽걸이로 실크벽지 뜯김이나 퇴실 보증금 차감 위험이 있는 상태',
+    costSaving: '도배 수리비(10만 원+) 전에 약 5천~1.2만 원으로 안전하게 하중 분산',
+    steps: [
+      '무거운 선반·액자는 벽에서 바로 내리고 꼭꼬핀+패브릭 포스터 등 초경량 거치로 바꾸세요.',
+      '이미 붙인 테이프를 뗄 땐 헤어드라이어 열풍 + 스티커 제거제로 천천히 녹여 뜯김을 막으세요.'
+    ],
+    kits: [
+      { title: '벽지 전용 꼭꼬핀 · 패브릭 포스터', estCost: '약 4~9천 원', keyword: '다이소 꼭꼬핀 린넨 패브릭 포스터' },
+      { title: '스티커 접착제거제 · 벽지 보수 패치', estCost: '약 5~9천 원', keyword: '벽지 스티커 제거제 보수 스티커' }
+    ]
+  },
+  {
+    id: 'bath-moisture',
+    matchRx: /흡착|규조토|변기|세탁기\s*상단|욕실|건조기|물곰팡이|베스켄|소르테라/,
+    symptom: '습기로 흡착판이 툭 떨어지거나 물때·곰팡이·물기 누수로 바닥이 상하기 쉬운 상태',
+    costSaving: '약 7천~1.8만 원으로 낙하 사고·욕실 곰팡이 즉시 예방',
+    steps: [
+      '흡착 선반은 비누·물병 대신 칫솔·면도기 등 초경량만 올리고 바닥형/압축봉으로 분산하세요.',
+      '물 고이는 하드 매트 위·아래에는 실리콘 물빠짐 패드나 규조토 통풍 깔판을 받쳐 건조하세요.'
+    ],
+    kits: [
+      { title: '실리콘 물빠짐 배수 패드', estCost: '약 6~1만 원', keyword: '실리콘 물빠짐 배수 매트 욕실' },
+      { title: '욕실 물기제거 스퀴지 · 규조토 제습스틱', estCost: '약 5~1만 원', keyword: '욕실 실리콘 스퀴지 규조토 제습' }
+    ]
+  },
+  {
+    id: 'diy-wobble',
+    matchRx: /말름|브림네스|헬메르|알렉스|에케트|마켓비|조립|전동드릴|서랍장|스툴|의자|바퀴|스마트베이스|네이덴/,
+    symptom: '나사가 서서히 풀려 삐걱대거나 좁은 철제 다리·바퀴로 장판·마루가 찍히기 쉬운 상태',
+    costSaving: '약 5천~1.5만 원으로 흔들림·소음·바닥 찍힘 동시 해결',
+    steps: [
+      '흔들리는 경첩·다리 볼트를 한 번에 조인 뒤, 닿는 면에 도톰한 펠트·우레탄 보호패드를 붙이세요.',
+      '높거나 가벼운 서랍장은 전도 방지 패드(논슬립)를 뒤쪽 모서리에 대면 쏠림이 확 줄어듭니다.'
+    ],
+    kits: [
+      { title: '가구 다리 두꺼운 펠트·실리콘 보호패드', estCost: '약 4~8천 원', keyword: '가구 다리 찍힘방지 두꺼운 펠트패드' },
+      { title: 'USB 미니 전동드라이버 (볼트 재조임)', estCost: '약 1.2~1.8만 원', keyword: 'USB 미니 충전 전동드라이버' }
+    ]
+  },
+  {
+    id: 'mirror-door',
+    matchRx: /거울|도어후크|문걸이|리클라이너|스탠드|가벽|압축/,
+    symptom: '방문 윗틈이 긁히거나 거울 다리·압축 기둥이 통로에서 흔들리기 쉬운 상태',
+    costSaving: '약 4천~1만 원 완충·고정 보강으로 스크래치·전도 예방',
+    steps: [
+      '방문 상단 걸이 안쪽에는 1~2mm EVA 완충 테이프를 붙여 문틀 시트지 까짐을 막으세요.',
+      '스탠드 거울·파티션 다리는 벽에 바짝 붙이고 뒤쪽 넘어짐 방지 와이어/논슬립 패드를 대세요.'
+    ],
+    kits: [
+      { title: '문틀 보호 EVA 완충 패드 · 도어스토퍼', estCost: '약 4~8천 원', keyword: '문틀 보호 완충 테이프 실리콘 도어스토퍼' },
+      { title: '가구 전도방지 무타공 고정 스트랩', estCost: '약 6~1만 원', keyword: '무타공 가구 전도방지 고정 스트랩' }
+    ]
+  }
+];
