@@ -22,11 +22,11 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope77';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope77';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope77';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope77';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope77';
+} from './data/app-data.js?v=nope78';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope78';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope78';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope78';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope78';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -3628,22 +3628,20 @@ function renderCompareView() {
     const isPicking = comparePickerTarget === slot;
     if (!item) {
       return `
-        <button type="button" id="compare-pick-btn-${slot.toLowerCase()}" class="compare-pick-card is-empty ${isPicking ? 'is-picking' : ''}" aria-label="제품 ${slot} 검색해서 고르기">
+        <button type="button" id="compare-pick-btn-${slot.toLowerCase()}" class="compare-pick-card is-empty ${isPicking ? 'is-picking' : ''}" aria-label="${slot === 'A' ? '첫 번째' : '두 번째'} 제품 검색해서 고르기">
           <div class="compare-pick-top">
-            <span class="compare-slot-tag">${slot}</span>
             <span class="compare-slot-empty-pill">미선택</span>
           </div>
-          <strong class="compare-pick-name">비교할 제품 ${slot}</strong>
-          <span class="compare-pick-sub">아래에서 검색하거나 추천 가구를 담아보세요</span>
+          <strong class="compare-pick-name">${slot === 'A' ? '비교할 제품 선택' : '상대 제품 선택'}</strong>
+          <span class="compare-pick-sub">검색하거나 아래 추천에서 담아보세요</span>
           <span class="compare-pick-cta">${isPicking ? '검색 중 ▲' : '검색해서 고르기 ›'}</span>
         </button>
       `;
     }
     const vm = verdictMeta(item.verdict);
     return `
-      <button type="button" id="compare-pick-btn-${slot.toLowerCase()}" class="compare-pick-card ${isPicking ? 'is-picking' : ''}" aria-label="제품 ${slot} 검색해서 변경">
+      <button type="button" id="compare-pick-btn-${slot.toLowerCase()}" class="compare-pick-card ${isPicking ? 'is-picking' : ''}" aria-label="${escapeHtml(item.name)} 변경">
         <div class="compare-pick-top">
-          <span class="compare-slot-tag">${slot}</span>
           <span class="verdict-pill ${vm.cls}">${vm.text}</span>
         </div>
         <strong class="compare-pick-name">${escapeHtml(item.name)}</strong>
@@ -3656,7 +3654,7 @@ function renderCompareView() {
   const pickerHtml = comparePickerTarget ? `
     <div id="compare-picker-panel" class="compare-picker-panel">
       <div class="compare-picker-head">
-        <strong>제품 ${comparePickerTarget} ${(!itemA && comparePickerTarget === 'A') || (!itemB && comparePickerTarget === 'B') ? '검색해서 고르기' : '바꾸기'} <span id="compare-picker-count" class="compare-picker-count"></span></strong>
+        <strong>${(!itemA && comparePickerTarget === 'A') || (!itemB && comparePickerTarget === 'B') ? '비교 제품 검색해서 고르기' : '다른 제품으로 바꾸기'} <span id="compare-picker-count" class="compare-picker-count"></span></strong>
         <button type="button" id="compare-picker-close" class="btn-ghost btn-sm" style="padding:2px 6px;">닫기 ✕</button>
       </div>
       ${state.excludedTraits.size > 0 ? `
@@ -3732,9 +3730,17 @@ function renderCompareView() {
           ? `<strong class="compare-reco-title">✓ 추천 제품: ${escapeHtml(winner.name)}</strong><p class="compare-reco-desc">${escapeHtml(loser.name)} 대비 내 방 조건과 유지관리·내구성 점수가 더 안정적입니다.</p>`
           : `<strong class="compare-reco-title">⚖️ 두 제품 스펙이 비슷해요</strong><p class="compare-reco-desc">예산과 방 톤에 맞춰 상세 근거를 비교해 보세요.</p>`}
         <div class="compare-winner-actions">
-          <button type="button" id="compare-open-a" class="btn-secondary btn-sm">A 상세 보기</button>
-          <button type="button" id="compare-open-b" class="btn-secondary btn-sm">B 상세 보기</button>
-          <button type="button" id="compare-wish-winner" class="btn-primary btn-sm">${pickWished ? '♥ 찜 저장됨' : `♡ ${winner ? '추천 제품' : 'A'} 찜하기`}</button>
+          ${(() => {
+            const shortName = (n) => {
+              const clean = String(n || '').replace(/\([^)]*\)/g, '').trim();
+              return clean.length > 8 ? `${clean.slice(0, 8)}…` : clean;
+            };
+            return `
+              <button type="button" id="compare-open-a" class="btn-secondary btn-sm">${escapeHtml(shortName(itemA.name))} 상세</button>
+              <button type="button" id="compare-open-b" class="btn-secondary btn-sm">${escapeHtml(shortName(itemB.name))} 상세</button>
+            `;
+          })()}
+          <button type="button" id="compare-wish-winner" class="btn-primary btn-sm">${pickWished ? '♥ 찜 저장됨' : `♡ ${winner ? '추천 제품' : '추천'} 찜하기`}</button>
           <button type="button" id="compare-share-link" class="btn-share-chip is-kakao" style="justify-content:center;padding:8px 10px;">${KAKAO_LOGO_SVG}<span>비교 링크 복사</span></button>
         </div>
       </div>
@@ -3769,7 +3775,7 @@ function renderCompareView() {
                 <strong class="compare-reco-name" data-cmp-detail="${escapeHtml(item.id)}">${escapeHtml(item.name)}</strong>
                 <p class="compare-reco-reason">${escapeHtml(reason)}</p>
                 <div class="compare-reco-btns">
-                  <button type="button" class="btn-primary btn-sm" data-add-slot="${targetSlot}" data-add-id="${escapeHtml(item.id)}">${targetSlot}에 담기</button>
+                  <button type="button" class="btn-primary btn-sm" data-add-slot="${targetSlot}" data-add-id="${escapeHtml(item.id)}">비교에 담기</button>
                   <button type="button" class="btn-secondary btn-sm" data-cmp-detail="${escapeHtml(item.id)}">스펙</button>
                 </div>
               </div>
@@ -6124,6 +6130,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope77').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope78').catch(() => {});
   }
 }
