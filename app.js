@@ -22,12 +22,12 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope90';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope90';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope90';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope90';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope90';
-import { BRAND_TRENDS } from './data/brand-trends.js?v=nope90';
+} from './data/app-data.js?v=nope91';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope91';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope91';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope91';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope91';
+import { BRAND_TRENDS } from './data/brand-trends.js?v=nope91';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -46,9 +46,18 @@ const STORAGE_KEYS = {
   excludeTraits: 'nope_exclude_traits_v1',
   analytics: 'nope_analytics_v1',
   homeRotation: 'nope_home_rot_v1',
+  interestDomain: 'nope_interest_domain_v1',
   legalConsent: 'nope_legal_consent_v1',
   feedback: 'nope_feedback_v1'
 };
+
+function loadHomeInterestDomain() {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.interestDomain) || 'ALL';
+  } catch {
+    return 'ALL';
+  }
+}
 
 const state = {
   nickname: '',
@@ -59,6 +68,7 @@ const state = {
   homeTenure: 'monthly',
   homePreAnswers: [],
   homeRotationOffset: 0,
+  homeInterestDomain: loadHomeInterestDomain(),
   scannerMode: 'search',
   selectedFilter: '전체',
   selectedVerdict: 'ALL',
@@ -683,6 +693,153 @@ function getHomeRotationItems(savedProfile, rotIdx = 0) {
   return picked;
 }
 
+const HOME_INTEREST_DOMAINS = [
+  { id: 'ALL', label: '전체', scanCat: null },
+  { id: '데스크테리어', label: '데스크테리어', scanCat: '데스크테리어' },
+  { id: '집청소·세탁', label: '집청소·세탁', scanCat: '집청소·세탁' },
+  { id: '구강·욕실케어', label: '구강·욕실케어', scanCat: '구강·욕실케어' },
+  { id: '소형가전·주방', label: '소형가전·주방', scanCat: '소형가전·주방' },
+  { id: '가구·공간', label: '가구·공간', scanCat: '책상·의자' }
+];
+
+function matchHomeInterestTrend(trend, domainId) {
+  if (domainId === 'ALL') return true;
+  const dom = trend && trend.domain ? trend.domain : '';
+  if (domainId === '데스크테리어') return /데스크/.test(dom);
+  if (domainId === '집청소·세탁') return /청소|세탁|생활/.test(dom);
+  if (domainId === '구강·욕실케어') return /구강|욕실/.test(dom);
+  if (domainId === '소형가전·주방') return /가전|주방/.test(dom);
+  if (domainId === '가구·공간') return /공간|가구|수납/.test(dom);
+  return true;
+}
+
+function matchHomeInterestItem(item, domainId) {
+  if (domainId === 'ALL') return true;
+  if (domainId === '데스크테리어') return item.category === '데스크테리어';
+  if (domainId === '집청소·세탁') return item.category === '집청소·세탁';
+  if (domainId === '구강·욕실케어') return item.category === '구강·욕실케어' || item.category === '무타공·욕실';
+  if (domainId === '소형가전·주방') return item.category === '소형가전·주방' || item.category === '식탁·주방·생활';
+  if (domainId === '가구·공간') return ['책상·의자', '수납·행거', '소파·침대·매트', '조명·거울'].includes(item.category);
+  return true;
+}
+
+function pickHomeInterestItems(domainId) {
+  const pool = ITEMS_DB.filter((it) => matchHomeInterestItem(it, domainId));
+  const richFirst = [...pool].sort((a, b) => Number(Boolean(b.reviewPulse)) - Number(Boolean(a.reviewPulse)));
+  const passPick = richFirst.find((it) => it.verdict === 'PASS');
+  const cautionPick = richFirst.find((it) => it.verdict === 'NOPE') || richFirst.find((it) => it.verdict === 'WARN');
+  const thirdPick = richFirst.find((it) => it !== passPick && it !== cautionPick);
+  return [passPick, cautionPick, thirdPick].filter(Boolean);
+}
+
+function renderHomeInterestSection(chipsId, feedId) {
+  const chipsEl = document.getElementById(chipsId);
+  const feedEl = document.getElementById(feedId);
+  if (!chipsEl || !feedEl) return;
+
+  const activeId = HOME_INTEREST_DOMAINS.some((d) => d.id === state.homeInterestDomain)
+    ? state.homeInterestDomain
+    : 'ALL';
+  const activeDomainObj = HOME_INTEREST_DOMAINS.find((d) => d.id === activeId) || HOME_INTEREST_DOMAINS[0];
+
+  chipsEl.innerHTML = HOME_INTEREST_DOMAINS.map((d) => `
+    <button type="button" class="home-interest-chip ${d.id === activeId ? 'active' : ''}" data-interest-domain="${escapeHtml(d.id)}" role="tab" aria-selected="${d.id === activeId ? 'true' : 'false'}">${escapeHtml(d.label)}</button>
+  `).join('');
+
+  chipsEl.querySelectorAll('[data-interest-domain]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.homeInterestDomain = btn.dataset.interestDomain || 'ALL';
+      try {
+        localStorage.setItem(STORAGE_KEYS.interestDomain, state.homeInterestDomain);
+      } catch {
+        // ignore storage errors
+      }
+      renderAllHomeInterestFeeds();
+    });
+  });
+
+  const matchingTrends = BRAND_TRENDS.filter((t) => matchHomeInterestTrend(t, activeId)).slice(0, 2);
+  const pickedItems = pickHomeInterestItems(activeId);
+
+  feedEl.innerHTML = `
+    ${matchingTrends.length ? `
+      <div class="home-trend-stack">
+        ${matchingTrends.map((t) => `
+          <button type="button" class="home-trend-card" data-open-trends="1">
+            <div class="trend-meta-row">
+              <span class="trend-pill ${t.type === '이슈·주의' ? 'is-issue' : 'is-new'}">${escapeHtml(t.type)}</span>
+              <span class="home-trend-brand">${escapeHtml(t.brand)} · ${escapeHtml(t.domain)} · ${escapeHtml(t.date)}</span>
+            </div>
+            <strong class="home-trend-title">${escapeHtml(t.title)}</strong>
+            <p class="home-trend-summary">${escapeHtml(t.summary)}</p>
+          </button>
+        `).join('')}
+      </div>
+    ` : ''}
+    <div class="seed-list" style="margin-top:10px;">
+      ${pickedItems.map((it) => {
+        const vm = verdictMeta(it.verdict);
+        const brief = (it.reviewPulse && it.reviewPulse.ratingSummary) || it.oneLiner || '';
+        return `
+          <button type="button" class="seed-list-item" data-interest-item-id="${escapeHtml(it.id)}">
+            <div class="seed-list-main">
+              <span class="seed-list-title">${escapeHtml(it.name)}</span>
+              <span class="seed-list-sub">${escapeHtml(it.priceTier || '')}${brief ? ` · ${escapeHtml(brief)}` : ''}</span>
+            </div>
+            <span class="home-rot-pill ${it.verdict === 'PASS' ? 'is-pass' : 'is-nope'}">${escapeHtml(vm.text)}</span>
+          </button>
+        `;
+      }).join('')}
+    </div>
+    <button type="button" class="home-interest-more-btn" data-browse-domain="${escapeHtml(activeDomainObj.scanCat || '')}">
+      ${activeId === 'ALL' ? `전체 ${ITEMS_DB.length}종 제품 둘러보기 →` : `${escapeHtml(activeDomainObj.label)} 전체 제품 보기 →`}
+    </button>
+  `;
+
+  feedEl.querySelectorAll('[data-open-trends]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      switchTab('my');
+      renderMyPage('notices');
+    });
+  });
+
+  feedEl.querySelectorAll('[data-interest-item-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = ITEMS_DB.find((x) => x.id === btn.dataset.interestItemId);
+      if (target) openDetailSheet(target);
+    });
+  });
+
+  const moreBtn = feedEl.querySelector('[data-browse-domain]');
+  if (moreBtn) {
+    moreBtn.addEventListener('click', () => {
+      const cat = moreBtn.dataset.browseDomain;
+      switchTab('scanner');
+      setScannerMode('search');
+      if (cat) {
+        state.selectedFilter = { label: cat, type: 'cat', value: cat };
+        state.activePassRuleId = '';
+        searchInput.value = '';
+        customOutEl.innerHTML = '';
+        openScannerResults(cat);
+        renderItems();
+      } else {
+        state.selectedFilter = { label: '전체', type: 'all', value: '전체' };
+        state.activePassRuleId = '';
+        searchInput.value = '';
+        customOutEl.innerHTML = '';
+        openScannerResults(`전체 ${ITEMS_DB.length}종`);
+        renderItems();
+      }
+    });
+  }
+}
+
+function renderAllHomeInterestFeeds() {
+  renderHomeInterestSection('guest-interest-chips', 'guest-interest-feed');
+  renderHomeInterestSection('saved-interest-chips', 'saved-interest-feed');
+}
+
 function renderHomeRotationList(savedProfile) {
   const listEl = document.getElementById('home-rotation-list');
   const titleEl = document.getElementById('home-rot-title');
@@ -720,6 +877,7 @@ function updateSavedProfileBadge() {
 
   if (guestGateEl) guestGateEl.classList.toggle('hidden', hasProfile);
   if (savedDashEl) savedDashEl.classList.toggle('hidden', !hasProfile);
+  renderAllHomeInterestFeeds();
 
   if (!hasProfile) {
     if (savedProfileBtn) savedProfileBtn.classList.add('hidden');
@@ -908,9 +1066,8 @@ savedProfileBtn.addEventListener('click', () => {
   );
 });
 
-const runHomeSearch = () => {
-  const homeInput = document.getElementById('home-search-input');
-  const q = homeInput ? homeInput.value.trim() : '';
+const runHomeQuerySearch = (inputEl) => {
+  const q = inputEl ? inputEl.value.trim() : '';
   switchTab('scanner');
   setScannerMode('search');
   if (q && searchInput) {
@@ -922,27 +1079,77 @@ const runHomeSearch = () => {
 };
 const homeAnalyzeBtn = document.getElementById('home-analyze-btn');
 const homeSearchInput = document.getElementById('home-search-input');
-if (homeAnalyzeBtn) homeAnalyzeBtn.addEventListener('click', runHomeSearch);
+if (homeAnalyzeBtn) homeAnalyzeBtn.addEventListener('click', () => runHomeQuerySearch(homeSearchInput));
 if (homeSearchInput) {
   homeSearchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') runHomeSearch();
+    if (e.key === 'Enter') runHomeQuerySearch(homeSearchInput);
   });
 }
 
-const homePhotoScanBtn = document.getElementById('home-photo-scan-btn');
-if (homePhotoScanBtn) {
-  homePhotoScanBtn.addEventListener('click', () => {
-    switchTab('scanner');
-    setScannerMode('search');
-    if (itemImageInput) itemImageInput.click();
+const guestAnalyzeBtn = document.getElementById('guest-analyze-btn');
+const guestSearchInput = document.getElementById('guest-search-input');
+if (guestAnalyzeBtn) guestAnalyzeBtn.addEventListener('click', () => runHomeQuerySearch(guestSearchInput));
+if (guestSearchInput) {
+  guestSearchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') runHomeQuerySearch(guestSearchInput);
   });
 }
+
+const openHomePhotoScan = () => {
+  switchTab('scanner');
+  setScannerMode('search');
+  if (itemImageInput) itemImageInput.click();
+};
+const openHomeCompareMode = () => {
+  switchTab('scanner');
+  setScannerMode('compare');
+};
+const homePhotoScanBtn = document.getElementById('home-photo-scan-btn');
+if (homePhotoScanBtn) homePhotoScanBtn.addEventListener('click', openHomePhotoScan);
+const guestPhotoBtn = document.getElementById('guest-photo-btn');
+if (guestPhotoBtn) guestPhotoBtn.addEventListener('click', openHomePhotoScan);
 
 const homeCompareBtn = document.getElementById('home-compare-btn');
-if (homeCompareBtn) {
-  homeCompareBtn.addEventListener('click', () => {
+if (homeCompareBtn) homeCompareBtn.addEventListener('click', openHomeCompareMode);
+const guestCompareBtn = document.getElementById('guest-compare-btn');
+if (guestCompareBtn) guestCompareBtn.addEventListener('click', openHomeCompareMode);
+
+document.querySelectorAll('[data-quick-compare-a]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const aId = btn.dataset.quickCompareA;
+    const bId = btn.dataset.quickCompareB;
+    if (!aId || !bId) return;
+    activeCompareA = aId;
+    activeCompareB = bId;
+    comparePickerTarget = null;
+    compareSearchQuery = '';
     switchTab('scanner');
     setScannerMode('compare');
+  });
+});
+
+const openAllBrandTrends = () => {
+  switchTab('my');
+  renderMyPage('notices');
+};
+const homeAllTrendsBtn = document.getElementById('home-all-trends-btn');
+if (homeAllTrendsBtn) homeAllTrendsBtn.addEventListener('click', openAllBrandTrends);
+const savedAllTrendsBtn = document.getElementById('saved-all-trends-btn');
+if (savedAllTrendsBtn) savedAllTrendsBtn.addEventListener('click', openAllBrandTrends);
+
+const roomQuizToggleBtn = document.getElementById('home-room-quiz-toggle');
+const roomQuizBodyEl = document.getElementById('home-room-quiz-body');
+const roomQuizArrowEl = document.getElementById('home-room-toggle-arrow');
+function setRoomQuizAccordion(open) {
+  if (!roomQuizBodyEl || !roomQuizToggleBtn) return;
+  roomQuizBodyEl.classList.toggle('hidden', !open);
+  roomQuizToggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (roomQuizArrowEl) roomQuizArrowEl.textContent = open ? '접기 ▲' : '펼치기 ▾';
+}
+if (roomQuizToggleBtn) {
+  roomQuizToggleBtn.addEventListener('click', () => {
+    const isHidden = roomQuizBodyEl && roomQuizBodyEl.classList.contains('hidden');
+    setRoomQuizAccordion(Boolean(isHidden));
   });
 }
 
@@ -967,7 +1174,10 @@ if (homeRetakeBtn) {
     const savedDashEl = document.getElementById('home-saved-dashboard');
     if (guestGateEl) guestGateEl.classList.remove('hidden');
     if (savedDashEl) savedDashEl.classList.add('hidden');
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    setRoomQuizAccordion(true);
+    if (roomQuizToggleBtn) {
+      roomQuizToggleBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   });
 }
 
@@ -2775,6 +2985,40 @@ function buildPairingReason(item, pairedItems, primaryTone) {
 }
 
 // Yuka Level 2 Bottom Sheet (Crisp 1-line summary + App Pairing + Coupang/Ohouse Dual Links)
+function formatSpecPlainWord(kind, val) {
+  const n = Number(val) || 3;
+  if (kind === 'dust') {
+    if (n <= 2) return '손 적게 감';
+    if (n === 3) return '보통 관리';
+    return '자주 닦아야 함';
+  }
+  if (kind === 'deposit') {
+    if (n <= 2) return '복구 부담 적음';
+    if (n === 3) return '설치 확인';
+    return '변색·흔적 주의';
+  }
+  if (n <= 2) return '내구성 무난';
+  if (n === 3) return '소모·관리 보통';
+  return '수명·부담 큼';
+}
+
+function buildTossReviewBlock(item) {
+  const pulse = item.reviewPulse || null;
+  const praised = (pulse && pulse.praised) || item.goodLine || (item.pros && item.pros[0]) || '';
+  const complaint = (pulse && pulse.repeatedComplaint)
+    || item.checkLine
+    || (item.cautions && item.cautions[0])
+    || (item.checks && item.checks[0])
+    || '';
+  const trapNote = (pulse && pulse.trapNote) || (item.checks && item.checks[0]) || '';
+  const market = (pulse && pulse.market) || `${item.brand} · 주요 쇼핑몰 실사용자 리뷰 기준`;
+  const summaryLine = (pulse && pulse.ratingSummary) || '';
+  const sourceBadge = item.creatorPick
+    ? `${item.creatorPick.source}${item.creatorPick.sponsored === false ? ' · 비협찬' : ''}${item.creatorPick.crossCount > 1 ? ` · ${item.creatorPick.crossCount}곳 교차 확인` : ''}`
+    : '';
+  return { praised, complaint, trapNote, market, summaryLine, sourceBadge };
+}
+
 function openDetailSheet(item) {
   recordDefenseInspect(item);
   trackEvent('product_detail_open', {
@@ -2803,15 +3047,15 @@ function openDetailSheet(item) {
     ).slice(0, 2);
   }
 
-  let altLabel = 'NOPE 대신 이 스펙 추천';
+  let altLabel = '이 제품 대신 추천하는 선택';
   let altBoxCls = 'is-nope';
   let primaryBtnCls = 'btn-accent';
   if (isPass) {
-    altLabel = '추천 옵션 · 함께 보기';
+    altLabel = '바로 찾아볼 수 있는 곳';
     altBoxCls = 'is-pass';
     primaryBtnCls = 'btn-primary';
   } else if (isWarn) {
-    altLabel = '보완·대체 추천 스펙';
+    altLabel = '함께 비교하면 좋은 대안';
     altBoxCls = '';
     primaryBtnCls = 'btn-primary';
   }
@@ -2824,6 +3068,7 @@ function openDetailSheet(item) {
 
   const whyBoxCls = isPass ? 'is-pass' : (isWarn ? 'is-warn' : 'is-nope');
   const whySentence = item.oneLiner || (isPass ? goodLine : checkLine) || goodLine;
+  const reviewBlock = buildTossReviewBlock(item);
   const wished = isWishlistedItem(item.id);
   const savedProfile = normalizeRoomProfileConstraints(loadSavedRoomProfile());
   const fitAlerts = getPersonalFitAlerts(item, savedProfile);
@@ -2841,6 +3086,11 @@ function openDetailSheet(item) {
         ...(item.checks && item.checks[0] ? [{ k: '실사용 검증 메모', v: item.checks[0] }] : [])
       ];
 
+  const showBriefExtra = !item.reviewPulse && (
+    Boolean(goodLine && goodLine.trim() && goodLine.trim() !== whySentence.trim())
+    || Boolean(checkLine && checkLine.trim() && checkLine.trim() !== whySentence.trim() && checkLine.trim() !== goodLine.trim())
+  );
+
   sheetPanel.innerHTML = `
     <div class="sheet-grabber" aria-hidden="true"></div>
     <div class="sheet-head">
@@ -2855,43 +3105,71 @@ function openDetailSheet(item) {
       </div>
     </div>
 
-    <div class="seed-segmented is-two" id="sheet-depth-seg" role="tablist" aria-label="상세 보기 깊이 선택">
-      <button type="button" class="seed-seg-btn active" data-sheet-depth="summary">요약 · 구매</button>
-      <button type="button" class="seed-seg-btn" data-sheet-depth="deep">스펙 · 리뷰 해부</button>
+    <div class="seed-segmented is-two" id="sheet-depth-seg" role="tablist" aria-label="상세 보기 탭 선택">
+      <button type="button" class="seed-seg-btn active" data-sheet-depth="summary">후기 · 핵심 판단</button>
+      <button type="button" class="seed-seg-btn" data-sheet-depth="deep">원천 스펙 · 비교 기준</button>
     </div>
 
     <div id="sheet-panel-summary">
-      <div class="score-trio">
-        <div class="score-pill"><span class="score-lbl">관리·먼지</span><strong class="${dustCls}">${item.specs.dust}/5</strong></div>
-        <div class="score-pill"><span class="score-lbl">복구·주의</span><strong class="${depCls}">${item.specs.deposit}/5</strong></div>
-        <div class="score-pill"><span class="score-lbl">수명·부담</span><strong class="${trbCls}">${item.specs.trouble}/5</strong></div>
-      </div>
-
       <div class="sheet-why-box ${whyBoxCls}">
+        <span class="sheet-why-kicker">한눈에 보는 결론</span>
         <p class="sheet-why-sentence">${escapeHtml(whySentence)}</p>
       </div>
 
-      ${(item.creatorPick || item.reviewPulse) ? `
-        <div class="sheet-proof-box">
-          ${item.creatorPick ? `
-            <div class="sheet-proof-line">
-              <span class="sheet-proof-badge ${item.creatorPick.sponsored === false ? 'is-clean' : ''}">출처</span>
-              <span>${escapeHtml(item.creatorPick.source)}${item.creatorPick.sponsored === false ? ' (비협찬 확인)' : ''}${item.creatorPick.crossCount > 1 ? ` · 교차 언급 ${item.creatorPick.crossCount}곳` : ''}</span>
-            </div>
-          ` : ''}
-          ${item.reviewPulse ? `
-            <div class="sheet-proof-line">
-              <span class="sheet-proof-badge">요약</span>
-              <span><strong>${escapeHtml(item.reviewPulse.market)}:</strong> ${escapeHtml(item.reviewPulse.repeatedComplaint || item.reviewPulse.ratingSummary)}</span>
-            </div>
-          ` : ''}
+      <div class="sheet-review-hero">
+        <div class="sheet-review-head">
+          <strong class="sheet-review-title">실사용 후기에서 먼저 볼 점</strong>
+          <span class="sheet-review-market">${escapeHtml(reviewBlock.market)}</span>
         </div>
-      ` : ''}
+        ${reviewBlock.summaryLine ? `<p class="sheet-review-summary">${escapeHtml(reviewBlock.summaryLine)}</p>` : ''}
+        ${reviewBlock.praised ? `
+          <div class="sheet-review-row">
+            <span class="sheet-review-badge is-good">좋다는 후기</span>
+            <p>${escapeHtml(reviewBlock.praised)}</p>
+          </div>
+        ` : ''}
+        ${reviewBlock.complaint ? `
+          <div class="sheet-review-row">
+            <span class="sheet-review-badge is-warn">자주 나온 불만</span>
+            <p>${escapeHtml(reviewBlock.complaint)}</p>
+          </div>
+        ` : ''}
+        ${reviewBlock.trapNote && reviewBlock.trapNote !== reviewBlock.complaint ? `
+          <div class="sheet-review-trap">
+            <strong>사기 전 알면 좋은 점</strong>
+            <p>${escapeHtml(reviewBlock.trapNote)}</p>
+          </div>
+        ` : ''}
+        ${reviewBlock.sourceBadge ? `
+          <div class="sheet-review-source">
+            <span class="sheet-proof-badge is-clean">교차 출처</span>
+            <span>${escapeHtml(reviewBlock.sourceBadge)}</span>
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="score-trio">
+        <div class="score-pill">
+          <span class="score-lbl">청소·관리</span>
+          <strong class="${dustCls}">${escapeHtml(formatSpecPlainWord('dust', item.specs.dust))}</strong>
+          <span class="score-sub-num">${item.specs.dust}/5</span>
+        </div>
+        <div class="score-pill">
+          <span class="score-lbl">보증금·주의</span>
+          <strong class="${depCls}">${escapeHtml(formatSpecPlainWord('deposit', item.specs.deposit))}</strong>
+          <span class="score-sub-num">${item.specs.deposit}/5</span>
+        </div>
+        <div class="score-pill">
+          <span class="score-lbl">오래 쓰는 정도</span>
+          <strong class="${trbCls}">${escapeHtml(formatSpecPlainWord('trouble', item.specs.trouble))}</strong>
+          <span class="score-sub-num">${item.specs.trouble}/5</span>
+        </div>
+      </div>
 
       ${savedProfile && fitAlerts.length ? `
         <div class="sheet-fit-box is-${fitAlerts[0].tone}">
           <div class="sheet-fit-head">
-            <strong>${savedProfile.nickname ? `${escapeHtml(savedProfile.nickname)}님 조건 체크` : '내 조건 체크'}</strong>
+            <strong>${savedProfile.nickname ? `${escapeHtml(savedProfile.nickname)}님 방 조건 기준` : '내 방 조건 기준'}</strong>
             <span>${escapeHtml(savedProfile.pyeongLabel || '원룸')}</span>
           </div>
           <div class="sheet-fit-list">
@@ -2908,25 +3186,20 @@ function openDetailSheet(item) {
         </div>
       ` : `
         <button type="button" id="sheet-fit-nudge-btn" class="sheet-fit-nudge">
-          <span>내 방 크기·공구·월세 조건 등록하면 맞춤 경고를 띄워드려요</span>
-          <strong>1분 등록 →</strong>
+          <span>내 방 크기·월세 조건을 입력하면 맞춤 주의사항도 함께 알려드려요</span>
+          <strong>40초 입력 →</strong>
         </button>
       `}
 
-      ${(() => {
-        const showGood = Boolean(goodLine && goodLine.trim() && goodLine.trim() !== whySentence.trim());
-        const showCheck = Boolean(checkLine && checkLine.trim() && checkLine.trim() !== whySentence.trim() && checkLine.trim() !== goodLine.trim());
-        if (!showGood && !showCheck) return '';
-        return `
-          <div class="sheet-brief-box">
-            ${showGood ? `<div class="sheet-brief-row"><span class="brief-badge is-good">장점</span><span>${escapeHtml(goodLine)}</span></div>` : ''}
-            ${showCheck ? `<div class="sheet-brief-row"><span class="brief-badge ${secondBadgeCls}">${secondBadgeText}</span><span>${escapeHtml(checkLine)}</span></div>` : ''}
-          </div>
-        `;
-      })()}
+      ${showBriefExtra ? `
+        <div class="sheet-brief-box">
+          ${goodLine && goodLine.trim() !== whySentence.trim() ? `<div class="sheet-brief-row"><span class="brief-badge is-good">장점</span><span>${escapeHtml(goodLine)}</span></div>` : ''}
+          ${checkLine && checkLine.trim() !== whySentence.trim() && checkLine.trim() !== goodLine.trim() ? `<div class="sheet-brief-row"><span class="brief-badge ${secondBadgeCls}">${secondBadgeText}</span><span>${escapeHtml(checkLine)}</span></div>` : ''}
+        </div>
+      ` : ''}
 
       <button type="button" id="sheet-extras-toggle" class="seed-disclosure-btn">
-        <span>궁합 아이템 · 숨은 비용 · 결과 공유 더보기</span>
+        <span>함께 쓰는 제품 · 숨은 추가 비용 · 공유</span>
         <strong id="sheet-extras-arrow">열기 ▾</strong>
       </button>
 
@@ -2940,7 +3213,7 @@ function openDetailSheet(item) {
 
         <div class="sheet-pair-section">
           <div class="pair-head-row">
-            <strong class="pair-head-title">함께 두면 잘 맞는 아이템</strong>
+            <strong class="pair-head-title">같이 두면 잘 맞는 제품</strong>
             <span class="pair-tone-badge">${escapeHtml(primaryTone)} 톤</span>
           </div>
           <div class="pair-grid">
@@ -2948,7 +3221,7 @@ function openDetailSheet(item) {
               const pv = verdictMeta(p.verdict);
               return `
                 <button class="pair-mini-card" data-pair-id="${escapeHtml(p.id)}">
-                  <div><span class="verdict-pill ${pv.cls}" style="font-size:10px;padding:2px 6px;">${pv.text}</span></div>
+                  <div><span class="verdict-pill ${pv.cls}" style="font-size:11px;padding:3px 7px;">${pv.text}</span></div>
                   <div class="pair-mini-title">${escapeHtml(p.name)}</div>
                   <div class="pair-mini-meta">${escapeHtml(p.category)} · ${escapeHtml(p.priceTier)} →</div>
                 </button>
@@ -2959,7 +3232,7 @@ function openDetailSheet(item) {
 
         <div class="sheet-prep-box">
           <div class="prep-head-row">
-            <strong class="prep-head-title">숨은 준비물 · 체감 비용</strong>
+            <strong class="prep-head-title">같이 사야 하는 준비물 · 추가 비용</strong>
             <span class="prep-cost-pill">${escapeHtml(prepInfo.totalCostLine)}</span>
           </div>
           <div class="prep-kit-list">
@@ -2986,8 +3259,8 @@ function openDetailSheet(item) {
             <strong>이 판독 결과 공유하기</strong>
           </div>
           <div class="sheet-share-row">
-            <button type="button" id="sheet-copy-share-btn" class="btn-share-chip is-kakao">${KAKAO_LOGO_SVG}<span>카톡 공유</span></button>
-            <button type="button" id="sheet-story-share-btn" class="btn-share-chip is-story">${INSTA_LOGO_SVG}<span>인스타 스토리</span></button>
+            <button type="button" id="sheet-copy-share-btn" class="btn-share-chip is-kakao">${KAKAO_LOGO_SVG}<span>카톡 요약 복사</span></button>
+            <button type="button" id="sheet-story-share-btn" class="btn-share-chip is-story">${INSTA_LOGO_SVG}<span>스토리 카드 저장</span></button>
           </div>
         </div>
       </div>
@@ -2995,7 +3268,7 @@ function openDetailSheet(item) {
       ${canRescue ? `
         <div class="sheet-solution-tabs" role="tablist" aria-label="해결 방식 선택">
           <button type="button" class="sheet-solution-btn active" data-sol-tab="alt">새로 살 때: 추천 대안</button>
-          <button type="button" class="sheet-solution-btn" data-sol-tab="rescue">이미 내 방에 있어요 (보완법)</button>
+          <button type="button" class="sheet-solution-btn" data-sol-tab="rescue">이미 갖고 있다면 (보완법)</button>
         </div>
       ` : ''}
 
@@ -3003,12 +3276,12 @@ function openDetailSheet(item) {
         <span class="sheet-alt-kicker">${altLabel}</span>
         <strong class="sheet-alt-name">${escapeHtml(item.altName)}</strong>
         <div class="dual-link-row">
-          <a href="${urls.coupang}" target="_blank" rel="noopener noreferrer" class="${primaryBtnCls}" style="padding:13px 12px;font-size:14px;font-weight:800;">쿠팡에서 보기 →</a>
-          <a href="${urls.ohouse}" target="_blank" rel="noopener noreferrer" class="btn-ohouse">오늘의집 보기 →</a>
+          <a href="${urls.coupang}" target="_blank" rel="noopener noreferrer" class="${primaryBtnCls}" style="padding:14px 12px;font-size:15px;font-weight:800;">쿠팡에서 확인 →</a>
+          <a href="${urls.ohouse}" target="_blank" rel="noopener noreferrer" class="btn-ohouse">오늘의집 확인 →</a>
         </div>
         ${altCompareItem ? `
           <button type="button" id="sheet-alt-compare-btn" class="btn-alt-compare">
-            ⚖️ '${escapeHtml(altCompareItem.name)}'과 A vs B 바로 비교 →
+            ⚖️ '${escapeHtml(altCompareItem.name)}'과 A vs B 비교 →
           </button>
         ` : ''}
         ${urls.hasCoupangAffiliate ? `<p class="ftc-affiliate-note">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
@@ -3056,14 +3329,18 @@ function openDetailSheet(item) {
         </div>
       </div>
 
-      ${item.reviewPulse ? `
+      ${item.tierLadder ? `
         <div class="deep-block">
-          <strong class="deep-sec-title">마켓 리뷰 편향 · 별점 함정 분석</strong>
-          <div class="deep-trap-box">
-            <div class="deep-trap-meta">${escapeHtml(item.reviewPulse.market)} · ${escapeHtml(item.reviewPulse.ratingSummary)}</div>
-            <div class="deep-trap-row"><strong>호평 요인</strong><span>${escapeHtml(item.reviewPulse.praised)}</span></div>
-            <div class="deep-trap-row"><strong>중복 불만</strong><span>${escapeHtml(item.reviewPulse.repeatedComplaint)}</span></div>
-            <div class="deep-trap-note">${escapeHtml(item.reviewPulse.trapNote)}</div>
+          <strong class="deep-sec-title">예산 · 사용 목적별 선택 기준</strong>
+          <div class="tier-ladder-box">
+            <div class="tier-step">
+              <span class="tier-tag">가성비 우선 기준</span>
+              <strong>${escapeHtml(item.tierLadder.budget)}</strong>
+            </div>
+            <div class="tier-step is-ref">
+              <span class="tier-tag">오래 쓰는 기준 모델</span>
+              <strong>${escapeHtml(item.tierLadder.reference)}</strong>
+            </div>
           </div>
         </div>
       ` : ''}
@@ -3073,31 +3350,15 @@ function openDetailSheet(item) {
           <strong class="deep-sec-title">유튜브 · 전문가 출처 검증</strong>
           <div class="deep-trap-box">
             <div class="deep-trap-row"><strong>언급 출처</strong><span>${escapeHtml(item.creatorPick.source)}</span></div>
-            <div class="deep-trap-row"><strong>협찬 여부</strong><span>${item.creatorPick.sponsored === false ? '유료광고 미포함·실사용 기반' : '유료광고/협찬 포함 여부 확인 필요'}</span></div>
-            ${item.creatorPick.crossCount ? `<div class="deep-trap-row"><strong>교차 검증</strong><span>다수 채널 ${item.creatorPick.crossCount}곳 이상 공통 언급</span></div>` : ''}
-          </div>
-        </div>
-      ` : ''}
-
-      ${item.tierLadder ? `
-        <div class="deep-block">
-          <strong class="deep-sec-title">등급 사다리 · 업그레이드 비교</strong>
-          <div class="tier-ladder-box">
-            <div class="tier-step">
-              <span class="tier-tag">실속 입문 기준</span>
-              <strong>${escapeHtml(item.tierLadder.budget)}</strong>
-            </div>
-            <div class="tier-step is-ref">
-              <span class="tier-tag">고관여 · 해외 종결급</span>
-              <strong>${escapeHtml(item.tierLadder.reference)}</strong>
-            </div>
+            <div class="deep-trap-row"><strong>협찬 여부</strong><span>${item.creatorPick.sponsored === false ? '유료광고 미포함 · 실사용 기반' : '유료광고·협찬 포함 여부 확인 필요'}</span></div>
+            ${item.creatorPick.crossCount ? `<div class="deep-trap-row"><strong>교차 검증</strong><span>독립 채널 ${item.creatorPick.crossCount}곳 이상에서 공통 언급</span></div>` : ''}
           </div>
         </div>
       ` : ''}
 
       ${(item.checks && item.checks.length) ? `
         <div class="deep-block">
-          <strong class="deep-sec-title">세부 실사용 체크리스트</strong>
+          <strong class="deep-sec-title">구매 전 꼭 확인할 체크리스트</strong>
           <ul class="deep-check-ul">
             ${item.checks.map((c) => `<li>${escapeHtml(c)}</li>`).join('')}
           </ul>
@@ -3233,7 +3494,7 @@ function buildSyntheticAnalysis(query) {
   const savedProfile = loadSavedRoomProfile();
 
   const rules = [
-    { match: /허니콤|종이|초저가|저가|1만원대|2만원대/, chip: '내구성·심재 주의', trouble: 3, good: '초기 입문 비용 부담이 적은 편', check: '속이 빈 허니콤·얇은 PB는 무거운 하중·재조립 시 파손 위험이 큼' },
+    { match: /허니콤|종이|초저가|저가|1만원대|2만원대/, chip: '내구성·심재 주의', trouble: 3, good: '초기 구매 비용 부담이 적은 편', check: '속이 빈 허니콤·얇은 PB는 무거운 하중·재조립 시 파손 위험이 큼' },
     { match: /시트지|필름|pb|mdf/, chip: '습기·까짐 주의', deposit: 1, trouble: 2, good: '깔끔한 외관과 합리적인 가격대', check: 'PVC 시트지는 물기·열기에 들뜨기 쉬우니 LPM 방수·원목 마감 여부 체크' },
     { match: /원목|고무나무|애쉬|오크|월넛/, chip: '원목 묵직·변형체크', dust: 1, good: '시트지 들뜸 없이 오래 쓰는 자연 질감', check: '온풍기·직사광선·뜨거운 냄비 바로 닿지 않게 받침대 사용 권장' },
     { match: /오픈|행거|선반|사다리|메쉬|와이어/, chip: '먼지 노출 관리', dust: 2, trouble: 1, good: '시야가 트여 좁은 방에서도 답답하지 않음', check: '오픈 구조라 2주 내 먼지·시각적 노이즈 누적 → 커버·불투명 박스 병행 추천' },
@@ -7223,6 +7484,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope90').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope91').catch(() => {});
   }
 }
