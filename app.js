@@ -22,11 +22,11 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope86';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope86';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope86';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope86';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope86';
+} from './data/app-data.js?v=nope87';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope87';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope87';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope87';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope87';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -639,7 +639,8 @@ function getHomeRotationItems(savedProfile, rotIdx = 0) {
   })
     .map((it) => {
       const toneBonus = savedProfile && Array.isArray(it.tones) && it.tones.includes(savedProfile.toneId) ? 6 : 0;
-      return { item: it, score: surveyFitBonus(it, savedProfile) + toneBonus };
+      const creatorBonus = it.creatorPick ? 4 : 0;
+      return { item: it, score: surveyFitBonus(it, savedProfile) + toneBonus + creatorBonus };
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, 12)
@@ -2242,32 +2243,35 @@ const THEME_MATCHERS = {
 
 const FILTER_GROUPS = [
   {
-    caption: '라이프스타일 테마',
+    caption: '6대 대분류',
     chips: [
+      { label: `전체 ${ITEMS_DB.length}종`, type: 'all', value: '전체' },
+      { label: '공간·가구', type: 'domain', value: ['책상·의자', '수납·행거', '소파·침대·매트'] },
+      { label: '데스크테리어', type: 'domain', value: ['데스크테리어'], keywords: /모니터암|라이트바|키보드|마우스|선반|멀티탭|독/ },
+      { label: '집 청소·세탁', type: 'domain', value: ['집청소·세탁'] },
+      { label: '욕실·구강', type: 'domain', value: ['무타공·욕실', '구강·욕실케어'] },
+      { label: '주방·소형가전', type: 'domain', value: ['식탁·주방·생활', '소형가전·주방'] },
+      { label: '조명·무드', type: 'domain', value: ['조명·거울'] }
+    ]
+  },
+  {
+    caption: '공신력 · 깊이 필터',
+    chips: [
+      { label: '전문가·유튜버 언급', type: 'proof', value: 'creator', isTheme: true },
+      { label: '협찬 제외·내돈내산', type: 'proof', value: 'organic', isTheme: true },
+      { label: '원천 스펙·종결 비교', type: 'proof', value: 'deep', isTheme: true },
       { label: '기존 가구 살리기', type: 'rescue', value: 'rescue', isTheme: true },
-      { label: '데스크테리어', type: 'theme', value: 'deskterior', isTheme: true },
-      { label: '플랜테리어', type: 'theme', value: 'planterior', isTheme: true },
-      { label: '홈카페·주방', type: 'theme', value: 'homecafe', isTheme: true },
-      { label: '침실·패브릭', type: 'theme', value: 'cozybed', isTheme: true },
-      { label: '틈새·초슬림', type: 'theme', value: 'gapstorage', isTheme: true },
       { label: '무타공·보증금', type: 'theme', value: 'nodrill', isTheme: true }
     ]
   },
   {
-    caption: '카테고리 · 브랜드',
+    caption: '브랜드',
     chips: [
-      { label: `전체 ${ITEMS_DB.length}종`, type: 'all', value: '전체' },
-      { label: '책상·의자', type: 'cat', value: '책상·의자' },
-      { label: '수납·행거', type: 'cat', value: '수납·행거' },
-      { label: '소파·침대·매트', type: 'cat', value: '소파·침대·매트' },
-      { label: '식탁·주방·생활', type: 'cat', value: '식탁·주방·생활' },
-      { label: '조명·거울', type: 'cat', value: '조명·거울' },
-      { label: '무타공·욕실', type: 'cat', value: '무타공·욕실' },
       { label: '이케아', type: 'brand', value: 'IKEA' },
       { label: '한샘·리바트·일룸', type: 'brand', value: 'HANSSEM|LIVART|ILOOM' },
       { label: '두닷·데스커·에이픽스', type: 'brand', value: 'DODOT|DESKER|APIX|SOFSYS' },
-      { label: '마켓비·룸앤홈·무지', type: 'brand', value: 'MARKETB|ROOMNHOME|MUJI' },
-      { label: '국내·리빙·조명', type: 'brand', value: '오늘의집|쿠팡|삼익|레이디|동서|웰퍼니|에몬스|보루네오|지누스|슬로우|몽제|까사미아|왕자|다이소|3M|제닉스|시디즈|시크릿|클라우드|린백|LEXON|ILKW|LIVING|DECO|SOODAM|EKO|LOUNGE|RARERAW|WANGJA|LUNARLAB|SIZEOF|DUOBACK|HERMAN|TP-LINK|PHILIPS|OSRAM|DAELIM|KYUNGDONG|LOCKNLOCK|SHINIL|XIAOMI|WINIX|CUCKOO|NB|LUNA|USM' }
+      { label: '무인양품·마켓비·룸앤홈', type: 'brand', value: 'MARKETB|ROOMNHOME|MUJI' },
+      { label: '해외·테크·케어 브랜드', type: 'brand', value: 'BenQ|Ergotron|Logitech|Keychron|CalDigit|CURAPROX|MARVIS|GSK|CAREPOD|KARCHER|XIAOMI|3M|LEXON|HERMAN' }
     ]
   }
 ];
@@ -2456,7 +2460,7 @@ function getPersonalFitAlerts(item, rawProfile) {
     });
   }
 
-  if (savedProfile.smallWasher && /세탁기\s*불가|세탁\s*불가|9~10kg|비분리/.test(txt)) {
+  if (savedProfile.smallWasher && /러그|이불|커튼|소파|매트리스|토퍼|수건/.test(`${item.name || ''} ${item.category || ''}`) && /세탁기\s*불가|세탁\s*불가|9~10kg|비분리/.test(txt)) {
     alerts.push({
       tone: 'danger',
       shortBadge: '9kg 이하 세탁기: 통세탁 불가',
@@ -2464,11 +2468,19 @@ function getPersonalFitAlerts(item, rawProfile) {
     });
   }
 
-  if (savedProfile.heavyDeskLoad && /허니콤|종이\s*벌집|모니터암\s*금지|라그캅텐|린몬/.test(txt)) {
+  if (savedProfile.heavyDeskLoad && /허니콤|종이\s*벌집|모니터암\s*금지|라그캅텐|린몬|가운데\s*휨|3~4mm\s*투명\s*아크릴|고개\s*숙임/.test(txt)) {
     alerts.push({
       tone: 'danger',
-      shortBadge: '모니터암 사용: 상판 함몰 위험',
-      detail: '모니터암 클램프 하중이 한 곳에 몰리면 속 빈 벌집 상판은 그대로 찌그러지거나 뚫릴 수 있습니다.'
+      shortBadge: '데스크 셋업: 하중·처짐 위험',
+      detail: '모니터암 클램프 하중이나 모니터 무게가 몰리면 상판 꺼짐·처짐이 발생할 수 있는 스펙입니다.'
+    });
+  }
+
+  if (savedProfile.hasAllergy && /진동자.*세척\s*불가|세균\s*분무|코튼\s*필터/.test(txt)) {
+    alerts.push({
+      tone: 'danger',
+      shortBadge: '비염·호흡기: 위생 세척 주의',
+      detail: '물통·진동자 내부 세척이 막힌 구조는 비염·호흡기 예민 환경에 불리하니 통세척 스텐 구조를 권장합니다.'
     });
   }
 
@@ -2483,8 +2495,8 @@ function getPersonalFitAlerts(item, rawProfile) {
   if (alerts.length === 0 && item.verdict === 'PASS') {
     alerts.push({
       tone: 'safe',
-      shortBadge: '✓ 내 방 조건 적합',
-      detail: '입력하신 30문항 방 크기·바닥·벽지·관리 조건에 무리 없이 들이기 좋은 스펙입니다.'
+      shortBadge: '✓ 내 조건 적합',
+      detail: '입력하신 내 방·생활 조건에 무리 없이 잘 맞는 스펙입니다.'
     });
   }
 
@@ -2649,6 +2661,9 @@ function renderYukaCard(item) {
   const savedProfile = loadSavedRoomProfile();
   const fitAlerts = getPersonalFitAlerts(item, savedProfile);
   const topAlert = fitAlerts[0];
+  const proofBadge = item.creatorPick && item.creatorPick.source
+    ? `<span class="card-proof-tag">${escapeHtml(item.creatorPick.source)}${item.creatorPick.sponsored === false ? ' · 비협찬' : ''}</span>`
+    : '';
   return `
     <button class="yuka-card ${cardStateCls}" data-item-id="${escapeHtml(item.id)}">
       <div class="yuka-top">
@@ -2657,6 +2672,7 @@ function renderYukaCard(item) {
       </div>
       <div class="yuka-title">${escapeHtml(item.name)}</div>
       <p class="yuka-oneliner">${escapeHtml(item.oneLiner)}</p>
+      ${proofBadge}
       ${topAlert ? `<div class="yuka-fit-pill is-${topAlert.tone}">${escapeHtml(topAlert.shortBadge)}</div>` : ''}
     </button>
   `;
@@ -2815,6 +2831,14 @@ function openDetailSheet(item) {
   const canRescue = !isPass;
   const rescuePatch = canRescue ? buildItemRescuePatch(item) : null;
   const altCompareItem = canRescue ? resolveAltCompareItem(item) : null;
+  const deepRows = Array.isArray(item.deepSpecs) && item.deepSpecs.length
+    ? item.deepSpecs
+    : [
+        { k: '분류 · 가격대', v: `${item.category} · ${item.priceTier}` },
+        { k: '핵심 특성', v: (item.chips || []).join(' · ') || '일반 스펙' },
+        { k: '주요 점검 포인트', v: checkLine || item.oneLiner },
+        ...(item.checks && item.checks[0] ? [{ k: '실사용 검증 메모', v: item.checks[0] }] : [])
+      ];
 
   sheetPanel.innerHTML = `
     <div class="sheet-grabber" aria-hidden="true"></div>
@@ -2830,175 +2854,275 @@ function openDetailSheet(item) {
       </div>
     </div>
 
-    <div class="score-trio">
-      <div class="score-pill"><span class="score-lbl">먼지</span><strong class="${dustCls}">${item.specs.dust}/5</strong></div>
-      <div class="score-pill"><span class="score-lbl">복구</span><strong class="${depCls}">${item.specs.deposit}/5</strong></div>
-      <div class="score-pill"><span class="score-lbl">수명</span><strong class="${trbCls}">${item.specs.trouble}/5</strong></div>
+    <div class="seed-segmented" id="sheet-depth-seg" role="tablist" aria-label="상세 보기 깊이 선택">
+      <button type="button" class="seed-seg-btn active" data-sheet-depth="summary">요약 · 구매</button>
+      <button type="button" class="seed-seg-btn" data-sheet-depth="deep">스펙 · 리뷰 해부</button>
     </div>
 
-    <div class="sheet-why-box ${whyBoxCls}">
-      <p class="sheet-why-sentence">${escapeHtml(whySentence)}</p>
-    </div>
+    <div id="sheet-panel-summary">
+      <div class="score-trio">
+        <div class="score-pill"><span class="score-lbl">관리·먼지</span><strong class="${dustCls}">${item.specs.dust}/5</strong></div>
+        <div class="score-pill"><span class="score-lbl">복구·주의</span><strong class="${depCls}">${item.specs.deposit}/5</strong></div>
+        <div class="score-pill"><span class="score-lbl">수명·부담</span><strong class="${trbCls}">${item.specs.trouble}/5</strong></div>
+      </div>
 
-    ${savedProfile && fitAlerts.length ? `
-      <div class="sheet-fit-box is-${fitAlerts[0].tone}">
-        <div class="sheet-fit-head">
-          <strong>${savedProfile.nickname ? `${escapeHtml(savedProfile.nickname)}님 방 조건 체크` : '내 방 조건 체크'}</strong>
-          <span>${escapeHtml(savedProfile.pyeongLabel || '원룸')}</span>
+      <div class="sheet-why-box ${whyBoxCls}">
+        <p class="sheet-why-sentence">${escapeHtml(whySentence)}</p>
+      </div>
+
+      ${(item.creatorPick || item.reviewPulse) ? `
+        <div class="sheet-proof-box">
+          ${item.creatorPick ? `
+            <div class="sheet-proof-line">
+              <span class="sheet-proof-badge ${item.creatorPick.sponsored === false ? 'is-clean' : ''}">출처</span>
+              <span>${escapeHtml(item.creatorPick.source)}${item.creatorPick.sponsored === false ? ' (비협찬 확인)' : ''}${item.creatorPick.crossCount > 1 ? ` · 교차 언급 ${item.creatorPick.crossCount}곳` : ''}</span>
+            </div>
+          ` : ''}
+          ${item.reviewPulse ? `
+            <div class="sheet-proof-line">
+              <span class="sheet-proof-badge">요약</span>
+              <span><strong>${escapeHtml(item.reviewPulse.market)}:</strong> ${escapeHtml(item.reviewPulse.repeatedComplaint || item.reviewPulse.ratingSummary)}</span>
+            </div>
+          ` : ''}
         </div>
-        <div class="sheet-fit-list">
-          ${fitAlerts.slice(0, 2).map((al) => `
-            <div class="sheet-fit-row">
-              <span class="fit-dot is-${al.tone}"></span>
-              <div>
-                <strong>${escapeHtml(al.shortBadge.replace(/^내 방 체크:\s*/, ''))}</strong>
-                <p>${escapeHtml(al.detail)}</p>
+      ` : ''}
+
+      ${savedProfile && fitAlerts.length ? `
+        <div class="sheet-fit-box is-${fitAlerts[0].tone}">
+          <div class="sheet-fit-head">
+            <strong>${savedProfile.nickname ? `${escapeHtml(savedProfile.nickname)}님 조건 체크` : '내 조건 체크'}</strong>
+            <span>${escapeHtml(savedProfile.pyeongLabel || '원룸')}</span>
+          </div>
+          <div class="sheet-fit-list">
+            ${fitAlerts.slice(0, 2).map((al) => `
+              <div class="sheet-fit-row">
+                <span class="fit-dot is-${al.tone}"></span>
+                <div>
+                  <strong>${escapeHtml(al.shortBadge.replace(/^내 방 체크:\s*/, ''))}</strong>
+                  <p>${escapeHtml(al.detail)}</p>
+                </div>
               </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : `
+        <button type="button" id="sheet-fit-nudge-btn" class="sheet-fit-nudge">
+          <span>내 방 크기·공구·월세 조건 등록하면 맞춤 경고를 띄워드려요</span>
+          <strong>1분 등록 →</strong>
+        </button>
+      `}
+
+      ${(() => {
+        const showGood = Boolean(goodLine && goodLine.trim() && goodLine.trim() !== whySentence.trim());
+        const showCheck = Boolean(checkLine && checkLine.trim() && checkLine.trim() !== whySentence.trim() && checkLine.trim() !== goodLine.trim());
+        if (!showGood && !showCheck) return '';
+        return `
+          <div class="sheet-brief-box">
+            ${showGood ? `<div class="sheet-brief-row"><span class="brief-badge is-good">장점</span><span>${escapeHtml(goodLine)}</span></div>` : ''}
+            ${showCheck ? `<div class="sheet-brief-row"><span class="brief-badge ${secondBadgeCls}">${secondBadgeText}</span><span>${escapeHtml(checkLine)}</span></div>` : ''}
+          </div>
+        `;
+      })()}
+
+      <button type="button" id="sheet-extras-toggle" class="seed-disclosure-btn">
+        <span>궁합 아이템 · 숨은 비용 · 결과 공유 더보기</span>
+        <strong id="sheet-extras-arrow">열기 ▾</strong>
+      </button>
+
+      <div id="sheet-extras-body" class="seed-detail-extras hidden">
+        ${gapHint ? `
+          <div class="sheet-gap-hint">
+            <span class="sheet-gap-hint-badge">틈새 수납</span>
+            <span>${escapeHtml(gapHint)}</span>
+          </div>
+        ` : ''}
+
+        <div class="sheet-pair-section">
+          <div class="pair-head-row">
+            <strong class="pair-head-title">함께 두면 잘 맞는 아이템</strong>
+            <span class="pair-tone-badge">${escapeHtml(primaryTone)} 톤</span>
+          </div>
+          <div class="pair-grid">
+            ${pairedItems.map((p) => {
+              const pv = verdictMeta(p.verdict);
+              return `
+                <button class="pair-mini-card" data-pair-id="${escapeHtml(p.id)}">
+                  <div><span class="verdict-pill ${pv.cls}" style="font-size:10px;padding:2px 6px;">${pv.text}</span></div>
+                  <div class="pair-mini-title">${escapeHtml(p.name)}</div>
+                  <div class="pair-mini-meta">${escapeHtml(p.category)} · ${escapeHtml(p.priceTier)} →</div>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <div class="sheet-prep-box">
+          <div class="prep-head-row">
+            <strong class="prep-head-title">숨은 준비물 · 체감 비용</strong>
+            <span class="prep-cost-pill">${escapeHtml(prepInfo.totalCostLine)}</span>
+          </div>
+          <div class="prep-kit-list">
+            ${prepInfo.kits.map((kit) => {
+              const kitUrls = buildShopUrls(kit.keyword);
+              return `
+                <div class="prep-kit-row">
+                  <div class="prep-kit-info">
+                    <strong>${escapeHtml(kit.title)}</strong>
+                    <span class="prep-kit-price">${escapeHtml(kit.estCost)}</span>
+                  </div>
+                  <div class="prep-kit-links">
+                    <a href="${kitUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill is-primary-shop">쿠팡 보기 →</a>
+                    <a href="${kitUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">오늘의집 →</a>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <div class="sheet-share-box">
+          <div class="sheet-share-head">
+            <strong>이 판독 결과 공유하기</strong>
+          </div>
+          <div class="sheet-share-row">
+            <button type="button" id="sheet-copy-share-btn" class="btn-share-chip is-kakao">${KAKAO_LOGO_SVG}<span>카톡 공유</span></button>
+            <button type="button" id="sheet-story-share-btn" class="btn-share-chip is-story">${INSTA_LOGO_SVG}<span>인스타 스토리</span></button>
+          </div>
+        </div>
+      </div>
+
+      ${canRescue ? `
+        <div class="sheet-solution-tabs" role="tablist" aria-label="해결 방식 선택">
+          <button type="button" class="sheet-solution-btn active" data-sol-tab="alt">새로 살 때: 추천 대안</button>
+          <button type="button" class="sheet-solution-btn" data-sol-tab="rescue">이미 내 방에 있어요 (보완법)</button>
+        </div>
+      ` : ''}
+
+      <div id="sheet-sol-alt" class="sheet-alt-box ${altBoxCls}">
+        <span class="sheet-alt-kicker">${altLabel}</span>
+        <strong class="sheet-alt-name">${escapeHtml(item.altName)}</strong>
+        <div class="dual-link-row">
+          <a href="${urls.coupang}" target="_blank" rel="noopener noreferrer" class="${primaryBtnCls}" style="padding:13px 12px;font-size:14px;font-weight:800;">쿠팡에서 보기 →</a>
+          <a href="${urls.ohouse}" target="_blank" rel="noopener noreferrer" class="btn-ohouse">오늘의집 보기 →</a>
+        </div>
+        ${altCompareItem ? `
+          <button type="button" id="sheet-alt-compare-btn" class="btn-alt-compare">
+            ⚖️ '${escapeHtml(altCompareItem.name)}'과 A vs B 바로 비교 →
+          </button>
+        ` : ''}
+        ${urls.hasCoupangAffiliate ? `<p class="ftc-affiliate-note">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
+      </div>
+
+      ${rescuePatch ? `
+        <div id="sheet-sol-rescue" class="sheet-rescue-box hidden">
+          <strong class="sheet-rescue-title">${escapeHtml(rescuePatch.symptom)}</strong>
+          <span class="sheet-rescue-saving">${escapeHtml(rescuePatch.costSaving)}</span>
+          <ul class="sheet-rescue-steps">
+            ${rescuePatch.steps.map((st) => `<li>${escapeHtml(st)}</li>`).join('')}
+          </ul>
+          <div class="prep-kit-list">
+            ${rescuePatch.kits.map((kit) => {
+              const kUrls = buildShopUrls(kit.keyword);
+              return `
+                <div class="prep-kit-row">
+                  <div class="prep-kit-info">
+                    <strong>${escapeHtml(kit.title)}</strong>
+                    <span class="prep-kit-price">${escapeHtml(kit.estCost)}</span>
+                  </div>
+                  <div class="prep-kit-links">
+                    <a href="${kUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill is-primary-shop">쿠팡 →</a>
+                    <a href="${kUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">오늘의집 →</a>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          ${AFFILIATE_CONFIG.coupangEnabled ? `<p class="ftc-affiliate-note" style="margin-top:8px;">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
+        </div>
+      ` : ''}
+    </div>
+
+    <div id="sheet-panel-deep" class="hidden">
+      <div class="deep-block">
+        <strong class="deep-sec-title">원천 스펙 · 소재/성분 검증</strong>
+        <div class="deep-spec-table">
+          ${deepRows.map((row) => `
+            <div class="deep-spec-row">
+              <span class="deep-spec-k">${escapeHtml(row.k)}</span>
+              <strong class="deep-spec-v">${escapeHtml(row.v)}</strong>
             </div>
           `).join('')}
         </div>
       </div>
-    ` : `
-      <button type="button" id="sheet-fit-nudge-btn" class="sheet-fit-nudge">
-        <span>내 방 크기·공구·월세 조건 등록하면 맞춤 경고를 띄워드려요</span>
-        <strong>1분 등록 →</strong>
-      </button>
-    `}
 
-    ${(() => {
-      const showGood = Boolean(goodLine && goodLine.trim() && goodLine.trim() !== whySentence.trim());
-      const showCheck = Boolean(checkLine && checkLine.trim() && checkLine.trim() !== whySentence.trim() && checkLine.trim() !== goodLine.trim());
-      if (!showGood && !showCheck) return '';
-      return `
-        <div class="sheet-brief-box">
-          ${showGood ? `<div class="sheet-brief-row"><span class="brief-badge is-good">GOOD</span><span>${escapeHtml(goodLine)}</span></div>` : ''}
-          ${showCheck ? `<div class="sheet-brief-row"><span class="brief-badge ${secondBadgeCls}">${secondBadgeText}</span><span>${escapeHtml(checkLine)}</span></div>` : ''}
-        </div>
-      `;
-    })()}
-
-    <button type="button" id="sheet-extras-toggle" class="seed-disclosure-btn">
-      <span>궁합 가구 · 숨은 비용 · 결과 공유 더보기</span>
-      <strong id="sheet-extras-arrow">열기 ▾</strong>
-    </button>
-
-    <div id="sheet-extras-body" class="seed-detail-extras hidden">
-      ${gapHint ? `
-        <div class="sheet-gap-hint">
-          <span class="sheet-gap-hint-badge">1초 틈새</span>
-          <span>${escapeHtml(gapHint)}</span>
+      ${item.reviewPulse ? `
+        <div class="deep-block">
+          <strong class="deep-sec-title">마켓 리뷰 편향 · 별점 함정 분석</strong>
+          <div class="deep-trap-box">
+            <div class="deep-trap-meta">${escapeHtml(item.reviewPulse.market)} · ${escapeHtml(item.reviewPulse.ratingSummary)}</div>
+            <div class="deep-trap-row"><strong>호평 요인</strong><span>${escapeHtml(item.reviewPulse.praised)}</span></div>
+            <div class="deep-trap-row"><strong>중복 불만</strong><span>${escapeHtml(item.reviewPulse.repeatedComplaint)}</span></div>
+            <div class="deep-trap-note">${escapeHtml(item.reviewPulse.trapNote)}</div>
+          </div>
         </div>
       ` : ''}
 
-      <div class="sheet-pair-section">
-        <div class="pair-head-row">
-          <strong class="pair-head-title">함께 두면 어울리는 궁합 가구</strong>
-          <span class="pair-tone-badge">${escapeHtml(primaryTone)} 톤</span>
+      ${item.creatorPick ? `
+        <div class="deep-block">
+          <strong class="deep-sec-title">유튜브 · 전문가 출처 검증</strong>
+          <div class="deep-trap-box">
+            <div class="deep-trap-row"><strong>언급 출처</strong><span>${escapeHtml(item.creatorPick.source)}</span></div>
+            <div class="deep-trap-row"><strong>협찬 여부</strong><span>${item.creatorPick.sponsored === false ? '유료광고 미포함·실사용 기반' : '유료광고/협찬 포함 여부 확인 필요'}</span></div>
+            ${item.creatorPick.crossCount ? `<div class="deep-trap-row"><strong>교차 검증</strong><span>다수 채널 ${item.creatorPick.crossCount}곳 이상 공통 언급</span></div>` : ''}
+          </div>
         </div>
-        <div class="pair-grid">
-          ${pairedItems.map((p) => {
-            const pv = verdictMeta(p.verdict);
-            return `
-              <button class="pair-mini-card" data-pair-id="${escapeHtml(p.id)}">
-                <div><span class="verdict-pill ${pv.cls}" style="font-size:10px;padding:2px 6px;">${pv.text}</span></div>
-                <div class="pair-mini-title">${escapeHtml(p.name)}</div>
-                <div class="pair-mini-meta">${escapeHtml(p.category)} · ${escapeHtml(p.priceTier)} →</div>
-              </button>
-            `;
-          }).join('')}
-        </div>
-      </div>
-
-      <div class="sheet-prep-box">
-        <div class="prep-head-row">
-          <strong class="prep-head-title">숨은 준비물 · 체감 비용</strong>
-          <span class="prep-cost-pill">${escapeHtml(prepInfo.totalCostLine)}</span>
-        </div>
-        <div class="prep-kit-list">
-          ${prepInfo.kits.map((kit) => {
-            const kitUrls = buildShopUrls(kit.keyword);
-            return `
-              <div class="prep-kit-row">
-                <div class="prep-kit-info">
-                  <strong>${escapeHtml(kit.title)}</strong>
-                  <span class="prep-kit-price">${escapeHtml(kit.estCost)}</span>
-                </div>
-                <div class="prep-kit-links">
-                  <a href="${kitUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill is-primary-shop">쿠팡 보기 →</a>
-                  <a href="${kitUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">오늘의집 →</a>
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-
-      <div class="sheet-share-box">
-        <div class="sheet-share-head">
-          <strong>이 판독 결과 공유하기</strong>
-        </div>
-        <div class="sheet-share-row">
-          <button type="button" id="sheet-copy-share-btn" class="btn-share-chip is-kakao">${KAKAO_LOGO_SVG}<span>카톡 공유</span></button>
-          <button type="button" id="sheet-story-share-btn" class="btn-share-chip is-story">${INSTA_LOGO_SVG}<span>인스타 스토리</span></button>
-        </div>
-      </div>
-    </div>
-
-    ${canRescue ? `
-      <div class="sheet-solution-tabs" role="tablist" aria-label="해결 방식 선택">
-        <button type="button" class="sheet-solution-btn active" data-sol-tab="alt">새로 살 때: 추천 대안</button>
-        <button type="button" class="sheet-solution-btn" data-sol-tab="rescue">이미 내 방에 있어요 (보완법)</button>
-      </div>
-    ` : ''}
-
-    <div id="sheet-sol-alt" class="sheet-alt-box ${altBoxCls}">
-      <span class="sheet-alt-kicker">${altLabel}</span>
-      <strong class="sheet-alt-name">${escapeHtml(item.altName)}</strong>
-      <div class="dual-link-row">
-        <a href="${urls.coupang}" target="_blank" rel="noopener noreferrer" class="${primaryBtnCls}" style="padding:13px 12px;font-size:14px;font-weight:800;">쿠팡에서 보기 →</a>
-        <a href="${urls.ohouse}" target="_blank" rel="noopener noreferrer" class="btn-ohouse">오늘의집 보기 →</a>
-      </div>
-      ${altCompareItem ? `
-        <button type="button" id="sheet-alt-compare-btn" class="btn-alt-compare">
-          ⚖️ '${escapeHtml(altCompareItem.name)}'과 A vs B 바로 비교 →
-        </button>
       ` : ''}
-      ${urls.hasCoupangAffiliate ? `<p class="ftc-affiliate-note">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
-    </div>
 
-    ${rescuePatch ? `
-      <div id="sheet-sol-rescue" class="sheet-rescue-box hidden">
-        <strong class="sheet-rescue-title">${escapeHtml(rescuePatch.symptom)}</strong>
-        <span class="sheet-rescue-saving">${escapeHtml(rescuePatch.costSaving)}</span>
-        <ul class="sheet-rescue-steps">
-          ${rescuePatch.steps.map((st) => `<li>${escapeHtml(st)}</li>`).join('')}
-        </ul>
-        <div class="prep-kit-list">
-          ${rescuePatch.kits.map((kit) => {
-            const kUrls = buildShopUrls(kit.keyword);
-            return `
-              <div class="prep-kit-row">
-                <div class="prep-kit-info">
-                  <strong>${escapeHtml(kit.title)}</strong>
-                  <span class="prep-kit-price">${escapeHtml(kit.estCost)}</span>
-                </div>
-                <div class="prep-kit-links">
-                  <a href="${kUrls.coupang}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill is-primary-shop">쿠팡 →</a>
-                  <a href="${kUrls.ohouse}" target="_blank" rel="noopener noreferrer" class="tip-shop-pill">오늘의집 →</a>
-                </div>
-              </div>
-            `;
-          }).join('')}
+      ${item.tierLadder ? `
+        <div class="deep-block">
+          <strong class="deep-sec-title">등급 사다리 · 업그레이드 비교</strong>
+          <div class="tier-ladder-box">
+            <div class="tier-step">
+              <span class="tier-tag">실속 입문 기준</span>
+              <strong>${escapeHtml(item.tierLadder.budget)}</strong>
+            </div>
+            <div class="tier-step is-ref">
+              <span class="tier-tag">고관여 · 해외 종결급</span>
+              <strong>${escapeHtml(item.tierLadder.reference)}</strong>
+            </div>
+          </div>
         </div>
-        ${AFFILIATE_CONFIG.coupangEnabled ? `<p class="ftc-affiliate-note" style="margin-top:8px;">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
-      </div>
-    ` : ''}
+      ` : ''}
+
+      ${(item.checks && item.checks.length) ? `
+        <div class="deep-block">
+          <strong class="deep-sec-title">세부 실사용 체크리스트</strong>
+          <ul class="deep-check-ul">
+            ${item.checks.map((c) => `<li>${escapeHtml(c)}</li>`).join('')}
+          </ul>
+        </div>
+      ` : ''}
+    </div>
   `;
 
   sheetBackdrop.classList.remove('hidden');
   syncBodyScrollLock();
   sheetPanel.scrollTop = 0;
   document.getElementById('close-sheet-btn').addEventListener('click', closeDetailSheet);
+  const depthSegBtns = sheetPanel.querySelectorAll('#sheet-depth-seg [data-sheet-depth]');
+  depthSegBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const targetDepth = btn.dataset.sheetDepth;
+      depthSegBtns.forEach((b) => b.classList.toggle('active', b === btn));
+      const sumPanel = document.getElementById('sheet-panel-summary');
+      const deepPanel = document.getElementById('sheet-panel-deep');
+      if (sumPanel) sumPanel.classList.toggle('hidden', targetDepth !== 'summary');
+      if (deepPanel) deepPanel.classList.toggle('hidden', targetDepth !== 'deep');
+      if (targetDepth === 'deep') {
+        trackEvent('deep_spec_open', { id: item.id, category: item.category });
+      }
+    });
+  });
   const extrasToggleBtn = document.getElementById('sheet-extras-toggle');
   if (extrasToggleBtn) {
     let extrasOpen = false;
@@ -3085,12 +3209,16 @@ sheetBackdrop.addEventListener('click', (e) => {
 
 function inferCategoryFromQuery(lowerCompact) {
   const map = [
+    { cat: '데스크테리어', rx: /모니터암|라이트바|스크린바|키보드|마우스|썬더볼트|허브|독|벤큐|어고트론|키크론|로지텍|칼디짓/ },
+    { cat: '집청소·세탁', rx: /과탄산|구연산|곰팡이|세탁세제|세제|매직블럭|돌돌이|스팀청소기|얼룩|청소|표백|물때/ },
+    { cat: '구강·욕실케어', rx: /치약|칫솔|불소|구강|가글|샤워기|필터|수건|타월|거치대/ },
+    { cat: '소형가전·주방', rx: /가습기|청정기|제습기|전기포트|주전자|프라이팬|도마|에어프라이어|서큘레이터|음식물/ },
     { cat: '책상·의자', rx: /책상|데스크|의자|체어|모니터|타공판|멀티탭|전선|좌식|스탠딩/ },
     { cat: '수납·행거', rx: /행거|옷장|드레스룸|서랍|선반|책장|수납|리빙박스|정리함|압축팩|건조대|옷걸이|캐비닛|트롤리/ },
     { cat: '소파·침대·매트', rx: /소파|카우치|빈백|스툴|오토만|침대|프레임|깔판|매트리스|토퍼|이불|베개|쿠션|러그|카페트|탄소매트|전기매트/ },
-    { cat: '식탁·주방·생활', rx: /식탁|테이블|아일랜드|홈바|렌지대|밥솥|주방|싱크대|식기|음식물|휴지통|냉장고|가습기|서큘레이터|청정기|제습기|청소기|홈카페/ },
+    { cat: '식탁·주방·생활', rx: /식탁|테이블|아일랜드|홈바|렌지대|밥솥|주방|싱크대|식기|휴지통|냉장고|청소기|홈카페/ },
     { cat: '조명·거울', rx: /조명|무드등|스탠드|램프|전구|거울|미러|협탁|사이드테이블|선셋|센서등/ },
-    { cat: '무타공·욕실', rx: /무타공|꼭꼬핀|코맨드|커튼|블라인드|롤스크린|욕실|샤워기|변기|수건|발매트|규조토|스퀴지|배수구|문풍지|현관|도어|디퓨저|시트지|포스터/ }
+    { cat: '무타공·욕실', rx: /무타공|꼭꼬핀|코맨드|커튼|블라인드|롤스크린|욕실|변기|발매트|규조토|스퀴지|배수구|문풍지|현관|도어|디퓨저|시트지|포스터/ }
   ];
   const hit = map.find((m) => m.rx.test(lowerCompact));
   return hit ? hit.cat : '자취 가구·소품';
@@ -3227,6 +3355,14 @@ function findDirectAndSimilarItems(rawQuery) {
     } else if (!q && f && f.type === 'brand') {
       const brands = f.value.split('|');
       if (!brands.some((b) => item.brand.includes(b))) return false;
+    } else if (!q && f && f.type === 'domain') {
+      const catMatch = Array.isArray(f.value) && f.value.includes(item.category);
+      const kwMatch = f.keywords && f.keywords.test(getItemSearchableText(item));
+      if (!catMatch && !kwMatch) return false;
+    } else if (!q && f && f.type === 'proof') {
+      if (f.value === 'creator' && !item.creatorPick) return false;
+      if (f.value === 'organic' && !(item.creatorPick && item.creatorPick.sponsored === false)) return false;
+      if (f.value === 'deep' && !(item.deepSpecs || item.tierLadder)) return false;
     } else if (!q && f && f.type === 'cat') {
       if (item.category !== f.value) return false;
     } else if (!q && f && f.type === 'theme') {
@@ -7073,6 +7209,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope86').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope87').catch(() => {});
   }
 }

@@ -25,7 +25,21 @@ export const ITEMS_DB = [
     goodLine: '3~7만 원대 가벼운 자취 입문 가격',
     checkLine: '속이 빈 벌집 심재라 모니터암 조이면 함몰',
     altName: '두닷 콰트로 / 데스커 (E0 풀판+스틸프레임)',
-    altSearchKeyword: '두닷 콰트로 책상 1200'
+    altSearchKeyword: '두닷 콰트로 책상 1200',
+    creatorPick: { source: '데스크테리어 채널 주의 품목 다수 언급', sponsored: false, crossCount: 4 },
+    reviewPulse: {
+      market: '오늘의집 · 이케아',
+      ratingSummary: '별점 높지만 단기 가벼운 사용 위주 후기 비중 높음',
+      praised: '가볍고 가격이 싸서 당장 놓고 쓰기 좋음',
+      repeatedComplaint: '모니터암·무거운 본체 올린 뒤 수개월 내 상판 꺼짐·흔들림 중복 지적',
+      trapNote: '가벼운 노트북 위주 후기 별점이 높아 데스크 셋업용으로 오해하기 쉬움'
+    },
+    deepSpecs: [
+      { k: '상판 심재', v: '종이 벌집(허니콤) 보드' },
+      { k: '표면재', v: '아크릴·포일 도장 (모서리 찍힘 취약)' },
+      { k: '모니터암 적합성', v: '비추천 (클램프 국소 압력 함몰)' }
+    ],
+    tierLadder: { budget: '두닷 콰트로 18T E0 풀판 (10만 대)', reference: '데스커 · 모션데스크 풀판 스틸 프레임' }
   },
   {
     id: 'dodot-quattro',
@@ -55,7 +69,21 @@ export const ITEMS_DB = [
     goodLine: 'E0 풀판+스틸 프레임으로 모니터암 안정적',
     checkLine: '묵직한 반제품이라 전동드릴 조립 권장',
     altName: '두닷 콰트로 에어 (모서리 라운드 마감)',
-    altSearchKeyword: '두닷 콰트로 에어 책상'
+    altSearchKeyword: '두닷 콰트로 에어 책상',
+    creatorPick: { source: '가성비 데스크셋업 유튜버 다수 추천', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '오늘의집 · 쿠팡',
+      ratingSummary: '실사용자 장기 만족도 높은 입문 표준 책상',
+      praised: '이 가격대에서 흔들림이 적고 모니터암이 튼튼히 물림',
+      repeatedComplaint: '상자 무게·나사 조립 피로도 및 엣지 마감 호불호 중복 언급',
+      trapNote: '성능은 검증됐으나 전동드릴 유무·이사 잦은 환경 여부를 먼저 따져야 함'
+    },
+    deepSpecs: [
+      { k: '상판 심재 · 등급', v: '18T E0 파티클보드(풀판)' },
+      { k: '표면 마감', v: 'LPM 저압 멜라민 (스크래치·열 방어 양호)' },
+      { k: '하부 프레임', v: '스틸 사각 파이프 + 수평 조절 글라이드' }
+    ],
+    tierLadder: { budget: '두닷 콰트로 (9~16만 · 가성비 기준)', reference: '데스커 28T 또는 어고트론 모션데스크' }
   },
   {
     id: 'desker-desk',
@@ -86,7 +114,21 @@ export const ITEMS_DB = [
     goodLine: 'E0 풀판과 스틸 다리로 흔들림 없는 기본기',
     checkLine: '우드 상판 요철 있어 필기 시 매트 추천',
     altName: '데스커 화이트 기본 상판 + 멀티탭 배선트레이',
-    altSearchKeyword: '데스커 컴퓨터 데스크 화이트'
+    altSearchKeyword: '데스커 컴퓨터 데스크 화이트',
+    creatorPick: { source: 'IT·데스크테리어 유튜버 다수 장기 실사용 언급', sponsored: false, crossCount: 5 },
+    reviewPulse: {
+      market: '오늘의집 · 브랜드몰',
+      ratingSummary: '고연령·장기 재택 유저까지 재구매율 높은 스테디셀러',
+      praised: '28T 두꺼운 상판·기사 시공·흔들림 없는 내구성',
+      repeatedComplaint: '우드 상판 미세 요철과 배선트레이 간섭 주의',
+      trapNote: '예산이 허락하면 입문 책상 2번 바꾸는 비용을 아끼는 구간'
+    },
+    deepSpecs: [
+      { k: '상판 두께 · 등급', v: '28T E0 등급 LPM 상판 (모니터암 넉넉)' },
+      { k: '시공 방식', v: '전문 기사 방문 설치 옵션 지원' },
+      { k: '하중 · 구조', v: '스틸 H-프레임 보강대 내장' }
+    ],
+    tierLadder: { budget: '두닷 콰트로 (9~16만)', reference: '데스커 모션데스크 / 스틸케이스·허먼밀러' }
   },
   {
     id: 'ikea-trotten',
@@ -1735,7 +1777,21 @@ export const ITEMS_DB = [
     goodLine: '포근한 발 촉감과 인테리어 분위기 전환 효과',
     checkLine: '긴 털 먼지 청소 지옥+난방 시 뒷면 장판 변색',
     altName: '세탁기 들어가는 단모 워셔블 폴리 러그',
-    altSearchKeyword: '단모 워셔블 물세탁 러그'
+    altSearchKeyword: '단모 워셔블 물세탁 러그',
+    creatorPick: { source: '살림·반려동물 채널 비추천 단골 언급', sponsored: false, crossCount: 4 },
+    reviewPulse: {
+      market: '오늘의집 · 쿠팡',
+      ratingSummary: '구매 직후 인테리어 사진 별점 높으나 장기 후기 만족도 급락',
+      praised: '폭신한 촉감과 가성비 있는 분위기 전환',
+      repeatedComplaint: '털 빠짐·머리카락 엉킴·난방 후 뒷면 논슬립 도트 장판 착색 중복 지적',
+      trapNote: '첫날 찍은 포토 리뷰로 평점이 높지만 1개월 후 관리 포기 비율이 높음'
+    },
+    deepSpecs: [
+      { k: '파일(털) 길이', v: '20~40mm 장모 폴리' },
+      { k: '세탁기 허용', v: '원룸 9~10kg 세탁기 불가 (코인/세탁소행)' },
+      { k: '바닥재 주의', v: 'PVC 장판 보일러 열 가소제 변색 위험' }
+    ],
+    tierLadder: { budget: '단모 워셔블 폴리 러그 (2~3만)', reference: '파펠리나/사이잘룩 워셔블 직조 매트' }
   },
 
   // ==================== 4. 식탁 · 주방 · 생활가전/용품 (10종) ====================
@@ -2759,7 +2815,21 @@ export const ITEMS_DB = [
     goodLine: '습기에도 절대 안 떨어지고 녹 없는 무타공 304 스텐 선반',
     checkLine: '설치 위치(바닥~천장 또는 젠다이~천장) 높이 cm 먼저 재기',
     altName: '스텐304 기둥형 무타공 욕실 코너선반',
-    altSearchKeyword: '스텐304 무타공 압축봉 욕실 코너선반'
+    altSearchKeyword: '스텐304 무타공 압축봉 욕실 코너선반',
+    creatorPick: { source: '자취 살림 채널 무타공 필수템 언급', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '쿠팡 · 오늘의집',
+      ratingSummary: '흡착 선반 실패 후 갈아탄 실사용 만족 후기 중심',
+      praised: '습기 차도 안 떨어지고 샴푸 3~4통 올려도 튼튼함',
+      repeatedComplaint: 'SMC 천장 약한 집·높이 오차 미측정 시 고정 불량',
+      trapNote: '저가 크롬도금(201 스텐·철제)은 3개월 내 녹 발생하므로 SUS304 표기 필수 확인'
+    },
+    deepSpecs: [
+      { k: '권장 강종', v: 'SUS 304 (18-8 스테인리스 · 녹 방어)' },
+      { k: '고정 구조', v: '바닥-천장 스프링 압축 텐션' },
+      { k: '퇴실 복구', v: '벽면 손상 0% · 1분 철거' }
+    ],
+    tierLadder: { budget: 'SUS304 3~4단 압축선반 (2~4만)', reference: '심플휴먼(simplehuman) 텐션 샤워 캐디' }
   },
   {
     id: 'suction-corner-rack',
@@ -6764,5 +6834,1237 @@ export const ITEMS_DB = [
     checkLine: '방문 상단 틈새(1.5mm+)·두께(3.5~4cm) 실측과 스크래치 방지 완충 패드 유무 필수',
     altName: '완충 실리콘 패드 슬림 도어후크 1.2mm + 문 두께 맞춤 스페이서',
     altSearchKeyword: '초슬림 문걸이 도어후크 기스방지 패드'
+  },
+
+  // ==================== 7. 데스크테리어 · 장비 (8종: 국내·해외 레퍼런스) ====================
+  {
+    id: 'benq-screenbar-halo',
+    brand: 'BenQ',
+    name: '벤큐 스크린바 헤일로(ScreenBar Halo) 모니터 조명',
+    category: '데스크테리어',
+    verdict: 'PASS',
+    priceTier: '20~24만 원대',
+    chips: ['비대칭 광학 화면 반사 0', 'CRI Ra>95', '무선 다이얼'],
+    oneLiner: '일반 저렴한 라이트바와 달리 모니터 화면에 빛이 반사되지 않는 비대칭 광학 설계의 데스크테리어 종결 조명.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '비대칭 광학 설계로 모니터 패널에 눈부심·글레어를 남기지 않고 책상 작업면만 균일하게 비춰줌',
+      '후면 무드 백라이트와 무선 로터리 다이얼 컨트롤러 덕분에 스탠드 밑공간 0cm로 감도와 실용성 모두 챙김'
+    ],
+    checks: [
+      '모니터 상단에 웹캠을 올려 쓰는 경우 전용 거치/간섭 여부 확인 필요',
+      '커브드(곡면) 모니터나 베젤이 두꺼운 구형 모니터는 클램프 호환 두께 범위 확인'
+    ],
+    tones: ['steel-modern', 'white-minimal', 'walnut-vintage'],
+    styles: ['모던·스틸', '깔끔 미니멀'],
+    pairIds: ['desker-desk', 'ergotron-lx-arm'],
+    goodLine: '화면 반사 0% 비대칭 광학 + 무선 다이얼 데스크테리어 종결 라이트바',
+    checkLine: '웹캠 간섭 및 무선 컨트롤러 AAA 배터리 소모 체크',
+    altName: '벤큐 스크린바 헤일로 또는 Pro (유선 일체형)',
+    altSearchKeyword: '벤큐 스크린바 헤일로',
+    creatorPick: { source: '데스크셋업·IT 유튜버 5곳 이상 레퍼런스 추천', sponsored: false, crossCount: 5 },
+    reviewPulse: {
+      market: '쿠팡 · 네이버 브랜드스토어',
+      ratingSummary: '가격 허들에도 불구하고 재구매·만족도 최상위',
+      praised: '화면 비침 없음·무선 다이얼 조작감·색온도 정밀 조절',
+      repeatedComplaint: '무선 다이얼 배터리 교체 주기 및 웹캠 동시 장착 시 균형 주의',
+      trapNote: '저가 유사품(3~5만 원대)은 광학 컷오프가 약해 화면에 빛이 비쳐 결국 끄게 되는 경우 다수'
+    },
+    deepSpecs: [
+      { k: '연색지수 · 색온도', v: 'CRI Ra > 95 · 2700K~6500K 무단 조절' },
+      { k: '조도 · 배광', v: '중앙 조도 800 Lux · 비대칭 컷오프 광학' },
+      { k: '전원 · 무게추', v: 'USB 5V 1.5A+ · 카운터밸런스 클램프' }
+    ],
+    tierLadder: { budget: '샤오미 미지아 라이트바 (4~5만 대 입문)', reference: 'BenQ ScreenBar Halo / Pro (종결)' }
+  },
+  {
+    id: 'baseus-lightbar-iwork',
+    brand: 'Baseus',
+    name: '베이스어스 i-wok 모니터 라이트바 (가성비 보급형)',
+    category: '데스크테리어',
+    verdict: 'WARN',
+    priceTier: '3~5만 원대',
+    chips: ['초기 입문 가성비', '모니터 반사 약간 있음', '곡면 호환 제한'],
+    oneLiner: '가벼운 입문용으로는 괜찮지만 광학 차광 각도가 완벽하지 않아 글레어 패널이나 커브드 모니터엔 빛 비침이 거슬림.',
+    specs: { dust: 1, deposit: 1, trouble: 2 },
+    pros: [
+      '3만 원대 부담 없는 가격으로 책상 위 스탠드 자리를 아끼면서 기본 조명을 확보할 수 있음'
+    ],
+    cautions: [
+      '구형 클램프 스프링 장력이 세거나 커브드·초슬림 OLED 베젤에 물릴 때 패널 압박·미끄러짐 보고 다수'
+    ],
+    checks: [
+      '빛이 모니터 화면에 반사되는지 작업 각도 확인 필요',
+      '저전력 USB 허브에 꽂으면 깜빡임·플리커가 생길 수 있으므로 5V 2A 단독 어댑터 권장'
+    ],
+    tones: ['steel-modern', 'white-minimal'],
+    styles: ['모던·스틸', '깔끔 미니멀'],
+    pairIds: ['dodot-quattro', 'nb-f80-arm'],
+    goodLine: '3~5만 원대 부담 없는 모니터 상단 거치 입문 라이트바',
+    checkLine: '화면 빛 반사 및 초슬림·커브드 모니터 클램프 압박 체크',
+    altName: '샤오미 미지아 라이트바 1S 또는 BenQ 스크린바',
+    altSearchKeyword: '샤오미 미지아 모니터 라이트바',
+    creatorPick: { source: '가성비 데스크템 비교 영상 다수 언급', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '쿠팡 · 알리익스프레스',
+      ratingSummary: '가성비 별점은 높으나 실사용 비교 후 업그레이드 비율 높음',
+      praised: '싸고 가벼워서 첫 모니터 조명으로 들이기 쉬움',
+      repeatedComplaint: '터치 버튼 오작동·화면 빛 번짐·클램프 고정 불안정 중복 지적',
+      trapNote: '가격이 싼 대신 비대칭 광학 설계 정밀도가 떨어져 장시간 작업용으론 피로감 차이 큼'
+    },
+    deepSpecs: [
+      { k: '연색지수 · 출력', v: 'Ra 80~95 표기(세대별 상이) · USB-C 5V' },
+      { k: '클램프 구조', v: '스프링 집게형 (얇은 패널 압박 주의)' },
+      { k: '추천 대안 구간', v: '무선 다이얼 필요 시 샤오미 미지아 1S 이상' }
+    ],
+    tierLadder: { budget: '베이스어스 · 샤오미 라이트바 (4~5만)', reference: 'BenQ ScreenBar Halo (20만 대)' }
+  },
+  {
+    id: 'ergotron-lx-arm',
+    brand: 'Ergotron',
+    name: '어고트론 LX 싱글 모니터암',
+    category: '데스크테리어',
+    verdict: 'PASS',
+    priceTier: '16~22만 원대',
+    chips: ['10년 내구성 레퍼런스', '고개숙임 0%', '유격 없는 움직임'],
+    oneLiner: '보급형 모니터암에서 흔한 틸트 고개 숙임·유격 없이 27~34인치를 손가락 하나로 움직이는 모니터암 끝판왕.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '컨스탄트 포스(Constant Force) 기계식 스프링 기술로 시간이 지나도 장력이 풀리거나 처지지 않음',
+      '정밀 가공된 관절부 덕분에 모니터 위치 조정 후 정확히 그 자리에 멈춤'
+    ],
+    checks: [
+      '반드시 18T 이상 풀판 목재/스틸 프레임 책상에 설치(이케아 라그캅텐 같은 허니콤 상판 설치 절대 금지)',
+      '모니터 무게(3.2~11.3kg) 범위 내인지 VESA 규격(75x75/100x100) 확인'
+    ],
+    tones: ['white-minimal', 'steel-modern'],
+    styles: ['모던·스틸', '깔끔 미니멀'],
+    pairIds: ['desker-desk', 'benq-screenbar-halo'],
+    goodLine: '처짐·유격 없이 10년 이상 쓰는 기계식 스프링 모니터암 표준',
+    checkLine: '설치 책상 상판 심재(허니콤 불가) 및 모니터 무게 범위 확인',
+    altName: '어고트론 LX 또는 국내 정품 카멜·루나랩 헤비 듀티 라인',
+    altSearchKeyword: '어고트론 LX 모니터암',
+    creatorPick: { source: '국내외 데스크테리어·개발자 채널 종결템 언급', sponsored: false, crossCount: 5 },
+    reviewPulse: {
+      market: '쿠팡 · 11번가 · 네이버',
+      ratingSummary: '장기 사용자 만족도 최고점, 중고 방어율도 높음',
+      praised: '조작 시 뻑뻑함이나 고개 숙임이 전혀 없고 한 번 세팅하면 잊고 삼',
+      repeatedComplaint: '폴(기둥) 높이가 다소 짧고 무거운 가격대',
+      trapNote: '저가 암 2번 교체할 비용 생각하면 처음부터 10년 쓰는 선택'
+    },
+    deepSpecs: [
+      { k: '스프링 방식', v: 'CF 기계식 스프링 (가스 누출 없음)' },
+      { k: '허용 하중 · VESA', v: '3.2 ~ 11.3kg · VESA 75/100mm' },
+      { k: '보증 기간', v: '10년 공식 워런티 · 상판 두께 10~60mm' }
+    ],
+    tierLadder: { budget: '루나랩 · 카멜 가성비 라인 (5~8만)', reference: 'Ergotron LX / HX (종결)' }
+  },
+  {
+    id: 'nb-f80-arm',
+    brand: 'NB',
+    name: 'NB F80 싱글 모니터암 (가성비 보급형)',
+    category: '데스크테리어',
+    verdict: 'WARN',
+    priceTier: '2~3만 원대',
+    chips: ['가성비 1위 입문', '무거운 모니터 고개숙임', '책상 상판 자국 주의'],
+    oneLiner: '가벼운 24~27인치 모니터 고정용으론 최고 가성비지만 32인치 이상이나 잦은 이동 시 고개 숙임과 뻑뻑함이 중복 지적됨.',
+    specs: { dust: 1, deposit: 2, trouble: 3 },
+    pros: [
+      '2~3만 원대 극강의 가격으로 책상 위 모니터 기본 스탠드 자리를 비워 넓은 작업 공간을 만들어줌'
+    ],
+    cautions: [
+      '장시간 사용 후 상하 틸트 나사가 헐거워져 모니터가 고개를 숙이는 현상과 반발력 조절 뻑뻑함 보고 다수'
+    ],
+    checks: [
+      '모니터가 7kg 이상이거나 32인치 커브드라면 상위 고중량 암 추천',
+      '월세·렌탈 책상이나 약한 상판이면 반드시 보강 플레이트를 덧대어 상판 눌림 방지'
+    ],
+    tones: ['steel-modern', 'white-minimal'],
+    styles: ['모던·스틸', '깔끔 미니멀'],
+    pairIds: ['dodot-quattro', 'baseus-lightbar-iwork'],
+    goodLine: '2~3만 원대로 가벼운 24~27인치 모니터 거치하는 입문 가성비',
+    checkLine: '32인치 이상 무거운 모니터 틸트 처짐 및 클램프 보강판 필요 체크',
+    altName: '어고트론 LX 또는 카멜 PMA-2 고중량 모니터암',
+    altSearchKeyword: '어고트론 LX 모니터암',
+    creatorPick: { source: '가성비 PC 셋업 채널 입문용 언급 다수', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '쿠팡 · 네이버',
+      ratingSummary: '수만 개 리뷰 보유한 국민 입문 암이지만 한계 명확',
+      praised: '가격 대비 공간 확보 체감이 엄청남',
+      repeatedComplaint: '틸트 관절 고개 숙임·장력 나사 헛돎·이동 시 뻑뻑함 중복 지적',
+      trapNote: '자주 움직이지 않고 27인치 이하 고정용일 때만 만족도 높음'
+    },
+    deepSpecs: [
+      { k: '스프링 방식', v: '가스 스프링 실린더' },
+      { k: '표기 하중', v: '2.0 ~ 9.0kg (실사용 안정권 6kg 이하)' },
+      { k: '추천 크기', v: '24 ~ 27인치 평면 모니터' }
+    ],
+    tierLadder: { budget: 'NB F80 (2~3만)', reference: 'Ergotron LX (16~22만)' }
+  },
+  {
+    id: 'logitech-mx-master-3s',
+    brand: 'Logitech',
+    name: '로지텍 MX Master 3S 무선 마우스',
+    category: '데스크테리어',
+    verdict: 'PASS',
+    priceTier: '12~14만 원대',
+    chips: ['저소음 클릭', '매그스피드 휠', '멀티페어링 3대'],
+    oneLiner: '개발자·영상편집·직장인 데스크테리어에서 압도적으로 많이 쓰이는 생산성 표준 무선 마우스.',
+    specs: { dust: 2, deposit: 1, trouble: 2 },
+    pros: [
+      '클릭 소음이 거의 없는 저소음 스위치와 고속 전자기 휠(매그스피드)로 밤·공유공간 작업 피로도가 낮음',
+      '맥·윈도우·아이패드 최대 3대 기기를 버튼 하나로 전환하며 가로 휠로 엑셀·타임라인 편집이 쾌적함'
+    ],
+    checks: [
+      '손 크기가 작거나(F1~F9 미만) 가벼운 게이밍 마우스를 선호하면 141g 무게·높이가 크게 느껴질 수 있음',
+      '표면 러버(고무) 코팅이 1~2년 이상 사용 시 땀·유분에 닳을 수 있으므로 밝은 색상 변색 주의'
+    ],
+    tones: ['steel-modern', 'white-minimal', 'walnut-vintage'],
+    styles: ['모던·스틸', '깔끔 미니멀'],
+    pairIds: ['keychron-k2-pro', 'caldigit-ts4-dock'],
+    goodLine: '저소음 클릭 + 3대 멀티페어링 + 고속 휠의 재택 생산성 표준 마우스',
+    checkLine: '141g 묵직한 무게(손 작은 분 비추) 및 밝은 그레이 러버 변색 체크',
+    altName: '로지텍 MX Master 3S 그래파이트 또는 Lift 버티컬(작은 손)',
+    altSearchKeyword: '로지텍 MX Master 3S',
+    creatorPick: { source: '개발자·데스크테리어 유튜버 다수 추천', sponsored: false, crossCount: 5 },
+    reviewPulse: {
+      market: '쿠팡 · 네이버 브랜드스토어',
+      ratingSummary: '생산성 마우스 부동의 1위, 실사용 장기 검증 완료',
+      praised: '휠 감각·멀티OS 전환·배터리 수명·손목 얹는 그립감',
+      repeatedComplaint: '오래 쓰면 러버 코팅 끈적임/변색 및 125Hz 폴링레이트(FPS 게임용 아님) 지적',
+      trapNote: '게임용이 아니라 순수 작업·문서·편집용임을 확인하고 사야 후회 없음'
+    },
+    deepSpecs: [
+      { k: '센서 · 폴링레이트', v: 'Darkfield 8000DPI(유리 위 작동) · 125Hz' },
+      { k: '무게 · 연결', v: '141g · Logi Bolt + 블루투스 3채널' },
+      { k: '충전 포트', v: 'USB-C 급속 충전 (완충 최대 70일)' }
+    ],
+    tierLadder: { budget: '로지텍 M650 / M720 (3~5만 대)', reference: 'MX Master 3S (13만) · 델타허브 팜레스트 조합' }
+  },
+  {
+    id: 'keychron-k2-pro',
+    brand: 'Keychron',
+    name: '키크론 K2 Pro / Q1 맥·윈도우 기계식 키보드',
+    category: '데스크테리어',
+    verdict: 'PASS',
+    priceTier: '12~22만 원대',
+    chips: ['Mac·Win 완벽 전환', 'QMK/VIA 키매핑', '흡음 폼 타건감'],
+    oneLiner: '맥북·윈도우 동시 전환과 웹 기반 키매핑(VIA)을 지원해 해외·국내 데스크 셋업에서 가장 무난한 커스텀 입문 키보드.',
+    specs: { dust: 2, deposit: 1, trouble: 1 },
+    pros: [
+      '스위치 핫스왑과 실리콘 흡음 패드가 기본 적용되어 일반 보급형 기계식보다 통울림이 적고 타건감이 정갈함',
+      '물리 OS 전환 스위치와 Mac 정품 배열 키캡을 기본 제공해 맥 사용자 입문 만족도가 높음'
+    ],
+    checks: [
+      '하우징 앞쪽 높이(전고)가 꽤 높은 편이라 손목 보호용 팜레스트를 함께 두지 않으면 손목이 꺾일 수 있음',
+      '방음이 약한 원룸·야간 작업엔 청축/갈축 대신 저소음 적축 계열 선택 권장'
+    ],
+    tones: ['steel-modern', 'white-minimal', 'walnut-vintage'],
+    styles: ['모던·스틸', '감성 빈티지'],
+    pairIds: ['logitech-mx-master-3s', 'benq-screenbar-halo'],
+    goodLine: 'Mac·Win 물리 전환과 흡음·핫스왑 기본기를 갖춘 데스크 셋업 표준 키보드',
+    checkLine: '높은 하우징 전고(팜레스트 권장) 및 원룸 소음용 저소음 스위치 선택 체크',
+    altName: '키크론 K2 Pro 저소음/적축 + 우드 팜레스트',
+    altSearchKeyword: '키크론 K2 Pro 기계식 키보드',
+    creatorPick: { source: '국내외 테크·커스텀 키보드 유튜버 다수 추천', sponsored: false, crossCount: 4 },
+    reviewPulse: {
+      market: '지티기어 · 쿠팡 · 네이버',
+      ratingSummary: '맥북 데스크 유저 실사용 만족도 최상위',
+      praised: 'Mac 호환성·무게감·VIA 키맵핑·모던한 디자인',
+      repeatedComplaint: '앞쪽 높이가 높아 팜레스트 필수라는 점과 무선 폴링레이트 한계(게임 비추)',
+      trapNote: '더 얇은 키보드를 원하면 로우프로파일(K3 Pro / Nuphy Air) 계열로 비교해야 함'
+    },
+    deepSpecs: [
+      { k: '배열 · 펌웨어', v: '75% 미니 배열 · QMK/VIA 오픈소스 지원' },
+      { k: '스위치 · 기판', v: '핫스왑 지원 · 흡음 폼·스틸/PC 보강판' },
+      { k: '연결 · OS', v: '블루투스 5.1(3대) + USB-C 유선 · Mac/Win' }
+    ],
+    tierLadder: { budget: '독거미 F87 Pro / AULA (5~7만 · 윈도우 가성비)', reference: 'Keychron Q Pro 알루미늄 · HHKB (25만+)' }
+  },
+  {
+    id: 'caldigit-ts4-dock',
+    brand: 'CalDigit',
+    name: '칼디짓 TS4 썬더볼트 4 독',
+    category: '데스크테리어',
+    verdict: 'PASS',
+    priceTier: '45~55만 원대',
+    chips: ['케이블 1줄 98W 충전', '포트 18개 풀스펙', '데스크 선정리 끝'],
+    oneLiner: '노트북·모니터·외장SSD·오디오·충전을 썬더볼트 케이블 딱 1줄로 묶는 고인물 데스크테리어 최상위 독.',
+    specs: { dust: 1, deposit: 1, trouble: 2 },
+    pros: [
+      '최대 98W 호스트 충전, 2.5Gb 유선랜, 듀얼 4K/6K 출력, SD 4.0까지 18개 포트를 안정적으로 동시 구동함',
+      '저가 C타입 허브에서 흔한 외장하드 끊김·모니터 깜빡임·속도 저하 문제가 현저히 적음'
+    ],
+    checks: [
+      '책상 위 케이블은 줄어들지만 본체 뒤쪽 230W 대형 전원 어댑터가 매우 크고 묵직해 하부 트레이 공간 확보 필수',
+      '고성능 알루미늄 방열판 본체 자체가 작동 중 따뜻해지는(미온~약열) 특성이 있음'
+    ],
+    tones: ['steel-modern', 'white-minimal'],
+    styles: ['모던·스틸', '깔끔 미니멀'],
+    pairIds: ['desker-desk', 'ergotron-lx-arm'],
+    goodLine: '노트북 케이블 1줄 연결로 모든 장비·충전을 안정 처리하는 레퍼런스 독',
+    checkLine: '초대형 230W 전원 어댑터 수납 공간 및 단순 C타입 노트북 호환(썬더볼트/USB4 확인) 체크',
+    altName: '칼디짓 TS4 또는 엔커(Anker) 577/프라임 썬더볼트 독',
+    altSearchKeyword: '칼디짓 TS4 썬더볼트4 독',
+    creatorPick: { source: '맥북·영상편집·테크 유튜버 데스크 종결템 언급', sponsored: false, crossCount: 4 },
+    reviewPulse: {
+      market: '아마존 직구 · 국내 정식수입몰',
+      ratingSummary: '비싸지만 저가 멀티허브 여러 개 거친 고관여 유저 정착템',
+      praised: '연결 안정성·모니터/SD카드 동시 전송 속도·견고한 알루미늄 바디',
+      repeatedComplaint: '본체 크기보다 큰 어댑터 벽돌 크기 및 본체 발열감 언급',
+      trapNote: '일반 웹서핑·모니터 1대 유저에겐 과스펙이므로 C타입 PD 지원 모니터 하나로도 충분할 수 있음'
+    },
+    deepSpecs: [
+      { k: '인터페이스 · 대역폭', v: 'Thunderbolt 4 · 40Gbps · 18포트' },
+      { k: '충전 출력', v: '호스트 최대 98W PD + 전면 USB-C 20W' },
+      { k: '네트워크 · 카드', v: '2.5GbE 이더넷 · UHS-II SD/microSD 4.0' }
+    ],
+    tierLadder: { budget: '앤커 555 / 벨킨 11-in-1 USB-C 허브 (7~12만)', reference: 'CalDigit TS4 (50만 전후)' }
+  },
+  {
+    id: 'cheap-acrylic-monitor-stand',
+    brand: '쿠팡·알리',
+    name: '저가 3~4mm 투명 아크릴 모니터 받침대',
+    category: '데스크테리어',
+    verdict: 'NOPE',
+    priceTier: '1~2만 원대',
+    chips: ['가운데 휨·처짐', '먼지·지문 티남', '모서리 크랙'],
+    oneLiner: '처음 사진은 투명하고 깔끔해 보이지만 3~4mm 얇은 아크릴은 모니터 하중에 가운데가 U자로 처지고 정전기 먼지가 눈에 바로 보임.',
+    specs: { dust: 5, deposit: 1, trouble: 4 },
+    checks: [
+      '리뷰 검증: 몇 주 지나지 않아 중앙 휨 현상 및 다리 접합부 실금·크랙 불만 중복',
+      '아크릴 특성상 정전기로 먼지가 붙고 키보드 넣었다 뺐다 할 때 생활 스크래치가 하얗게 남음'
+    ],
+    tones: ['white-minimal', 'steel-modern'],
+    styles: ['깔끔 미니멀'],
+    pairIds: ['ergotron-lx-arm', 'benq-screenbar-halo'],
+    goodLine: '초기 개봉 시 답답해 보이지 않는 투명한 외관',
+    checkLine: '얇은 3~4mm 아크릴 중앙 처짐 + 정전기 먼지·스크래치 누적',
+    altName: '모니터암(공간 100% 확보) 또는 8~10mm 두께 스틸·원목 선반',
+    altSearchKeyword: '스틸 모니터 받침대 서랍형',
+    creatorPick: { source: '데스크테리어 채널 장기 사용 후 교체템 언급', sponsored: false, crossCount: 2 },
+    reviewPulse: {
+      market: '쿠팡 · 오늘의집',
+      ratingSummary: '초기 인테리어 사진 만족 vs 장기 내구성 불만 극명',
+      praised: '투명해서 책상이 덜 좁아 보임',
+      repeatedComplaint: '모니터 무게로 가운데 휨, 닦아도 생기는 잔기스·물티슈 자국 중복 지적',
+      trapNote: '아크릴 받침대를 꼭 쓸 거라면 최소 8mm 이상 두께 또는 중앙 지지 다리 있는 제품을 골라야 함'
+    },
+    deepSpecs: [
+      { k: '소재 · 두께', v: 'PMMA 아크릴 3~4mm (휨 임계 낮음)' },
+      { k: '내스크래치', v: '표면 경도 약함 (마찰 시 백화 스크래치)' },
+      { k: '대체 권장', v: 'VESA 모니터암 또는 분체도장 스틸 선반' }
+    ],
+    tierLadder: { budget: '분체도장 스틸 모니터 선반 (2~3만)', reference: '모니터암 VESA 거치 (NB F80 ~ 어고트론 LX)' }
+  },
+
+  // ==================== 8. 집 청소 · 세탁 · 케어 (8종: 살림/청소 과학 스펙) ====================
+  {
+    id: 'oxyclean-sodium-percarbonate',
+    brand: '살림백서·옥시크린',
+    name: '과탄산소다 100% (산소계 표백 · 배수구/수건 케어)',
+    category: '집청소·세탁',
+    verdict: 'PASS',
+    priceTier: '5천~1만 원대',
+    chips: ['찌든때·쉰내 제거', '물온도 50도+ 필수', '알루미늄·울 금지'],
+    oneLiner: '자취방 수건 쉰내, 싱크대 배수구 기름때, 세탁조 청소까지 1통으로 해결하는 가성비 1티어 산소계 세정제.',
+    specs: { dust: 1, deposit: 1, trouble: 2 },
+    pros: [
+      '뜨거운 물(50~60도)에 녹으면 활성산소가 발생해 락스 냄새 없이 수건 찌든때·냄새·기름때를 분해함',
+      '순수 과탄산소다 100% 대용량(3~5kg) 기준 회당 원가가 몇백 원 수준으로 유지비 압도적'
+    ],
+    checks: [
+      '찬물에는 잘 녹지 않아 세탁조에 가루가 남으므로 반드시 50도 이상 온수에 완전히 녹여서 투입',
+      '알루미늄(냄비/후드망)·양모·실크·가죽·색상 빠지는 의류에 사용하면 변색·부식되므로 절대 금지',
+      '밀폐 용기 안에서 가스가 차오를 수 있으니 환기 구멍·습기 주의 및 고무장갑 착용 필수'
+    ],
+    tones: ['white-minimal', 'steel-modern'],
+    styles: ['깔끔 미니멀'],
+    pairIds: ['citric-acid-cleaner', 'bodum-towel-40s-hotel'],
+    goodLine: '50도 온수로 수건 쉰내·배수구 물때를 락스 냄새 없이 해결하는 만능 산소계 세제',
+    checkLine: '찬물 불용해(미온수 용해 필수) 및 알루미늄·울·실크 변색/부식 주의',
+    altName: '식품첨가물/순도 100% 과탄산소다 (지퍼백 소분 보관)',
+    altSearchKeyword: '과탄산소다 100% 대용량',
+    creatorPick: { source: '청소·살림 전문가 유튜브 채널 필수 기본템 언급', sponsored: false, crossCount: 5 },
+    reviewPulse: {
+      market: '쿠팡 · 컬리 · 네이버',
+      ratingSummary: '재구매율 최상위 생활 화학 기본템',
+      praised: '수건 쉰내 박멸, 커피포트·스텐 탄 자국 1분 세척',
+      repeatedComplaint: '찬물에 그냥 부어 가루 남거나 알루미늄 식기 담갔다가 검게 변색된 사례 중복',
+      trapNote: '비싼 전용 크리너 여러 개 살 필요 없이 과탄산·구연산 조합만으로 집안 청소 70% 커버 가능'
+    },
+    deepSpecs: [
+      { k: '화학 액성', v: '약알칼리성 pH ~10.5 (산소계 표백제)' },
+      { k: '유효 성분', v: '탄산나트륨·과산화수소 부가물 100%' },
+      { k: '반응 조건', v: '40~60°C 온수 권장 (염소계 락스와 혼합 금지)' }
+    ],
+    tierLadder: { budget: '순도 100% 과탄산소다 대용량 (1만 이하)', reference: '옥시크린 젤/파워 부스터 (계면활성제 배합 편의형)' }
+  },
+  {
+    id: 'citric-acid-cleaner',
+    brand: '살림백서·에코',
+    name: '구연산 100% (물때·석회질·섬유유연제 대체)',
+    category: '집청소·세탁',
+    verdict: 'PASS',
+    priceTier: '5천~1만 원대',
+    chips: ['욕실 수전 물때 순삭', '수건 유연제 대체', '락스 혼합 절대금지'],
+    oneLiner: '알칼리성인 욕실 하얀 물때·변기 요석·전기포트 석회질을 1분 만에 녹이는 산성 필수 케어템.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '수전·유리 샤워부스에 하얗게 굳은 물때(알칼리성)를 산성으로 중화해 힘주어 문지르지 않아도 깨끗해짐',
+      '수건 세탁 시 섬유유연제 대신 구연산수 소량을 헹굼에 쓰면 코팅 막힘 없이 뽀송하고 물 흡수력 유지'
+    ],
+    checks: [
+      '절대 주의: 락스(차아염소산나트륨)와 구연산이 만나면 치명적인 염소가스가 발생하므로 같은 날·같은 곳에 동시 사용 금지',
+      '천연 대리석(인조대리석 포함 일부)이나 철제 도금에 오래 방치하면 표면이 부식·변색되니 5분 내 헹굼 필수'
+    ],
+    tones: ['white-minimal', 'steel-modern'],
+    styles: ['깔끔 미니멀'],
+    pairIds: ['oxyclean-sodium-percarbonate', 'ss304-tension-bath-rod'],
+    goodLine: '욕실 물때·포트 석회질 중화 및 수건 쉰내 예방용 산성 천연 세정 기본템',
+    checkLine: '염소계 락스·곰팡이제거제와 절대 혼합 금지(유독가스) 및 대리석 사용 불가',
+    altName: '무수 구연산 100% 식품첨가물 등급 + 2% 희석 스프레이 공병',
+    altSearchKeyword: '무수 구연산 100% 식품첨가물',
+    creatorPick: { source: '청소 전문가·살림 채널 기본 조합 추천', sponsored: false, crossCount: 5 },
+    reviewPulse: {
+      market: '쿠팡 · 컬리',
+      ratingSummary: '물때 청소 만족도 압도적 1위',
+      praised: '전기포트 바닥 1분 세척, 샤워기/수전 반짝임 복구',
+      repeatedComplaint: '희석 비율 모르고 진하게 뿌려 수전 코팅 얼룩졌다는 사례 보고',
+      trapNote: '물 500ml에 구연산 1스푼(약 2% 농도)만 희석해 5~10분 뒤 헹구는 것이 안전 기준'
+    },
+    deepSpecs: [
+      { k: '화학 액성', v: '약산성 pH 2~3 (물 2~5% 희석 기준)' },
+      { k: '타겟 오염', v: '칼슘·마그네슘 물때, 비누 찌꺼기, 포트 석회질' },
+      { k: '혼합 금기', v: '락스·차아염소산나트륨 제품과 절대 병용 금지' }
+    ],
+    tierLadder: { budget: '무수 구연산 100% (5천~1만)', reference: '아스토니쉬 / 프로쉬 물때 전용 스프레이' }
+  },
+  {
+    id: 'mold-gel-chlorine',
+    brand: '생활공작소·유한락스',
+    name: '실리콘 곰팡이 제거 젤 (차아염소산염계)',
+    category: '집청소·세탁',
+    verdict: 'WARN',
+    priceTier: '5천~1.2만 원대',
+    chips: ['실리콘 검은 곰팡이 특효', '환기·장갑 필수', '의류 탈색 주의'],
+    oneLiner: '화장실 실리콘에 박힌 검은 곰팡이를 유일하게 지우는 염소계 젤이지만, 환기 안 하거나 산성 세제(구연산)와 닿으면 유독가스 위험.',
+    specs: { dust: 1, deposit: 2, trouble: 2 },
+    pros: [
+      '흐르지 않는 젤 제형이라 세면대·타일 실리콘 벽면에 2~3시간 발라두고 헹구면 곰팡이 얼룩이 말끔히 빠짐'
+    ],
+    cautions: [
+      '자취방 창문 없는 화장실에선 환풍기+문 개방 필수이며, 구연산/식초와 닿지 않게 주의해야 함'
+    ],
+    checks: [
+      '이미 실리콘 안쪽 깊이 파고든 묵은 곰팡이는 젤 1회로 안 빠질 수 있음(마른 상태 도포 후 랩 덮기 권장)',
+      '검은 옷·컬러 매트에 1방울만 튀어도 즉시 하얗게 탈색됨'
+    ],
+    tones: ['white-minimal'],
+    styles: ['깔끔 미니멀'],
+    pairIds: ['ss304-tension-bath-rod', 'soft-diatomite-mat'],
+    goodLine: '타일·실리콘 검은 곰팡이를 물로 문지르지 않고 제거하는 확실한 살균 효과',
+    checkLine: '무창 욕실 환기 필수 · 구연산 등 산성세제 혼합 금지 · 의류 탈색 주의',
+    altName: '유한락스 곰팡이 제거제 젤타입 또는 바이오 곰팡이 방지 코팅제',
+    altSearchKeyword: '욕실 실리콘 곰팡이 제거 젤',
+    creatorPick: { source: '원룸 입주청소·퇴실 복구 채널 언급 다수', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '쿠팡 · 다이소',
+      ratingSummary: '효과 확실하지만 냄새·자극 호불호 존재',
+      praised: '문지르지 않고 발라만 둬도 실리콘이 하얘짐',
+      repeatedComplaint: '물기 있는 상태에서 발라 흘러내렸거나 락스 냄새 두통 지적',
+      trapNote: '도포 전 키친타월로 실리콘 물기를 바짝 닦아야 효과가 2배 이상 올라감'
+    },
+    deepSpecs: [
+      { k: '화학 액성', v: '강알칼리 · 염소계 (차아염소산나트륨 함유)' },
+      { k: '유효 성분 농도', v: '보통 2~5% 내외 차아염소산염 젤' },
+      { k: '필수 수칙', v: '건조 상태 도포 · 환풍기/마스크 · 단독 사용' }
+    ],
+    tierLadder: { budget: '다이소/유한락스 곰팡이 젤 (3~6천)', reference: '스겔/수입 고농도 젤 + 실리콘 재시공 키트' }
+  },
+  {
+    id: 'aekyung-spark-drum',
+    brand: '퍼실·리큐',
+    name: '고농축 중성·약알칼리 액체 세탁세제 (드럼·통돌이 겸용)',
+    category: '집청소·세탁',
+    verdict: 'PASS',
+    priceTier: '1~2만 원대',
+    chips: ['찬물 잔여 세제 0%', '9kg 소형세탁기 적합', '과다 계량 주의'],
+    oneLiner: '가루 세제 뭉침이나 9kg 소형 세탁기 헹굼 잔여물 없이 실내 건조 쉰내까지 잡아주는 고효율 액체 세제.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '액체 제형이라 원룸 냉수 코스에서도 잔여 세제 찌꺼기가 거의 남지 않아 피부 가려움·곰팡이 원인을 줄임',
+      '효소(프로테아제·아밀라아제) 함유 라인을 고르면 피지·음식 얼룩 분해력이 우수함'
+    ],
+    checks: [
+      '가장 흔한 실수: 세제를 정량보다 많이 넣으면 거품 과다로 헹굼이 안 돼 오히려 빨래 쉰내와 세탁조 오염의 원인이 됨',
+      '울·기능성 의류는 알칼리 효소 대신 중성세제(울샴푸) 분리 사용'
+    ],
+    tones: ['white-minimal'],
+    styles: ['깔끔 미니멀'],
+    pairIds: ['oxyclean-sodium-percarbonate', 'bodum-towel-40s-hotel'],
+    goodLine: '찬물에도 잔여물 없이 녹고 9kg 소형 세탁기 헹굼에 안정적인 액체 세제',
+    checkLine: '소형 세탁기 정량 절반(과다 투입 시 쉰내·고장 원인) 준수 필수',
+    altName: '퍼실 파워젤 실내건조 / 피죤 액츠 퍼펙트 실내건조',
+    altSearchKeyword: '실내건조 액체 세탁세제 고농축',
+    creatorPick: { source: '세탁·살림 전문가 채널 정량 계량 권장', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '쿠팡 · 컬리',
+      ratingSummary: '실내건조 전용 라인 만족도 높음',
+      praised: '장마철 실내 건조 시 꿉꿉한 냄새 감소',
+      repeatedComplaint: '뚜껑 계량 시 세제 흐름 및 과다 사용 시 거품 오류 보고',
+      trapNote: '세제 자체보다 "정량 계량 + 세탁 직후 바로 꺼내기"가 쉰내 방지의 80%'
+    },
+    deepSpecs: [
+      { k: '액성 · 형태', v: '중성 ~ 약알칼리 고농축 액체 (효소 배합)' },
+      { k: '소형 세탁기 적정량', v: '빨래 3kg 기준 15~20ml (정량의 절반 시작 권장)' },
+      { k: '잔여물 리스크', v: '낮음 (가루/캡슐 저온 불용해 대비 유리)' }
+    ],
+    tierLadder: { budget: '액츠·테크 실내건조 (1만 원 내외)', reference: '퍼실 딥클린 / 런드레스(울·실크 전용)' }
+  },
+  {
+    id: 'scrubber-sponge-melamine',
+    brand: '다이소·쿠팡',
+    name: '매직블럭 (멜라민 폼 스펀지)',
+    category: '집청소·세탁',
+    verdict: 'NOPE',
+    priceTier: '2~5천 원대',
+    chips: ['사포와 같은 미세 연마', '코팅 수전·가죽 손상', '원목 광택 벗겨짐'],
+    oneLiner: '때가 잘 지워지는 이유는 화학 세정이 아니라 "초미세 사포로 표면을 깎아내기 때문"이라 코팅 수전·실크벽지·가죽·시트지에 쓰면 광택이 영구 손상됨.',
+    specs: { dust: 2, deposit: 4, trouble: 3 },
+    checks: [
+      '절대 사용 금지: 유광/무광 코팅 수전, 원목/시트지 가구, 가죽 소파, 실크벽지, 차량 도장, 플라스틱 아크릴',
+      '잘게 부서지며 미세 플라스틱 가루가 떨어지므로 식기류(프라이팬·컵 안쪽) 세척에도 비추천'
+    ],
+    tones: ['white-minimal'],
+    styles: ['깔끔 미니멀'],
+    pairIds: ['citric-acid-cleaner', 'oxyclean-sodium-percarbonate'],
+    goodLine: '운동화 고무 밑창이나 코팅 없는 도자기 찌든때 1회성 제거 효과',
+    checkLine: '초미세 연마 작용으로 수전 코팅·벽지·가구 시트지·가죽 표면 영구 훼손',
+    altName: '구연산 2% 희석 스프레이 + 극세사 행주 (무스크래치 세정)',
+    altSearchKeyword: '극세사 청소 행주 구연산 스프레이',
+    creatorPick: { source: '청소·원상복구 전문가 채널 주의 물질 언급', sponsored: false, crossCount: 4 },
+    reviewPulse: {
+      market: '다이소 · 쿠팡',
+      ratingSummary: '"신세계다" 후기 많지만 뒤늦게 수전·벽지 까짐 후회글 반복',
+      praised: '힘 안 들이고 얼룩이 바로 사라지는 쾌감',
+      repeatedComplaint: '욕실 블랙/니켈 수전 무광 코팅 벗겨짐·인조대리석 광택 죽음·벽지 얼룩 확대 지적',
+      trapNote: '퇴실 청소할 때 매직블럭으로 실크벽지/가죽 문질렀다가 도배·수리비 청구되는 사례 다수'
+    },
+    deepSpecs: [
+      { k: '재질 · 원리', v: '멜라민-포름알데히드 수지 폼 (모스 경도 높음)' },
+      { k: '작용 기전', v: '화학적 분해 없음 · 물리적 미세 연마(사포 효과)' },
+      { k: '금지 대상', v: '무광·블랙 수전, 코팅 가구, 시트지, 실크벽지, 식기' }
+    ],
+    tierLadder: { budget: '물+구연산+극세사 행주', reference: '스텐·유리 전용 논스크래치 수세미' }
+  },
+  {
+    id: '3m-scotch-lint-roller',
+    brand: '3M',
+    name: '3M 스카치브라이트 고밀착 테이프 클리너 (롱핸들/일반)',
+    category: '집청소·세탁',
+    verdict: 'PASS',
+    priceTier: '1~2만 원대',
+    chips: ['원룸 먼지·머리카락 즉효', '리필 뜯김 깔끔함', '반려동물 필수'],
+    oneLiner: '원룸 바닥·침구 머리카락과 반려동물 털을 밤늦게도 층간소음 없이 10초 만에 잡아내는 3M 스테디셀러.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '저가 리필과 달리 절취선(사선/스파이럴)이 한 장씩 깔끔하게 뜯어지고 점착력이 일정해 머리카락을 놓치지 않음',
+      '롱핸들(길이 조절 밀대형)을 고르면 허리 숙이지 않고 러그·침구·바닥 전체를 1분 만에 청소 가능'
+    ],
+    checks: [
+      '강한 고점착 타입을 종이 벽지나 약한 원목/코팅 바닥에 힘주어 굴리면 자국이 남을 수 있으므로 패브릭·일반 마루용 선택'
+    ],
+    tones: ['white-minimal'],
+    styles: ['깔끔 미니멀'],
+    pairIds: ['shaggy-rug', 'ikea-klippan'],
+    goodLine: '층간소음 없이 침구·러그·바닥 머리카락을 즉시 회수하는 깔끔한 사선 리필 클리너',
+    checkLine: '강한 점착력은 바닥·코팅재 붙을 수 있으므로 일반 패브릭·바닥용 확인',
+    altName: '3M 스카치브라이트 롱핸들 테이프 클리너 + 사선 리필 세트',
+    altSearchKeyword: '3M 테이프 클리너 롱핸들',
+    creatorPick: { source: '반려동물·1인가구 살림 채널 추천템 다수 언급', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '쿠팡 · 트레이더스',
+      ratingSummary: '다이소/저가형 썼다가 결국 3M 사선 리필로 돌아오는 후기 다수',
+      praised: '다음 장이 꼬이지 않고 시원하게 뜯어짐·점착력 유지',
+      repeatedComplaint: '리필 가격이 저가형보다 다소 비쌈',
+      trapNote: '일자 커팅보다 사선(대각선) 리필을 사야 뜯을 때 스트레스가 없음'
+    },
+    deepSpecs: [
+      { k: '커팅 구조', v: '사선 스파이럴 절취선 (찢김 최소화)' },
+      { k: '폭 · 핸들', v: '16cm 표준 롤 · 연장봉 최대 ~95cm 지원' },
+      { k: '소음', v: '0 dB (야간 원룸 청소 최적화)' }
+    ],
+    tierLadder: { budget: '무인양품 / 다이소 카페트 클리너', reference: '3M 스카치브라이트 롱핸들 + 사선 리필' }
+  },
+  {
+    id: 'karcher-sc2-steam',
+    brand: 'KARCHER',
+    name: '카처 SC2 / SC3 스팀청소기',
+    category: '집청소·세탁',
+    verdict: 'WARN',
+    priceTier: '15~25만 원대',
+    chips: ['욕실·타일·창틀 살균 최강', '장판·강마루 수분 팽창 주의', '원룸 수납 부피 큼'],
+    oneLiner: '욕실 타일·싱크대 기름때·창틀 살균엔 끝판왕이지만, 원룸 PVC 장판이나 저가 강마루에 고온 스팀을 자주 쏘면 들뜸·변형 위험이 있음.',
+    specs: { dust: 2, deposit: 3, trouble: 2 },
+    pros: [
+      '세제 없이 100도 이상 고압 스팀으로 가스레인지 기름때, 창틀 묵은 때, 매트리스/욕실 살균력이 뛰어남'
+    ],
+    cautions: [
+      '본체+호스+노즐 부피가 작지 않아 5~6평 원룸에선 수납 자리를 많이 차지하며, 열에 약한 PVC 장판·강마루 이음새 손상 보고 있음'
+    ],
+    checks: [
+      '원룸 마루·장판 위주 바닥 청소용이라면 비추, 욕실·주방 찌든때 위주일 때만 추천',
+      'SC2는 사용 중 물 보충 시 압력이 식을 때까지 기다려야 함(즉시 보충은 SC3부터)'
+    ],
+    tones: ['white-minimal', 'steel-modern'],
+    styles: ['모던·스틸'],
+    pairIds: ['citric-acid-cleaner', 'ss304-tension-bath-rod'],
+    goodLine: '세제 없이 고온 고압 스팀으로 주방 기름때·타일 줄눈·창틀을 밀어내는 독일제 살균 청소기',
+    checkLine: 'PVC 장판·강마루 열변형 위험 및 원룸 내 호스·본체 수납 부피 체크',
+    altName: '핸디형 스팀/욕실 전동브러쉬 (원룸 좁은 공간) 또는 SC3 이지픽스',
+    altSearchKeyword: '카처 SC3 스팀청소기',
+    creatorPick: { source: '청소 전문가·유튜버 욕실·창틀 청소용 언급', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '쿠팡 · 네이버 브랜드스토어',
+      ratingSummary: '타일·줄눈·유리 청소 만족도 최고 vs 원룸 보관 불편 지적',
+      praised: '후드 기름때·창틀 흙먼지 스팀 한 방에 녹여버림',
+      repeatedComplaint: 'SC2 예열·냉각 대기 시간과 호스 수납 불편함, 장판 변색 사례 지적',
+      trapNote: '원룸 거주자라면 대형 캐니스터 SC 시리즈 대신 필요할 때만 꺼내는 스몰 포맷 여부 먼저 고민'
+    },
+    deepSpecs: [
+      { k: '압력 · 히터', v: '최대 3.2~3.5 bar · 보일러 1500~1900W' },
+      { k: '예열 시간', v: 'SC2 약 6.5분 (SC3 약 30초 연속보충)' },
+      { k: '바닥 주의', v: '무코팅 원목·PVC 장판·강마루 틈새 장시간 집중 분사 금지' }
+    ],
+    tierLadder: { budget: '무선 욕실 전동브러쉬 (3~5만)', reference: 'Karcher SC3 EasyFix 연속 스팀 (25만)' }
+  },
+  {
+    id: 'stain-remover-peroxide',
+    brand: '에코버·아스토니쉬',
+    name: '산소계 부분 얼룩 제거제 (과산화수소 · 효소 스프레이)',
+    category: '집청소·세탁',
+    verdict: 'PASS',
+    priceTier: '8천~1.5만 원대',
+    chips: ['커버 분리 불가 소파 보완', '커피·혈흔·기름 즉효', '색빠짐 테스트 필요'],
+    oneLiner: '세탁기에 못 넣는 비분리형 패브릭 소파나 매트리스에 커피·음식을 흘렸을 때 즉각 응급 복구해 주는 살림 보완템.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '분사 후 5분 방치하고 젖은 극세사 타월로 두드려 닦아내면 물얼룩을 최소화하면서 유기물 얼룩을 분해함',
+      '이미 세탁 불가 패브릭 소파·매트리스가 있는 자취방의 사실상 필수 보험'
+    ],
+    checks: [
+      '울·실크·어두운 진한 염색 원단은 안 보이는 뒷면에 먼저 물빠짐 테스트 권장',
+      '스프레이 사용 후 깨끗한 물 수건으로 세제 잔여물을 한 번 더 닦아주어야 마른 뒤 자국이 남지 않음'
+    ],
+    tones: ['white-minimal'],
+    styles: ['깔끔 미니멀'],
+    pairIds: ['shaggy-rug', 'aekyung-spark-drum'],
+    goodLine: '세탁기 못 넣는 매트리스·소파 얼룩을 산소계 분해로 바로 빼주는 응급 케어템',
+    checkLine: '울·실크 금지 및 사용 후 깨끗한 물타월 마무리 닦기 필요',
+    altName: '에코버 얼룩제거제 또는 옥시크린 젤 + 극세사 타월',
+    altSearchKeyword: '패브릭 소파 매트리스 얼룩제거제',
+    creatorPick: { source: '살림·홈케어 채널 매트리스 관리 필수템 언급', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '쿠팡 · 컬리',
+      ratingSummary: '생리혈·커피·반려동물 얼룩 해결 후기 다수',
+      praised: '오래 지나지 않은 얼룩은 세탁 없이도 거의 흔적 없이 빠짐',
+      repeatedComplaint: '마른 뒤 둥근 물테두리 자국 남는 현상(주변 넓게 물 닦기로 해결 가능)',
+      trapNote: '비싼 건식 소파클리너 부르기 전 1만 원대 응급 키트로 구비 가치가 높음'
+    },
+    deepSpecs: [
+      { k: '주성분 계열', v: '과산화수소·비이온 계면활성제·단백질 효소' },
+      { k: '적합 소재', v: '면·폴리 패브릭 소파, 매트리스 겉면, 단모 러그' },
+      { k: '주의 소재', v: '천연 가죽·스웨이드·울·실크 사용 금지' }
+    ],
+    tierLadder: { budget: '에코버 / 아스토니쉬 얼룩제거제 (1만)', reference: '비셀(Bissell) 스팟클린 습식 청소기 (20만+)' }
+  },
+
+  // ==================== 9. 욕실 · 구강 · 위생 소모품 (7종: 치과의사/전문가 스펙) ====================
+  {
+    id: 'sensodyne-multicare',
+    brand: 'GSK',
+    name: '센소다인 멀티케어 / 후레쉬 민트 치약',
+    category: '구강·욕실케어',
+    verdict: 'PASS',
+    priceTier: '6천~1.2만 원대 (다회입)',
+    chips: ['불소 1450ppm 고함량', '질산칼륨 시린이 케어', '치과의사 다수 언급'],
+    oneLiner: '디자인 치약보다 치과의사 채널에서 충치 예방(고불소 1450ppm)과 시린이 완화 성분 기준으로 가장 자주 꼽히는 정석 치약.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '식품의약품안전처 기준 최대치 수준인 불소 1450ppm 배합으로 재광화·충치 예방 효과가 확실함',
+      '질산칼륨(KNO3) 함유로 찬물 마실 때 시린 치아 상아세관 신경 전달을 둔화시키고 연마도가 낮아 치아 마모가 적음'
+    ],
+    checks: [
+      '라인업 중 화이트닝·일부 제품에는 SLS(소듐라우릴설페이트) 포함 모델과 무첨가(프로나멜/젠틀) 모델이 갈리므로 성분표 확인',
+      '고불소 치약은 양치 후 물로 너무 여러 번 헹구지 말고 1~2회 가볍게 헹구는 편이 효과 유지에 유리'
+    ],
+    tones: ['white-minimal'],
+    styles: ['깔끔 미니멀'],
+    pairIds: ['curaprox-5460-brush', 'sus304-toothbrush-holder'],
+    goodLine: '불소 1450ppm 충치 방어 + 낮은 연마도 + 시린이 완화 성분이 검증된 정석 치약',
+    checkLine: 'SLS 계면활성제 예민한 경우 프로나멜·무첨가 라인 여부 확인',
+    altName: '센소다인 멀티케어 / 프로나멜 (불소 1450ppm)',
+    altSearchKeyword: '센소다인 멀티케어 치약 1450ppm',
+    creatorPick: { source: '치과의사 유튜브 채널 4곳 이상 성분 기준 추천 언급', sponsored: false, crossCount: 5 },
+    reviewPulse: {
+      market: '쿠팡 · 약국 · 마트',
+      ratingSummary: '거품 적지만 치과 권유로 정착한 장기 실사용자 다수',
+      praised: '2주 이상 꾸준히 쓰면 찬물 시림 체감 감소 · 자극 적음',
+      repeatedComplaint: '화한 박하향이나 풍성한 거품을 기대하면 밍밍하게 느껴진다는 평',
+      trapNote: '화한 청량감(멘톨·강한 계면활성제)이 치아를 깨끗하게 해주는 게 아니라는 치의학 기준 부합'
+    },
+    deepSpecs: [
+      { k: '불소 함량', v: '플루오르화나트륨 (불소로서 1,450 ppm)' },
+      { k: '유효 성분 · 마모도', v: '질산칼륨 5% · 저연마(RDA 낮음)' },
+      { k: '추천 대상', v: '충치 예방 우선 · 시린이 · 탄산/커피 잦은 직장인' }
+    ],
+    tierLadder: { budget: '페리오·2080 고불소 라인(1450ppm 확인)', reference: '센소다인 프로나멜 / 엘멕스(Elmex)' }
+  },
+  {
+    id: 'curaprox-5460-brush',
+    brand: 'CURAPROX',
+    name: '큐라프로스 CS 5460 울트라소프트 칫솔',
+    category: '구강·욕실케어',
+    verdict: 'PASS',
+    priceTier: '6천~9천 원대 (개당)',
+    chips: ['5460가닥 Curen 미세모', '잇몸 마모 방지', '스위스 치과 레퍼런스'],
+    oneLiner: '칫솔질에 힘이 세서 잇몸이 내려앉거나 치경부 마모가 걱정될 때 치과의사들이 1순위로 꼽는 고밀도 초극세모 칫솔.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '나일론 대신 물을 덜 흡수하는 Curen 폴리에스테르 모 5,460가닥이 빽빽해 칫솔모가 쉽게 벌어지지 않고 잇몸 자극이 극도로 적음',
+      '팔각형(옥타곤) 손잡이로 45도 배스법 각도를 잡기 쉽도록 설계됨'
+    ],
+    checks: [
+      '일반 칫솔 대비 헤드 크기가 약간 넓게 느껴질 수 있으므로 입이 작거나 어금니 안쪽이 닿기 힘든 분은 컴팩트(CS Smart 7600) 권장',
+      '일반 마트 칫솔보다 가격대가 높고 모가 매우 부드러워 강한 시원함을 원하는 분에겐 호불호 갈림'
+    ],
+    tones: ['white-minimal', 'butter-pastel', 'sage-terracotta'],
+    styles: ['컬러 포인트', '깔끔 미니멀'],
+    pairIds: ['sensodyne-multicare', 'sus304-toothbrush-holder'],
+    goodLine: '5,460가닥 고밀도 Curen 모로 잇몸 손상·치경부 마모를 막는 스위스 표준 칫솔',
+    checkLine: '헤드 크기 확인(작은 입·어금니 안쪽은 CS Smart 추천) 및 부드러운 강도 호불호 체크',
+    altName: '큐라프로스 CS 5460 또는 CS Smart(작은 헤드)',
+    altSearchKeyword: '큐라프로스 5460 칫솔 정품',
+    creatorPick: { source: '치과의사·교정/잇몸 관리 채널 다수 추천 언급', sponsored: false, crossCount: 5 },
+    reviewPulse: {
+      market: '쿠팡 · 올리브영 · 공식몰',
+      ratingSummary: '한 번 쓰면 일반 칫솔로 못 돌아간다는 재구매 후기 압도적',
+      praised: '잇몸 피가 안 나고 치아 표면을 촘촘히 쓸어주는 감각',
+      repeatedComplaint: '헤드가 생각보다 크다는 의견과 개당 가격 부담 중복 지적',
+      trapNote: '교정인·잇몸 작은 분은 성인용 5460 대신 어린이/여성용으로 나온 CS Smart(7600모)가 훨씬 편할 수 있음'
+    },
+    deepSpecs: [
+      { k: '필라멘트 수 · 굵기', v: 'Curen 모 5,460가닥 · 직경 0.10mm' },
+      { k: '그립 설계', v: '옥타곤(8각) 핸들 · 45도 바스법 가이드' },
+      { k: '교체 주기', v: '2~3개월 (일반 나일론 대비 탄성 유지 길음)' }
+    ],
+    tierLadder: { budget: '왕타 / 켄트 초극세모 입문 (2~4천)', reference: 'Curaprox CS 5460 / CS Smart · 필립스 소닉케어' }
+  },
+  {
+    id: 'marvis-classic-toothpaste',
+    brand: 'MARVIS',
+    name: '마비스 클래식 스트롱 민트 치약 (이탈리아 감성 치약)',
+    category: '구강·욕실케어',
+    verdict: 'WARN',
+    priceTier: '1.2~1.8만 원대',
+    chips: ['인테리어 오브제 튜브', '불소 905ppm(저~중)', '고연마·강한 민트'],
+    oneLiner: '세면대에 올려두면 가장 예쁜 이탈리아 레퍼런스 치약이지만, 고불소(1450ppm) 충치 방어나 저연마 잇몸 보호 기준으론 가성비·스펙 아쉬움이 있음.',
+    specs: { dust: 1, deposit: 1, trouble: 2 },
+    pros: [
+      '욕실 인테리어 포인트가 되는 클래식 알루미늄 튜브 패키지와 강렬하고 오래 남는 특유의 민트 향'
+    ],
+    cautions: [
+      '국내 유통 정품 기준 불소 함량이 905~1000ppm 수준(일부 직구 무불소)이며 연마제(수산화알루미늄 등)와 강한 향료 비중이 높아 시린이엔 비추천'
+    ],
+    checks: [
+      '충치·잇몸 관리 목적이면 아침은 마비스(기분 전환), 저녁 잠들기 전엔 1450ppm 저연마 치약으로 분리 사용하는 전략 추천',
+      '직구/면세 구매 시 불소(Fluoride) 포함 버전인지 무불소(Fluoride-Free)인지 반드시 확인'
+    ],
+    tones: ['white-minimal', 'steel-modern', 'sage-terracotta'],
+    styles: ['감성 빈티지', '컬러 포인트'],
+    pairIds: ['sensodyne-multicare', 'sus304-toothbrush-holder'],
+    goodLine: '세면대 분위기를 살리는 패키지 디자인과 강렬한 페퍼민트 청량감',
+    checkLine: '저~중불소·상대적 고연마 스펙이므로 시린이·취침 전 고불소 케어용으론 비추천',
+    altName: '센소다인 멀티케어(저녁용) + 마비스 소용량(외출/기분전환용)',
+    altSearchKeyword: '마비스 클래식 스트롱 민트 치약',
+    creatorPick: { source: '치과의사 채널 성분 분석 비교 영상 다수 언급', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '올리브영 · 쿠팡 · 선물샵',
+      ratingSummary: '집들이 선물·인테리어 만족도 최상 vs 치과 성분 기준 지적',
+      praised: '양치 후 개운함·화장실에 놓았을 때 예쁨',
+      repeatedComplaint: '가격 대비 양 적음, 알루미늄 튜브 구겨짐/샘, 이 시림 보고',
+      trapNote: '집들이 선물로 자주 돌지만 정작 치아 건강 기능성 측면에선 성분표 확인이 필요한 대표 품목'
+    },
+    deepSpecs: [
+      { k: '불소 함량', v: '약 905ppm (일부 해외 라인 무불소 주의)' },
+      { k: '연마제 · 자극', v: '수산화알루미늄/실리카 + 강한 멘톨 향료' },
+      { k: '권장 용도', v: '기분 전환·모닝 양치 (시린이·야간 케어는 고불소 분리)' }
+    ],
+    tierLadder: { budget: '센소다인 · 엘멕스 1450ppm 기능 중심', reference: '루치펠로 / 마비스 (디자인·향 중심)' }
+  },
+  {
+    id: 'low-fluoride-charcoal-paste',
+    brand: '시중 저가 미백·숯',
+    name: '고연마 활성탄(숯) · 무불소 화이트닝 치약류',
+    category: '구강·욕실케어',
+    verdict: 'NOPE',
+    priceTier: '5천~1.5만 원대',
+    chips: ['높은 RDA 치아 마모', '무불소 충치 취약', '세면대 검은 물때'],
+    oneLiner: '숯 가루나 강한 연마제로 겉면 착색만 긁어내는 방식이라 장기 사용 시 치아 법랑질(에나멜)이 닳아 치아가 더 누래 보이고 시려질 수 있음.',
+    specs: { dust: 2, deposit: 1, trouble: 4 },
+    checks: [
+      '리뷰 검증: 양치 후 칫솔모와 세면대 실리콘 틈새에 검은 숯 잔여물이 끼고 이가 시려졌다는 불만 반복',
+      '무불소·저불소 제품이 많아 성인 충치 예방에 불리함'
+    ],
+    tones: ['steel-modern'],
+    styles: ['모던·스틸'],
+    pairIds: ['sensodyne-multicare', 'curaprox-5460-brush'],
+    goodLine: '일시적 커피·와인 표면 착색 제거 체감',
+    checkLine: '고연마(높은 RDA)로 인한 법랑질 마모·시린이 및 세면대 착색 주의',
+    altName: '과산화수소 저농도 공식 미백 패치 또는 센소다인/오랄비 저연마 고불소',
+    altSearchKeyword: '센소다인 멀티케어 치약',
+    creatorPick: { source: '치과의사 채널 비추천·주의 치약 유형 언급', sponsored: false, crossCount: 4 },
+    reviewPulse: {
+      market: 'SNS 광고 · 오픈마켓',
+      ratingSummary: '"한 번에 하얘진다" 광고 대비 실사용자 시림·오염 불만',
+      praised: '거품 색깔과 즉각적인 개운함',
+      repeatedComplaint: '칫솔모 검게 물듦, 잇몸·치아 시림 증가, 미백 효과 미미 지적',
+      trapNote: '화학적 미백(과산화수소)이 아닌 물리적 숯 연마는 치아 표면을 깎아내는 원리임을 알아야 함'
+    },
+    deepSpecs: [
+      { k: '연마도 리스크', v: '고연마 RDA 경향 (에나멜 마모 시 상아질 비침으로 더 누래짐)' },
+      { k: '불소 유무', v: '무불소 또는 저불소 비율 높음' },
+      { k: '욕실 관리', v: '세면대 실리콘·흰 수건 검은 얼룩 주의' }
+    ],
+    tierLadder: { budget: '일반 1450ppm 불소치약 + 연 1회 스케일링', reference: '식약처 허가 과산화수소 미백제 + 저연마 치약 병행' }
+  },
+  {
+    id: 'daiso-ceramic-filter-head',
+    brand: '초저가 비인증',
+    name: '1만 원 미만 초저가 비인증 필터 샤워기 헤드',
+    category: '구강·욕실케어',
+    verdict: 'NOPE',
+    priceTier: '3천~9천 원대',
+    chips: ['나사선 물샘 불량', '플라스틱 크랙', '필터 인증 불명확'],
+    oneLiner: '본체 나사 결합부 플라스틱 두께가 얇아 수압에 금세 금이 가거나 호스 연결부에서 물이 옆으로 새고 리필 규격이 호환되지 않는 경우 많음.',
+    specs: { dust: 1, deposit: 2, trouble: 5 },
+    checks: [
+      '리뷰 검증: "1~2주 만에 손잡이 이음새에서 물줄기가 뿜어져 나온다", "고무 패킹 빠져 수압 약해짐" 불만 다수',
+      'KC 위생안전인증(또는 NSF) 없는 저가 카트리지는 오히려 세균 번식·압력 저하 유발'
+    ],
+    tones: ['white-minimal', 'steel-modern'],
+    styles: ['깔끔 미니멀'],
+    pairIds: ['ss304-tension-bath-rod', 'bodum-towel-40s-hotel'],
+    goodLine: '당장 급할 때 1만 원 아래로 달아보는 초기 진입 가격',
+    checkLine: '수압 누수·플라스틱 내압 크랙 및 KC 인증/필터 호환 불가',
+    altName: '바디럽 퓨어썸 / 닥터피엘 KC인증 정품 필터 샤워기',
+    altSearchKeyword: '바디럽 퓨어썸 샤워기 KC인증',
+    creatorPick: { source: '살림·자취 리뷰 채널 인증 체크 강조 품목', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '오픈마켓 · 저가몰',
+      ratingSummary: '첫날 수압 상승 별점 높으나 1개월 내 파손/누수 후기 급증',
+      praised: '싸고 미세 살수판 때문에 수압이 세진 느낌',
+      repeatedComplaint: '온수 사용 시 결합부 휨·누수, 리필 단종으로 본체 통째 폐기 중복 지적',
+      trapNote: '샤워기 헤드 나사 규격(국제표준 G1/2)은 같아도 내부 카트리지 직경이 제각각이라 호환 리필을 못 구함'
+    },
+    deepSpecs: [
+      { k: '내압·재질', v: '저가 ABS/PC 접합부 (온수 반복 시 열변형 누수)' },
+      { k: '필터 규격', v: '비표준 OEM 카트리지 (장기 수급 불확실)' },
+      { k: '필수 인증', v: '수도용 자재 위생안전인증(KC) 확인 필요' }
+    ],
+    tierLadder: { budget: '스텐 살수판 일반 무필터 헤드(고장 없음)', reference: '바디럽 퓨어썸 / 대림바스 KC인증 정품 라인' }
+  },
+  {
+    id: 'bodum-towel-40s-hotel',
+    brand: '송월·코마사',
+    name: '40수 코마사 190~200g 호텔 수건 세트',
+    category: '구강·욕실케어',
+    verdict: 'PASS',
+    priceTier: '2~4만 원대 (5~10장)',
+    chips: ['원룸 최적 건조 속도', '먼지 덜 날리는 코마사', '과밀도 70수보다 쉰내 적음'],
+    oneLiner: '무조건 비싸고 두꺼운 70수(230g+) 수건보다 40수 190~200g 코마사가 통풍 약한 원룸에서 빠르게 마르고 쉰내가 훨씬 덜 남.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '코마사 공정으로 짧은 잔털을 빗어내 첫 세탁 후 얼굴에 수건 먼지가 덜 묻음',
+      '190~200g 적정 중량이라 좁은 실내 건조 환경에서도 밤사이 보송하게 말라 세균·쉰내 발생이 적음'
+    ],
+    checks: [
+      '세탁 시 섬유유연제를 쓰면 코팅막 때문에 물 흡수가 떨어지고 보풀이 올라오므로 단독 세탁 + 울코스 권장',
+      '첫 사용 전 물로 단독 1~2회 헹굼 세탁하면 잔사가 거의 사라짐'
+    ],
+    tones: ['white-minimal', 'oak-natural', 'steel-modern'],
+    styles: ['깔끔 미니멀', '포근 내추럴'],
+    pairIds: ['oxyclean-sodium-percarbonate', 'citric-acid-cleaner'],
+    goodLine: '실내 건조가 잦은 원룸에서 빠른 건조·적은 먼지·도톰함 균형이 가장 좋은 40수 200g 수건',
+    checkLine: '섬유유연제 금지(흡수력 저하) 및 처음 2회 단독 세탁 필수',
+    altName: '송월타월 40수 코마사 200g 5~10장 세트 (무채색 통일)',
+    altSearchKeyword: '송월타월 40수 코마사 200g',
+    creatorPick: { source: '살림·호텔수건 비교 채널 40수 적정론 다수 언급', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '쿠팡 · 브랜드몰',
+      ratingSummary: '고중량 수건 썼다가 안 말라서 40수 200g으로 정착한 후기 다수',
+      praised: '도톰하면서도 다음날 아침이면 다 마르는 실용성',
+      repeatedComplaint: '유연제 써서 물 안 닦인다는 오해와 초기 잔털 세탁 언급',
+      trapNote: '70수·240g 초고중량은 건조기가 없거나 햇빛 약한 원룸에선 쉰내 주범이 되기 쉬움'
+    },
+    deepSpecs: [
+      { k: '원사 · 공정', v: '면 100% 40수 코마사 (잔털 제거 코밍 가공)' },
+      { k: '권장 중량', v: '180 ~ 200g/장 (약 450~500 GSM 밸런스)' },
+      { k: '세탁 금기', v: '섬유유연제 비추천 · 단독 물세탁 + 그늘 건조' }
+    ],
+    tierLadder: { budget: '30수·40수 180g 기본 면타월', reference: '송월 40수 200g / 테클라·아비데코(유럽 브랜드)' }
+  },
+  {
+    id: 'sus304-toothbrush-holder',
+    brand: 'LIVING',
+    name: '스테인리스 304 물빠짐 무타공 칫솔·전동칫솔 거치대',
+    category: '구강·욕실케어',
+    verdict: 'PASS',
+    priceTier: '1~2만 원대',
+    chips: ['바닥 물고임 곰팡이 0%', '전동칫솔 수납', 'SUS304 녹 방지'],
+    oneLiner: '바닥이 막힌 도자기/플라스틱 칫솔통에 물과 치약이 고여 붉은 물때·곰팡이가 끼던 문제를 완전히 없애는 개방형 거치대.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '공중에 띄워 칫솔모와 바닥이 모두 즉시 건조되므로 세면대 위 물때 청소가 압도적으로 편해짐',
+      '전동칫솔 본체와 면도기까지 깔끔하게 분리 거치 가능'
+    ],
+    checks: [
+      '타일 부착형(비접착/겔패드) 고를 땐 굴곡진 타일이나 줄눈 위를 피해 매끈한 타일/거울 면에 부착',
+      '부착 테이프가 아닌 방수 겔/압착 방식인지 확인해 원상복구 감점 방지'
+    ],
+    tones: ['white-minimal', 'steel-modern'],
+    styles: ['깔끔 미니멀', '모던·스틸'],
+    pairIds: ['curaprox-5460-brush', 'sensodyne-multicare'],
+    goodLine: '물고임 없이 칫솔·전동칫솔을 공중 건조해 욕실 붉은 물때를 없애는 SUS304 거치대',
+    checkLine: '줄눈 피한 매끈 타일 부착 및 방수 패드 접착 잔여물 주의',
+    altName: '스탠드형 또는 거울 부착형 스텐304 칫솔살균/건조 거치대',
+    altSearchKeyword: '스텐304 칫솔 거치대 물빠짐',
+    creatorPick: { source: '미니멀 욕실 정리 채널 추천 언급', sponsored: false, crossCount: 2 },
+    reviewPulse: {
+      market: '쿠팡 · 오늘의집',
+      ratingSummary: '도자기 칫솔통 물때 지겨워서 바꾼 후기 만족도 높음',
+      praised: '바닥 닦을 필요 없어짐, 칫솔 4개+치약 한 번에 정리',
+      repeatedComplaint: '3M 테이프 동봉 제품 벽 타일 부착 후 떼기 힘들다는 지적(거울 부착 권장)',
+      trapNote: '접착 패드가 걱정된다면 타일 대신 욕실 거울 하단에 붙이거나 세면대 위 스탠드형 물빠짐 트레이 선택'
+    },
+    deepSpecs: [
+      { k: '소재', v: 'SUS 304 스테인리스 (방청 내구성)' },
+      { k: '배수 구조', v: '하부 오픈 스켈레톤 (물고임 0%)' },
+      { k: '원상복구 팁', v: '타일보다 유리 거울 면 부착 시 제거 흔적 없음' }
+    ],
+    tierLadder: { budget: '스탠드형 규조토/스텐 트레이 (1만)', reference: '야마자키(YAMAZAKI) 타워 욕실 거치 시리즈' }
+  },
+
+  // ==================== 10. 주방 · 소형가전 (7종: 스펙·안전·가성비 검증) ====================
+  {
+    id: 'carepod-stainless-humidifier',
+    brand: 'CAREPOD',
+    name: '케어팟 큐브/오리지널 스텐 가습기',
+    category: '소형가전·주방',
+    verdict: 'PASS',
+    priceTier: '12~19만 원대',
+    chips: ['수조 통스텐 열탕소독', '세척 부품 딱 3개', '세균 걱정 극소화'],
+    oneLiner: '가습기 세척이 귀찮아 곰팡이를 마시게 되는 자취방에서, 밥솥 내솥처럼 물통을 통째로 꺼내 열탕 소독할 수 있는 세척 종결 가습기.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '복잡한 구멍이나 틈새 없이 수조·진동자·뚜껑 3개 부품만 분리해 주방세제 설거지 및 열탕 소독이 1분 만에 끝남',
+      '스테인리스 304 수조라 플라스틱 스크래치 세균 번식 걱정이 적고 가습량(최대 330cc/h)도 원룸에 충분함'
+    ],
+    checks: [
+      '초음파 방식(X31S 등)은 바닥이 젖을 수 있으므로 높은 스툴·협탁 위에 두고 사용, 온풍·저온가열 겸용 여부는 모델명 확인',
+      '수돗물 대신 정수물 사용 시 하얀 석회 가루 분진을 줄일 수 있음(단, 세균 번식 막기 위해 매일 물 갈기 권장)'
+    ],
+    tones: ['white-minimal', 'steel-modern'],
+    styles: ['깔끔 미니멀', '모던·스틸'],
+    pairIds: ['xiaomi-smart-air-4', 'desker-desk'],
+    goodLine: '복잡한 틈새 없이 수조 통스텐 3파트 분리로 1분 열탕 소독 가능한 가습기',
+    checkLine: '초음파 방식 특성상 협탁 위 배치 권장(바닥 결로 방지) 및 매일 물 교체',
+    altName: '케어팟 X31S(초음파) / X50V(저온가열) 또는 스텐 가열식 가습기',
+    altSearchKeyword: '케어팟 스텐 가습기',
+    creatorPick: { source: '비염·가전·살림 채널 장기 사용 추천 1순위 언급', sponsored: false, crossCount: 5 },
+    reviewPulse: {
+      market: '오늘의집 · 쿠팡 · 브랜드몰',
+      ratingSummary: '플라스틱 가습기 세척 지쳐 넘어온 유저 정착률 최상위',
+      praised: '내솥처럼 설거지되는 구조 덕분에 매일 씻기 부담 없음',
+      repeatedComplaint: '물 떨어지는 소리(또르르) 호불호 및 정수/수돗물 분진 관련 언급',
+      trapNote: '가습 성능보다 "내가 일주일 뒤에도 진짜 씻어서 쓸 수 있는 구조인가"가 가습기 선택의 핵심'
+    },
+    deepSpecs: [
+      { k: '수조 재질', v: 'SUS 304 통스테인리스 (열탕·식기세척기 가능)' },
+      { k: '분해 부품', v: '3개 (커버 · 내솥 · 진동자/스틱)' },
+      { k: '용량 · 소비전력', v: '4.0L · 약 30W (가열식 모델은 별도 확인)' }
+    ],
+    tierLadder: { budget: '스텐 통세척 가열/초음파 보급형 (6~9만)', reference: 'Carepod · 조지루시/발뮤다 레인(기화식)' }
+  },
+  {
+    id: 'ultrasonic-mini-mood-humidifier',
+    brand: 'SNS·저가형',
+    name: '1~2만 원대 무드등 일체형 미니 초음파 가습기',
+    category: '소형가전·주방',
+    verdict: 'NOPE',
+    priceTier: '1~2만 원대',
+    chips: ['내부 곰팡이 세척 불가', '물 부족 가습효과 미미', '필터 코튼 부패'],
+    oneLiner: '귀여운 무드등처럼 책상에 두기 좋지만, 좁은 구멍과 흡수 솜(코튼 필터) 내부를 씻을 수 없어 1주일만 지나도 붉은 물때·세균이 공기 중으로 분무됨.',
+    specs: { dust: 2, deposit: 1, trouble: 5 },
+    checks: [
+      '리뷰 검증: 필터 교체 주기를 놓치면 냄새가 나고 충전 포트(C타입)로 물이 새어 고장 난다는 불만 매우 많음',
+      '분무량(30~50ml/h)이 너무 적어 4평 원룸 습도조차 1~2% 올리기 역부족'
+    ],
+    tones: ['white-minimal', 'butter-pastel'],
+    styles: ['깔끔 미니멀'],
+    pairIds: ['carepod-stainless-humidifier'],
+    goodLine: '작고 예쁜 무드등 겸용 소품 디자인',
+    checkLine: '진동자·솜필터 내부 세척 불가(세균 분무 위험) 및 실질 가습량 미미',
+    altName: '손이 통째로 들어가는 통세척 스테인리스 가습기 (2L 이상)',
+    altSearchKeyword: '통세척 스텐 가습기',
+    creatorPick: { source: '가전·비염 관리 채널 주의 품목 언급', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '쿠팡 · 카카오선물하기',
+      ratingSummary: '귀여운 디자인 별점 높지만 한 철 쓰고 버리는 소모품 비율 높음',
+      praised: '책상 바로 코앞 습기 느낌과 예쁜 LED',
+      repeatedComplaint: '솜 필터 악취, 책상 바닥 젖음, 2개월 내 분무량 급감 중복 지적',
+      trapNote: '호흡기로 바로 들어가는 가습기는 청소 안 되는 일체형보다 손 들어가는 구조가 필수'
+    },
+    deepSpecs: [
+      { k: '구조 한계', v: '일체형 진동자 + 코튼 심지(세척·건조 불리)' },
+      { k: '분무량', v: '약 35~50ml/h (실내 습도 개선 효과 극히 낮음)' },
+      { k: '위생 위험', v: '물통 내 물때 방치 시 바이오필름·미스트 흡입 주의' }
+    ],
+    tierLadder: { budget: '손 들어가는 대용량 통세척 가습기 (4~6만)', reference: '케어팟 SUS304 스텐 가습기 (12만+)' }
+  },
+  {
+    id: 'de-longhi-stainless-kettle',
+    brand: '드롱기·테팔',
+    name: '내부 이음매 없는 통스테인리스 304 전기포트 (1~1.5L)',
+    category: '소형가전·주방',
+    verdict: 'PASS',
+    priceTier: '4~9만 원대',
+    chips: ['내부 플라스틱 접촉 0%', '환경호르몬 걱정 적음', '구연산 1분 세척'],
+    oneLiner: '가열되는 물통 안쪽이 실리콘 이음매나 플라스틱 수위창 없이 통스테인리스 304로 찍혀 나와 미세플라스틱·누수 걱정이 적은 정석 전기포트.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '100도로 물을 끓일 때 플라스틱 수위창이나 접착제가 물에 닿지 않아 위생적임',
+      '이중 단열 구조(쿨터치) 모델을 고르면 겉면이 뜨겁지 않고 보온 유지력도 좋음'
+    ],
+    checks: [
+      '구입 전 반드시 "뚜껑 안쪽(증기 닿는 면)까지 스테인리스인지" 상세 이미지 확인',
+      '바닥 하얀 석회 얼룩은 고장이 아니라 물속 미네랄이므로 구연산 반 스푼 넣고 한 번 끓이면 즉시 복원'
+    ],
+    tones: ['white-minimal', 'steel-modern', 'butter-pastel'],
+    styles: ['깔끔 미니멀', '모던·스틸'],
+    pairIds: ['citric-acid-cleaner', 'ikea-docksta'],
+    goodLine: '내부 플라스틱 수위창·이음매 없이 물과 닿는 면을 SUS304 스텐으로 막은 위생 전기포트',
+    checkLine: '뚜껑 안쪽 스텐 처리 여부 확인 및 스테인리스 이중벽 무게감 체크',
+    altName: '테팔·필립스·유니맥스 통스텐 304 이중단열 전기포트',
+    altSearchKeyword: '통스테인리스 304 이중단열 전기포트',
+    creatorPick: { source: '주방가전·환경호르몬 체크 채널 다수 추천', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '쿠팡 · 오늘의집',
+      ratingSummary: '유리포트 물때·플라스틱 냄새 피해서 갈아탄 만족 후기 중심',
+      praised: '플라스틱 물 냄새 전혀 없고 겉이 안 뜨거워 안전함',
+      repeatedComplaint: '내부에 물 양이 안 보여 무게로 가늠하거나 뚜껑을 열어야 하는 점 언급',
+      trapNote: '수위창이 달린 포트는 고온에 닿는 플라스틱 실리콘 패킹 경화로 몇 년 뒤 누수가 생기는 경우가 많음'
+    },
+    deepSpecs: [
+      { k: '내부 재질', v: '심리스 SUS 304 (이음매 없는 일체 성형)' },
+      { k: '단열 · 안전', v: '이중벽 구조 (외부 화상 방지 · 보온 연장)' },
+      { k: '소비전력', v: '1500~1850W (멀티탭 말고 벽 콘센트 직결 권장)' }
+    ],
+    tierLadder: { budget: '국내 통스텐304 이중단열 포트 (3~5만)', reference: '발뮤다 더 팟 / 브레빌 온도조절 주전자' }
+  },
+  {
+    id: 'cheap-nonstick-pan-thin',
+    brand: '초저가 보급형',
+    name: '1만 원 이하 초경량 알루미늄 불소수지 코팅 프라이팬',
+    category: '소형가전·주방',
+    verdict: 'NOPE',
+    priceTier: '6천~1만 원대',
+    chips: ['바닥 열변형 휘어짐', '3개월 코팅 벗겨짐', '인덕션 인식 불량'],
+    oneLiner: '바닥 두께가 너무 얇아 강불에 두 번만 구워도 가운데가 볼록하게 휘고 2~3개월 만에 계란 프라이가 눌어붙기 시작함.',
+    specs: { dust: 1, deposit: 1, trouble: 5 },
+    checks: [
+      '리뷰 검증: "인덕션에서 달그락거리며 열이 한쪽으로만 쏠린다", "코팅이 너무 빨리 벗겨져 계속 새로 산다" 중복 불만',
+      '중저가 코팅팬이라도 바닥 두께 3mm 이상·무게감 있는 통주물/고압 단조 제품을 사야 1~2년 이상 편하게 씀'
+    ],
+    tones: ['steel-modern'],
+    styles: ['모던·스틸'],
+    pairIds: ['tpu-antibacterial-board', 'oxyclean-sodium-percarbonate'],
+    goodLine: '손목 힘 약한 사람도 한 손으로 들 만큼 매우 가벼운 무게',
+    checkLine: '얇은 바닥 열변형(인덕션 떨림·기름 쏠림) 및 3개월 내 코팅 수명 종료',
+    altName: '테팔 티타늄 코팅(인덕션 겸용) 또는 해피콜 통주물 3mm+ 팬',
+    altSearchKeyword: '테팔 티타늄 인덕션 프라이팬',
+    creatorPick: { source: '요리·자취 살림 채널 가성비 함정 품목 언급', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '다이소 · 저가 오픈마켓',
+      ratingSummary: '잠깐 쓰고 버릴 생각으로 샀다가 요리 스트레스 호소 다수',
+      praised: '싸고 가벼워서 부담 없이 버릴 수 있음',
+      repeatedComplaint: '중앙이 볼록 솟아 기름이 가장자리로 도망감, 2달 만에 눌어붙음 지적',
+      trapNote: '1만 원 팬 4번 바꾸는 것보다 2~3만 원대 두꺼운 인덕션용 팬 1개 사고 실리콘 뒤집개 쓰는 게 훨씬 이득'
+    },
+    deepSpecs: [
+      { k: '판 두께', v: '1.5~2.0mm 미만 프레스 알루미늄 (열충격 취약)' },
+      { k: '코팅 내구', v: '단층 저가 PTFE · 중불 이상 예열 시 급속 노화' },
+      { k: '대체 기준', v: '바닥 두께 3.0mm 이상 단조/통주물 + PFOA Free 확인' }
+    ],
+    tierLadder: { budget: '테팔 · 해피콜 티타늄 인덕션 팬 (2.5~4만)', reference: '스텐 316L 통3중/5중 (휘슬러·드부이에·올클래드)' }
+  },
+  {
+    id: 'tpu-antibacterial-board',
+    brand: '도블레·락앤락',
+    name: '두꺼운 TPU 항균 도마 (열탕 소독 가능)',
+    category: '소형가전·주방',
+    verdict: 'PASS',
+    priceTier: '1.5~3만 원대',
+    chips: ['열탕 소독 가능', '미세플라스틱 가루 적음', '빠른 건조'],
+    oneLiner: '기존 딱딱한 PP 플라스틱 도마의 칼집 미세플라스틱 문제와 나무 도마의 곰팡이·건조 스트레스를 동시에 줄여주는 자취방 주방 표준 도마.',
+    specs: { dust: 1, deposit: 1, trouble: 1 },
+    pros: [
+      '탄성 있는 TPU(열가소성 폴리우레탄) 소재라 칼날 손상을 줄이고 칼집 파편이 덜 떨어짐',
+      '팔팔 끓는 물을 부어 10초 열탕 소독이 가능해 닭고기·채소 위생 관리가 매우 간편함'
+    ],
+    checks: [
+      '너무 얇은 1.5~2mm TPU 도마는 사용 중 끝이 말려 올라올 수 있으므로 4mm 이상 두께 또는 인덱스 스탠드 세트를 추천',
+      '김치 국물·카레 색배임은 햇빛에 두거나 과탄산/식초로 닦으면 옅어지나 진한 색상은 어두운 컬러 도마로 분리 권장'
+    ],
+    tones: ['white-minimal', 'butter-pastel', 'sage-terracotta'],
+    styles: ['깔끔 미니멀', '컬러 포인트'],
+    pairIds: ['de-longhi-stainless-kettle', 'oxyclean-sodium-percarbonate'],
+    goodLine: '열탕 소독 가능·칼집 미세플라스틱 감소·물기 건조까지 빠른 원룸 주방 최적화 도마',
+    checkLine: '얇은 2mm 시트형 말림 주의(4mm+ 권장) 및 김치 색배임 대비 컬러 선택',
+    altName: '도블레 / 락앤락 두꺼운 TPU 항균 인덱스 도마 세트',
+    altSearchKeyword: 'TPU 항균 도마 열탕소독',
+    creatorPick: { source: '살림·위생 전문가 채널 PP 대체 추천템 언급', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '쿠팡 · 컬리',
+      ratingSummary: '나무 도마 곰팡이·PP 도마 칼집 때문에 갈아탄 만족 후기 다수',
+      praised: '뜨거운 물 부어도 안 휘고 칼 닿는 소리가 부드러움',
+      repeatedComplaint: '얇은 모델 끝부분 말림 및 연한 베이지 색상의 김치 이염 지적',
+      trapNote: '생닭/생선용과 과일/채소용 2장으로 색상 구분해 쓰면 위생 관리가 완벽해짐'
+    },
+    deepSpecs: [
+      { k: '소재 · 내열', v: '열가소성 폴리우레탄(TPU) · 내열 최대 ~150°C' },
+      { k: '권장 두께', v: '4mm 이상 (변형·미끄럼 방지)' },
+      { k: '소독법', v: '끓는 물 10초 샤워 소독 / 식세기는 변형 주의' }
+    ],
+    tierLadder: { budget: 'TPU 두꺼운 단품 도마 1~2만', reference: '요시다/도블레 인덱스 스탠드 TPU 세트' }
+  },
+  {
+    id: 'camphor-wood-board',
+    brand: '해외·원목 브랜드',
+    name: '호주 캄포 원목 도마 (감성 플레이팅 겸용)',
+    category: '소형가전·주방',
+    verdict: 'WARN',
+    priceTier: '3~7만 원대',
+    chips: ['자연 향균·플레이팅 감성', '물기 방치 시 갈라짐', '정기 오일링 필수'],
+    oneLiner: '홈카페 플레이팅과 칼 닿는 손맛은 최고지만 물에 불려두면 바로 갈라지고 틈새 곰팡이가 생겨 설거지를 바로 끝내는 부지런한 자취생에게만 적합함.',
+    specs: { dust: 1, deposit: 1, trouble: 3 },
+    pros: [
+      '캄포 나무 고유의 향균 성분과 아름다운 나뭇결 덕분에 브런치·스테이크 플레이팅 보드로 훌륭함'
+    ],
+    cautions: [
+      '식기세척기 절대 금지, 물 담금 금지, 세워서 자연 건조 후 주기적으로 포도씨유/미네랄오일 코팅이 필요함'
+    ],
+    checks: [
+      '저가 원목 도마 중 집성목(본드 접합) 제품은 물 닿으면 접합선이 벌어지므로 통원목(솔리드) 여부 확인',
+      '김치·생고기 손질용보다는 빵·과일·플레이팅 전용으로 쓰는 것이 관리 수명이 김'
+    ],
+    tones: ['oak-natural', 'walnut-vintage'],
+    styles: ['포근 내추럴', '감성 빈티지'],
+    pairIds: ['tpu-antibacterial-board', 'de-longhi-stainless-kettle'],
+    goodLine: '자연스러운 나뭇결과 칼날 보호가 뛰어난 감성 플레이팅 겸용 통원목 도마',
+    checkLine: '물기 방치 시 휨·갈라짐 위험과 주기적 오일 관리 필요 여부 체크',
+    altName: 'TPU 도마(조리용) + 미니 캄포 보드(빵·플레이팅 전용 분리)',
+    altSearchKeyword: '통원목 호주 캄포 도마',
+    creatorPick: { source: '홈카페·요리 유튜버 플레이팅용 언급(관리법 주의 포함)', sponsored: false, crossCount: 3 },
+    reviewPulse: {
+      market: '오늘의집 · 브랜드몰',
+      ratingSummary: '디자인 만족도 최상 vs 건조 관리 소홀로 금 간 후기 공존',
+      praised: '음식 올려만 둬도 사진이 잘 나오고 향이 좋음',
+      repeatedComplaint: '식세기에 넣었거나 싱크대 물 담금 후 갈라짐·거칠어짐 보고',
+      trapNote: '물·세제·김치 국물에 닿는 일상 조리는 TPU 도마로 쓰고, 나무 도마는 건식 플레이팅 전용이 가장 이상적'
+    },
+    deepSpecs: [
+      { k: '목재 유형', v: '캄포 통원목 권장 (저가 집성목 본드 라인 주의)' },
+      { k: '금기 사항', v: '식기세척기·열탕 소독·장시간 물 불림 불가' },
+      { k: '관리 루틴', v: '마른 행주 닦기 + 1~2개월 1회 푸드그레이드 미네랄오일' }
+    ],
+    tierLadder: { budget: 'TPU 도마 (조리 실사용)', reference: '호주 정품 통캄포 · 엔드그레인 도마 (플레이팅/고급 칼용)' }
+  },
+  {
+    id: 'thermoelectric-mini-dehumidifier',
+    brand: '쿠팡·저가형',
+    name: '펠티어 소자 미니 제습기 (3~6만 원대 소형)',
+    category: '소형가전·주방',
+    verdict: 'NOPE',
+    priceTier: '3~6만 원대',
+    chips: ['하루 제습량 300ml 수준', '장마철 체감 효과 0%', '어댑터 발열 주의'],
+    oneLiner: '작고 조용해 보이지만 컴프레셔가 없는 펠티어 방식은 하루 제습량이 종이컵 1~2잔 수준이라 4평 원룸 빨래 건조·결로 방지에 거의 효과가 없음.',
+    specs: { dust: 2, deposit: 1, trouble: 4 },
+    checks: [
+      '리뷰 검증: "물통은 조그만 게 일주일 틀어도 반밖에 안 찬다", "방 습도가 75%에서 전혀 안 내려간다"는 불만 압도적',
+      '옷장 내부(밀폐 0.5평) 국소용이 아니라 방 전체 습기 제거 목적이면 반드시 일일 제습량 6L 이상 컴프레셔 제습기 선택'
+    ],
+    tones: ['white-minimal'],
+    styles: ['깔끔 미니멀'],
+    pairIds: ['carepod-stainless-humidifier'],
+    goodLine: '작은 크기로 옷장·신발장 같은 좁은 밀폐 공간 안에 두기 쉬운 크기',
+    checkLine: '일일 제습량 0.3L 수준이라 원룸 전체 습기·장마 빨래 건조에는 무력함',
+    altName: '일일 제습량 6~10L+ 컴프레셔 제습기 (위닉스·캐리어·LG 등)',
+    altSearchKeyword: '위닉스 뽀송 10L 컴프레셔 제습기',
+    creatorPick: { source: '가전 분석 유튜버 대표 헛돈 방지 품목 언급', sponsored: false, crossCount: 4 },
+    reviewPulse: {
+      market: '쿠팡 · 오늘의집',
+      ratingSummary: '겉모양 보고 샀다가 장마철에 결국 컴프레셔 제습기 다시 산 후기 다수',
+      praised: '가볍고 소리가 조용하며 가격이 쌈',
+      repeatedComplaint: '방 습도 수치 변화 없음, 여름철 더운 바람만 나오고 물 거의 안 고임 중복 지적',
+      trapNote: '제품 설명에 "500ml/일"이 적혀 있어도 최적 조건(30도 80%) 수치라 실생활에선 하루 150~250ml 수준'
+    },
+    deepSpecs: [
+      { k: '제습 원리', v: '펠티어(열전반도체) 방식 · 소비전력 25~45W' },
+      { k: '실제 일일 제습량', v: '약 0.2 ~ 0.4L/일 (컴프레셔식 대비 1/20 수준)' },
+      { k: '원룸 권장 스펙', v: '방 전체용은 컴프레셔식 최소 6~12L/일 이상 필수' }
+    ],
+    tierLadder: { budget: '염화칼슘 물먹는하마(옷장용) + 서큘레이터 환기', reference: '위닉스/캐리어 10~12L 컴프레셔 제습기 (15~25만)' }
+  },
+  {
+    id: 'xiaomi-smart-air-4',
+    brand: 'XIAOMI',
+    name: '샤오미 스마트 공기청정기 4 라이트 / 4',
+    category: '소형가전·주방',
+    verdict: 'PASS',
+    priceTier: '9~15만 원대',
+    chips: ['원룸 CADR 가성비 1위', '원통형 360도 흡입', '호환 필터 수급 용이'],
+    oneLiner: '바닥 면적 A4 용지 한 장 크기로 6~10평 원룸 미세먼지·요리 냄새를 빠르게 잡는 실속형 공기청정기.',
+    specs: { dust: 1, deposit: 1, trouble: 2 },
+    pros: [
+      '작은 원통형 풋프린트 덕분에 좁은 방 구석에 세워두기 좋고 앱 연동 및 필터 교체 비용이 합리적임',
+      '시간당 공기청정화율(CADR 360㎡/h 전후)이 동가격대 국내 미니 공기청정기보다 높아 실제 먼지 제거 속도가 빠름'
+    ],
+    checks: [
+      '전용 필터를 고를 땐 단순 부직포가 아닌 HEPA H13 + 활성탄 탈취층 포함 여부 확인',
+      '실시간 미세먼지 센서(레이저) 주변을 몇 달에 한 번 면봉으로 닦아주어야 수치 오차를 막을 수 있음'
+    ],
+    tones: ['white-minimal', 'steel-modern'],
+    styles: ['깔끔 미니멀', '모던·스틸'],
+    pairIds: ['carepod-stainless-humidifier', '3m-scotch-lint-roller'],
+    goodLine: 'A4 한 장 풋프린트에 높은 CADR 성능을 갖춘 원룸·반려동물 가정 가성비 공기청정기',
+    checkLine: '정품/호환 필터 선택 시 HEPA 등급·활성탄 포함 여부 및 레이저 센서 청소 체크',
+    altName: '샤오미 스마트 공기청정기 4 라이트 또는 위닉스 제로S',
+    altSearchKeyword: '샤오미 스마트 공기청정기 4 라이트',
+    creatorPick: { source: '가전·자취 IT 채널 가성비 레퍼런스 언급 다수', sponsored: false, crossCount: 4 },
+    reviewPulse: {
+      market: '쿠팡 · 네이버',
+      ratingSummary: '비싼 브랜드 대비 CADR/가격 효율로 장기 만족도 높음',
+      praised: '자리 적게 차지함, 요리 후 자동 모드 반응 빠름, 저렴한 유지비',
+      repeatedComplaint: '터보 모드 소음 및 상단 팬 그릴 내부 먼지 청소 번거로움 언급',
+      trapNote: '미니 탁상형(3~5만 원대)은 CADR이 너무 낮아 실효성이 떨어지므로 원룸이라도 8평+급 이상 권장'
+    },
+    deepSpecs: [
+      { k: '청정능력(CADR)', v: '약 360 ㎡/h (라이트 기준 · 약 9~13평 커버)' },
+      { k: '필터 구조', v: '360도 원통형 헤파 + 활성탄 (필터 유지비 연 2~3만)' },
+      { k: '소비전력 · 크기', v: '약 30W 전후 · 바닥 24×24cm' }
+    ],
+    tierLadder: { budget: '샤오미 에어 4 라이트 / 위닉스 타워프라임', reference: 'LG 퓨리케어 360 / 블루에어' }
   }
 ];
