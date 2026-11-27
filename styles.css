@@ -5051,3 +5051,13 @@ input[type="range"] { width: 100%; accent-color: var(--ink); cursor: pointer; }
   line-height: 1.45;
   word-break: keep-all;
 }
+.my-notice-item.is-focused-trend {
+  background: rgba(37, 99, 235, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+}
+.compare-matrix-card .compare-row {
+  align-items: start;
+  word-break: keep-all;
+}

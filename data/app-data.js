@@ -1,12 +1,12 @@
 // NOPE! v9 — 272종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
-import { ITEMS_DB } from './products-db.js?v=nope93';
+import { ITEMS_DB } from './products-db.js?v=nope94';
 import {
   STYLE_MOODS,
   ROOM_TONES,
   TARGET_CATEGORIES,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './mood-palettes.js?v=nope93';
+} from './mood-palettes.js?v=nope94';
 export {
   ITEMS_DB,
   STYLE_MOODS,
@@ -995,6 +995,8 @@ export const CYCLE_ALARMS = [
   { id: 'cyc-bedding', title: '베개커버 · 이불 세탁', everyDays: 14, tip: '2주 1회 세탁·건조' },
   { id: 'cyc-fabric', title: '소파 · 러그 먼지·탈취', everyDays: 7, tip: '주 1회 청소기 + 환기' },
   { id: 'cyc-drain', title: '욕실 배수구 · 실리콘 케어', everyDays: 7, tip: '주 1회 물때 5분 컷' },
+  { id: 'cyc-waterfilter', title: '정수기(브리타) 필터 교체', everyDays: 28, tip: '사용량 무관 4주 교체' },
+  { id: 'cyc-toothbrush', title: '칫솔 · 전동칫솔모 교체', everyDays: 90, tip: '3개월 주기 위생 교체' },
   { id: 'cyc-washer', title: '세탁기 통세척 · 제습제', everyDays: 30, tip: '월 1회 과탄산소다' },
   { id: 'cyc-filter', title: '에어컨 · 청정기 필터', everyDays: 30, tip: '월 1회 먼지 세척' }
 ];
@@ -1334,6 +1336,20 @@ export const RESCUE_PATCH_RULES = [
     ]
   },
   {
+    id: 'wall-film',
+    matchRx: /코맨드|시트지|점착|모스란다|벽선반|블라인드|실크벽지|타공|포스터/,
+    symptom: '접착 테이프·무리한 벽걸이로 실크벽지 뜯김이나 퇴실 보증금 차감 위험이 있는 상태',
+    costSaving: '도배 수리비(10만 원+) 전에 약 5천~1.2만 원으로 안전하게 하중 분산',
+    steps: [
+      '무거운 선반·액자는 벽에서 바로 내리고 꼭꼬핀+패브릭 포스터 등 초경량 거치로 바꾸세요.',
+      '이미 붙인 테이프를 뗄 땐 헤어드라이어 열풍 + 스티커 제거제로 천천히 녹여 뜯김을 막으세요.'
+    ],
+    kits: [
+      { title: '벽지 전용 꼭꼬핀 · 패브릭 포스터', estCost: '약 4~9천 원', keyword: '다이소 꼭꼬핀 린넨 패브릭 포스터' },
+      { title: '스티커 접착제거제 · 벽지 보수 패치', estCost: '약 5~9천 원', keyword: '벽지 스티커 제거제 보수 스티커' }
+    ]
+  },
+  {
     id: 'open-hanger',
     matchRx: /행거|오픈\s*선반|파이프|와이어|요낙셀|스피드랙|메쉬|북타워/,
     symptom: '앞이 트인 구조라 2주 만에 먼지가 쌓이고 잡동사니가 보여 방이 어수선해지기 쉬움',
@@ -1359,20 +1375,6 @@ export const RESCUE_PATCH_RULES = [
     kits: [
       { title: '통세탁 가능 생활방수 소파·방석 커버', estCost: '약 1~1.8만 원', keyword: '생활방수 소파 패드 워셔블 커버' },
       { title: '러그·매트 논슬립 미끄럼 방지 패드', estCost: '약 5~9천 원', keyword: '러그 논슬립 미끄럼방지 패드' }
-    ]
-  },
-  {
-    id: 'wall-film',
-    matchRx: /코맨드|시트지|점착|모스란다|벽선반|블라인드|실크벽지|타공|포스터/,
-    symptom: '접착 테이프·무리한 벽걸이로 실크벽지 뜯김이나 퇴실 보증금 차감 위험이 있는 상태',
-    costSaving: '도배 수리비(10만 원+) 전에 약 5천~1.2만 원으로 안전하게 하중 분산',
-    steps: [
-      '무거운 선반·액자는 벽에서 바로 내리고 꼭꼬핀+패브릭 포스터 등 초경량 거치로 바꾸세요.',
-      '이미 붙인 테이프를 뗄 땐 헤어드라이어 열풍 + 스티커 제거제로 천천히 녹여 뜯김을 막으세요.'
-    ],
-    kits: [
-      { title: '벽지 전용 꼭꼬핀 · 패브릭 포스터', estCost: '약 4~9천 원', keyword: '다이소 꼭꼬핀 린넨 패브릭 포스터' },
-      { title: '스티커 접착제거제 · 벽지 보수 패치', estCost: '약 5~9천 원', keyword: '벽지 스티커 제거제 보수 스티커' }
     ]
   },
   {

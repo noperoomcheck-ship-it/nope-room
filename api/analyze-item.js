@@ -18,19 +18,37 @@ function isPrivateIp(ip) {
 }
 
 async function validatePublicUrl(rawUrl) {
-  const parsed = new URL(rawUrl.trim());
+  let parsed;
+  try {
+    parsed = new URL(rawUrl.trim());
+  } catch {
+    const err = new Error('Malformed URL');
+    err.code = 'MALFORMED_URL';
+    throw err;
+  }
   if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-    throw new Error('Only http(s) URLs allowed');
+    const err = new Error('Only http(s) URLs allowed');
+    err.code = 'BLOCKED_PROTOCOL';
+    throw err;
   }
   const host = parsed.hostname.toLowerCase();
-  if (!host || host === 'localhost' || host.endsWith('.local') || net.isIP(host)) {
-    if (isPrivateIp(host) || host === 'localhost' || host.endsWith('.local')) {
-      throw new Error('Blocked local or private host');
+  if (!host || host === 'localhost' || host.endsWith('.local') || host.endsWith('.internal')) {
+    const err = new Error('Blocked local or private host');
+    err.code = 'BLOCKED_PRIVATE';
+    throw err;
+  }
+  if (net.isIP(host)) {
+    if (isPrivateIp(host)) {
+      const err = new Error('Blocked private IP');
+      err.code = 'BLOCKED_PRIVATE';
+      throw err;
     }
   } else {
     const records = await dns.lookup(host, { all: true });
     if (!records.length || records.some((r) => isPrivateIp(r.address))) {
-      throw new Error('Blocked private DNS target');
+      const err = new Error('Blocked private DNS target');
+      err.code = 'BLOCKED_PRIVATE';
+      throw err;
     }
   }
   return parsed;
@@ -56,6 +74,19 @@ function extractMetaContent(html, key) {
   return m ? decodeHtmlEntities(m[1]) : '';
 }
 
+function extractSlugHintFromUrl(parsed) {
+  const host = parsed.hostname.toLowerCase();
+  const isShort = /ozip\.me|link\.coupang\.com|coupa\.ng|bit\.ly|me2\.do|naver\.me|han\.gl/.test(host);
+  if (isShort) return '';
+  const tokens = parsed.pathname
+    .split('/')
+    .map((s) => decodeURIComponent(s).replace(/[-_]+/g, ' ').trim())
+    .filter((s) => s && s.length >= 3 && !/^\d+$/.test(s) && !/^(vp|products|productions|np|search|catalog|p|kr|ko|en|us|item|items|re|view|detail)$/i.test(s));
+  const raw = tokens.join(' ').replace(/\b\d{6,}\b/g, '').replace(/\s+/g, ' ').trim();
+  if (!raw || /^[a-z0-9]{1,8}$/i.test(raw)) return '';
+  return raw;
+}
+
 function cleanProductTitle(rawTitle) {
   if (!rawTitle) return '';
   return rawTitle
@@ -64,8 +95,15 @@ function cleanProductTitle(rawTitle) {
     .trim();
 }
 
+function isGenericStoreTitle(title) {
+  return !title
+    || /^(쿠팡|오늘의집|네이버|이케아|IKEA|무인양품|MUJI|YouTube)$/i.test(title)
+    || /좋은 품질과 합리적인 가격|오직\s*IKEA|홈퍼니싱|로켓배송|국내\s*1등/i.test(title);
+}
+
 async function fetchUrlMetadata(rawUrl) {
   const parsed = await validatePublicUrl(rawUrl);
+  const slugHint = extractSlugHintFromUrl(parsed);
   const res = await fetch(parsed.toString(), {
     method: 'GET',
     redirect: 'follow',
@@ -76,7 +114,12 @@ async function fetchUrlMetadata(rawUrl) {
     }
   });
   if (!res.ok) {
-    return { urlStatus: `http_${res.status}`, host: parsed.hostname, title: '', description: '' };
+    return {
+      urlStatus: slugHint ? 'slug_fallback' : `http_${res.status}`,
+      host: parsed.hostname,
+      title: slugHint,
+      description: ''
+    };
   }
   const html = (await res.text()).slice(0, 180000);
   const ogTitle = extractMetaContent(html, 'og:title');
@@ -84,13 +127,22 @@ async function fetchUrlMetadata(rawUrl) {
   const rawTitle = ogTitle || (titleTagMatch ? decodeHtmlEntities(titleTagMatch[1]) : '');
   const description = extractMetaContent(html, 'og:description') || extractMetaContent(html, 'description');
   const cleaned = cleanProductTitle(rawTitle);
-  const blockedTitle = /access denied|robot|captcha|잠시만|로봇|보안|403 forbidden/i.test(cleaned);
+  const blockedOrGeneric = /access denied|robot|captcha|잠시만|로봇|보안|403 forbidden/i.test(cleaned) || isGenericStoreTitle(cleaned);
+  const resolvedTitle = blockedOrGeneric ? slugHint : cleaned;
   return {
-    urlStatus: cleaned && !blockedTitle ? 'ok' : 'blocked_or_empty',
+    urlStatus: resolvedTitle ? (blockedOrGeneric ? 'slug_fallback' : 'ok') : 'blocked_or_empty',
     host: parsed.hostname,
-    title: blockedTitle ? '' : cleaned,
-    description: blockedTitle ? '' : description
+    title: resolvedTitle,
+    description: blockedOrGeneric ? '' : description
   };
+}
+
+function isValidYoutubeSeed(seed) {
+  const s = String(seed || '').trim();
+  if (!s || s.length < 2 || /<[^>]+>/.test(s) || /^https?:\/\//i.test(s)) return false;
+  if (/^[\s\p{Emoji}\p{P}\p{S}]+$/u.test(s)) return false;
+  const meaningful = s.match(/[가-힣a-zA-Z]{2,}/g) || [];
+  return meaningful.length > 0 && !/^(test|admin|localhost|re)$/i.test(meaningful.join(' '));
 }
 
 function extractYoutubeVideosFromHtml(html) {
@@ -135,10 +187,9 @@ function extractYoutubeVideosFromHtml(html) {
 }
 
 async function fetchYoutubeReviewVideos(searchKeyword) {
-  const cleanKw = String(searchKeyword || '').trim();
-  if (!cleanKw || cleanKw.length < 2) return [];
+  if (!isValidYoutubeSeed(searchKeyword)) return [];
   try {
-    const q = encodeURIComponent(`${cleanKw} 후기 단점 내돈내산`);
+    const q = encodeURIComponent(`${searchKeyword.trim()} 후기 단점 내돈내산`);
     const res = await fetch(`https://www.youtube.com/results?search_query=${q}&hl=ko&gl=KR`, {
       signal: AbortSignal.timeout(3800),
       headers: {
@@ -169,12 +220,23 @@ module.exports = async function handler(req, res) {
       try {
         meta = await fetchUrlMetadata(rawUrl);
       } catch (err) {
-        meta = { urlStatus: 'fetch_error', host: '', title: '', description: '' };
+        const statusCodeMap = {
+          BLOCKED_PRIVATE: 'blocked_private',
+          BLOCKED_PROTOCOL: 'malformed_url',
+          MALFORMED_URL: 'malformed_url'
+        };
+        meta = {
+          urlStatus: statusCodeMap[err && err.code] || 'fetch_error',
+          host: '',
+          title: '',
+          description: ''
+        };
       }
     }
 
-    const searchSeed = meta.title || rawQuery;
-    const youtubeVideos = searchSeed ? await fetchYoutubeReviewVideos(searchSeed) : [];
+    const blockSearch = meta.urlStatus === 'blocked_private' || meta.urlStatus === 'malformed_url';
+    const searchSeed = blockSearch ? '' : (meta.title || (rawUrl ? '' : rawQuery));
+    const youtubeVideos = isValidYoutubeSeed(searchSeed) ? await fetchYoutubeReviewVideos(searchSeed) : [];
 
     res.status(200).json({
       detectedTitle: meta.title || '',
@@ -183,7 +245,7 @@ module.exports = async function handler(req, res) {
       urlStatus: meta.urlStatus,
       youtubeVideos
     });
-  } catch (err) {
+  } catch {
     res.status(200).json({
       detectedTitle: '',
       descriptionSnippet: '',

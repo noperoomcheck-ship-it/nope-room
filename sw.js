@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nope-v93';
+const CACHE_NAME = 'nope-v94';
 const ASSETS = [
   './',
   './index.html',
@@ -45,6 +45,6 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {});
         return res;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => caches.match(event.request, { ignoreSearch: true }))
   );
 });
