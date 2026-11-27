@@ -22,12 +22,12 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope92';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope92';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope92';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope92';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope92';
-import { BRAND_TRENDS } from './data/brand-trends.js?v=nope92';
+} from './data/app-data.js?v=nope93';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope93';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope93';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope93';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope93';
+import { BRAND_TRENDS } from './data/brand-trends.js?v=nope93';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -3012,17 +3012,19 @@ function formatSpecPlainWord(kind, val) {
 
 function buildTossReviewBlock(item) {
   const pulse = item.reviewPulse || null;
-  const praised = (pulse && pulse.praised) || item.goodLine || (item.pros && item.pros[0]) || '';
-  const complaint = (pulse && pulse.repeatedComplaint)
-    || item.checkLine
-    || (item.cautions && item.cautions[0])
-    || (item.checks && item.checks[0])
-    || '';
-  const trapNote = (pulse && pulse.trapNote) || (item.checks && item.checks[0]) || '';
-  const market = (pulse && pulse.market) || `${item.brand} · 주요 쇼핑몰 실사용자 리뷰 기준`;
+  const praised = (pulse && 'praised' in pulse)
+    ? pulse.praised
+    : (item.goodLine || (item.pros && item.pros[0]) || '');
+  const complaint = (pulse && 'repeatedComplaint' in pulse)
+    ? pulse.repeatedComplaint
+    : (item.checkLine || (item.cautions && item.cautions[0]) || (item.checks && item.checks[0]) || '');
+  const trapNote = (pulse && 'trapNote' in pulse)
+    ? pulse.trapNote
+    : (item.checks && item.checks[0]) || '';
+  const market = (pulse && pulse.market) || `${item.brand} · 쇼핑몰 실사용 후기`;
   const summaryLine = (pulse && pulse.ratingSummary) || '';
   const sourceBadge = item.creatorPick
-    ? `${item.creatorPick.source}${item.creatorPick.sponsored === false ? ' · 비협찬' : ''}${item.creatorPick.crossCount > 1 ? ` · ${item.creatorPick.crossCount}곳 교차 확인` : ''}`
+    ? `${item.creatorPick.source}${item.creatorPick.sponsored === false ? ' · 비협찬' : ''}${item.creatorPick.crossCount > 1 ? ` · ${item.creatorPick.crossCount}곳 추천` : ''}`
     : '';
   return { praised, complaint, trapNote, market, summaryLine, sourceBadge };
 }
@@ -3089,15 +3091,17 @@ function openDetailSheet(item) {
   let altBoxCls = 'is-nope';
   let primaryBtnCls = 'btn-accent';
   if (isPass) {
-    altLabel = (item.altName || '').includes('+') ? '단점까지 메꿔주는 추천 구성' : '추천 사양 바로 확인하기';
+    altLabel = (item.altName || '').includes('+') ? '단점까지 보완하는 추천 구성' : '추천 사양 바로 확인하기';
     altBoxCls = 'is-pass';
     primaryBtnCls = 'btn-primary';
   } else if (isWarn) {
-    altLabel = '아쉬운 단점을 보완하는 추천 대안';
+    altLabel = item.isGenericFallback ? '구매 전 실후기 · 가격 확인' : '아쉬운 단점을 보완하는 추천 대안';
     altBoxCls = '';
     primaryBtnCls = 'btn-primary';
   }
-  const altWhyText = buildAltSolutionReason(item, isPass, isWarn, checkLine);
+  const altWhyText = item.isGenericFallback
+    ? '아래 쇼핑몰에서 별점 낮은 순 리뷰와 실제 사용 사진을 먼저 훑어보세요.'
+    : buildAltSolutionReason(item, isPass, isWarn, checkLine);
   const crossUrls = buildCrossVerifyUrls(item.altSearchKeyword || item.name);
   const drillVideos = Array.isArray(item.youtubeVideos) ? item.youtubeVideos : [];
 
@@ -3148,7 +3152,7 @@ function openDetailSheet(item) {
 
     <div class="seed-segmented is-two" id="sheet-depth-seg" role="tablist" aria-label="상세 보기 탭 선택">
       <button type="button" class="seed-seg-btn active" data-sheet-depth="summary">후기 · 핵심 판단</button>
-      <button type="button" class="seed-seg-btn" data-sheet-depth="deep">원천 스펙 · 비교 기준</button>
+      <button type="button" class="seed-seg-btn" data-sheet-depth="deep">상세 스펙 · 선택 기준</button>
     </div>
 
     <div id="sheet-panel-summary">
@@ -3160,10 +3164,10 @@ function openDetailSheet(item) {
       ${item.creatorPick && item.creatorPick.source ? `
         <div class="sheet-creator-banner">
           <div class="sheet-creator-top">
-            <span class="sheet-creator-kicker">🎙️ 유튜브 · 전문가 추천 검증</span>
+            <span class="sheet-creator-kicker">🎙️ 유튜브 · 전문가 추천</span>
             ${item.creatorPick.sponsored === false ? '<span class="sheet-creator-clean">비협찬 실사용</span>' : ''}
           </div>
-          <strong class="sheet-creator-main">${escapeHtml(item.creatorPick.source)}${item.creatorPick.crossCount > 1 ? ` · 독립 채널 ${item.creatorPick.crossCount}곳 공통 언급` : ''}</strong>
+          <strong class="sheet-creator-main">${escapeHtml(item.creatorPick.source)}${item.creatorPick.crossCount > 1 ? ` · ${item.creatorPick.crossCount}개 채널 언급` : ''}</strong>
         </div>
       ` : ''}
 
@@ -3206,7 +3210,7 @@ function openDetailSheet(item) {
           </div>
         ` : ''}
         <div class="sheet-verify-links">
-          <a href="${crossUrls.youtubeReview}" target="_blank" rel="noopener noreferrer" class="verify-link-chip is-yt">▶ 유튜브 '내돈내산·단점' 후기 찾기</a>
+          <a href="${crossUrls.youtubeReview}" target="_blank" rel="noopener noreferrer" class="verify-link-chip is-yt">▶ 유튜브 솔직·단점 후기 보기</a>
           <a href="${crossUrls.naverBlog}" target="_blank" rel="noopener noreferrer" class="verify-link-chip">🔍 블로그 한달 사용기</a>
         </div>
       </div>
@@ -3382,7 +3386,7 @@ function openDetailSheet(item) {
 
     <div id="sheet-panel-deep" class="hidden">
       <div class="deep-block">
-        <strong class="deep-sec-title">원천 스펙 · 소재/성분 검증</strong>
+        <strong class="deep-sec-title">상세 스펙 · 소재/성분 확인</strong>
         <div class="deep-spec-table">
           ${deepRows.map((row) => `
             <div class="deep-spec-row">
@@ -3411,7 +3415,7 @@ function openDetailSheet(item) {
 
       ${item.creatorPick ? `
         <div class="deep-block">
-          <strong class="deep-sec-title">유튜브 · 전문가 출처 검증</strong>
+          <strong class="deep-sec-title">유튜브 · 전문가 추천 출처</strong>
           <div class="deep-trap-box">
             <div class="deep-trap-row"><strong>언급 출처</strong><span>${escapeHtml(item.creatorPick.source)}</span></div>
             <div class="deep-trap-row"><strong>협찬 여부</strong><span>${item.creatorPick.sponsored === false ? '유료광고 미포함 · 실사용 기반' : '유료광고·협찬 포함 여부 확인 필요'}</span></div>
@@ -3616,10 +3620,7 @@ function buildSyntheticAnalysis(query) {
   let isGenericFallback = false;
   if (checks.length === 0) {
     isGenericFallback = true;
-    chips.push('실측 60cm 체크', '소재·조립 확인', '리뷰 1점대 확인');
-    checks.push(
-      '구체적 상품은 아직 DB 등록 전이나, 구매 전 ①문 열림·통로 60cm 실측 ②마감 소재(LPM/원목/스텐304) ③오늘의집·쿠팡 최저평점 사진 리뷰 3가지를 꼭 확인하세요.'
-    );
+    chips.push('실사용 후기 모아보기', '장단점 확인');
   }
 
   const sameCatPairs = ITEMS_DB
@@ -3628,37 +3629,33 @@ function buildSyntheticAnalysis(query) {
     .map((it) => it.id);
 
   const verdict = deposit >= 4 || trouble >= 4 ? 'NOPE' : 'WARN';
-  const primaryCheck = checks[0];
-  const goodLine = goods[0] || `${inferredCat} 영역에서 많이 찾는 실용 아이템군`;
+  const primaryCheck = checks[0] || '';
+  const goodLine = goods[0] || '';
+  const summaryOneLiner = primaryCheck || '유튜브·쇼핑몰 실사용 후기를 아래에서 바로 확인해 보세요.';
 
   return {
     id: 'custom-scan',
-    brand: 'LIVE SPEC SCAN',
-    name: `"${q}" 실시간 후기·스펙 분석`,
+    brand: '실시간 분석',
+    name: `"${q}" 후기 · 스펙 분석`,
     category: inferredCat,
     verdict,
-    priceTier: '미등록 상품 실시간 분석',
+    priceTier: '실시간 후기 분석',
     chips: chips.slice(0, 3),
-    oneLiner: primaryCheck,
+    oneLiner: summaryOneLiner,
     specs: { dust, deposit, trouble },
     checks,
     tones: savedProfile && savedProfile.toneId ? [savedProfile.toneId] : ['white-minimal'],
     pairIds: sameCatPairs,
     goodLine,
     checkLine: checks[1] || primaryCheck,
-    altName: `${inferredCat} 검증 스펙 · 유튜브 내돈내산 단점 대조 확인`,
+    altName: `${q} (실사용 후기 · 최저가 비교)`,
     altSearchKeyword: q,
     reviewPulse: {
-      market: '유튜브 · 오늘의집 · 블로그 교차 드릴',
-      ratingSummary: `${inferredCat} 품목군 공통 검증 패턴 적용`,
+      market: '유튜브 · 쇼핑몰 실사용 후기',
+      ratingSummary: checks.length ? `${inferredCat} 주요 체크포인트 반영` : '실시간 후기 모음',
       praised: goodLine,
       repeatedComplaint: primaryCheck,
-      trapNote: checks[1] || primaryCheck
-    },
-    creatorPick: {
-      source: `${inferredCat} 분야 유튜브 '내돈내산 · 단점' 리뷰 실시간 교차 조회 대상`,
-      sponsored: false,
-      crossCount: 1
+      trapNote: checks[1] || ''
     },
     isGenericFallback
   };
@@ -4042,12 +4039,12 @@ function renderCustomScanResult({ analyzedItem, engineLabel, urlStatusNote, rawI
   customOutEl.innerHTML = `
     <div class="engine-meta-banner">
       <span>${escapeHtml(engineLabel)}</span>
-      <span class="engine-meta-pill">${analyzedItem.sourceUrl ? 'LINK DRILL' : (pendingScanImage ? 'IMAGE' : 'LIVE DRILL')}</span>
+      <span class="engine-meta-pill">${analyzedItem.sourceUrl ? '링크 분석' : (pendingScanImage ? '이미지 분석' : '실시간 분석')}</span>
     </div>
     ${urlStatusNote ? `<p class="live-url-status-note">${escapeHtml(urlStatusNote)}</p>` : ''}
     ${needsRefineChips ? `
       <div class="url-refine-box">
-        <div class="url-refine-title">링크 보안상 상품명을 자동으로 못 읽었어요. 어떤 품목인지 2초만 골라주세요:</div>
+        <div class="url-refine-title">링크 보안상 상품명을 자동으로 못 읽었어요. 어떤 제품인지 2초만 골라주세요:</div>
         <div class="url-refine-step">
           <span class="url-refine-sub">1단계 · 품목 고르기</span>
           <div class="chips-row">
@@ -4079,8 +4076,8 @@ function renderCustomScanResult({ analyzedItem, engineLabel, urlStatusNote, rawI
     ` : ''}
     <div class="live-search-bridge">
       <div class="sheet-verify-links" style="margin-bottom:8px;">
-        <a href="${crossUrls.youtubeReview}" target="_blank" rel="noopener noreferrer" class="verify-link-chip is-yt">▶ 유튜브 '내돈내산·단점' 전체 검색</a>
-        <a href="${crossUrls.naverBlog}" target="_blank" rel="noopener noreferrer" class="verify-link-chip">🔍 네이버 한달 후기</a>
+        <a href="${crossUrls.youtubeReview}" target="_blank" rel="noopener noreferrer" class="verify-link-chip is-yt">▶ 유튜브 솔직 후기 더 보기</a>
+        <a href="${crossUrls.naverBlog}" target="_blank" rel="noopener noreferrer" class="verify-link-chip">🔍 블로그 한달 사용기</a>
       </div>
       <div class="dual-link-row" style="margin-bottom:8px;">
         <a href="${analyzedItem.sourceUrl || urls.ohouse}" target="_blank" rel="noopener noreferrer" class="btn-ohouse">${analyzedItem.sourceUrl ? '원본 링크 열기 →' : '오늘의집 실후기 →'}</a>
@@ -4108,11 +4105,11 @@ function renderCustomScanResult({ analyzedItem, engineLabel, urlStatusNote, rawI
       updated.sourceUrl = analyzedItem.sourceUrl;
       updated.brand = analyzedItem.brand;
     } else if (pendingScanImage) {
-      updated.brand = 'IMAGE SCAN';
+      updated.brand = '사진 분석';
     }
     const labelParts = [catObj ? catObj.label : '', ...state.quickRefineFeatures.map((fid) => QUICK_REFINE_FEATURES.find((f) => f.id === fid)?.label).filter(Boolean)];
     if (labelParts.length) {
-      updated.name = `${labelParts.join(' · ')} 스펙 판독`;
+      updated.name = `${labelParts.join(' · ')} 후기·스펙 요약`;
       updated.altSearchKeyword = [catObj ? catObj.label : '', ...featTokens].filter(Boolean).join(' ');
     }
     saveLocalAutoItem(updated);
@@ -4123,7 +4120,7 @@ function renderCustomScanResult({ analyzedItem, engineLabel, urlStatusNote, rawI
     searchInput.value = prevVal;
     renderCustomScanResult({
       analyzedItem: updated,
-      engineLabel: '선택 보정 실시간 스펙 판독',
+      engineLabel: '선택 조건 반영 후기·스펙 요약',
       urlStatusNote,
       rawInput,
       effectiveSearchQuery: updated.altSearchKeyword || effectiveSearchQuery,
@@ -4213,9 +4210,9 @@ async function runScannerSearch() {
   }
 
   let analyzedItem = null;
-  let engineLabel = '실시간 링크 · 유튜브 후기 드릴';
+  let engineLabel = '실시간 후기 분석';
   let urlStatusNote = '';
-  const fallbackText = `${effectiveSearchQuery} ${imageNote}`.trim() || (pendingScanImage ? pendingScanImage.name : '가구');
+  const fallbackText = `${effectiveSearchQuery} ${imageNote}`.trim() || (pendingScanImage ? pendingScanImage.name : '생활용품');
 
   try {
     if (!location.protocol.startsWith('http')) throw new Error('Offline file protocol');
@@ -4238,7 +4235,7 @@ async function runScannerSearch() {
     const data = await res.json();
     if (data.item) {
       analyzedItem = data.item;
-      engineLabel = data.engineLabel || '실시간 스펙·후기 분석 드릴';
+      engineLabel = data.engineLabel || '실시간 스펙·후기 요약';
     } else {
       const detectedTitle = String(data.detectedTitle || '').trim();
       const seedText = [detectedTitle, data.descriptionSnippet || '', fallbackText].filter(Boolean).join(' ').trim();
@@ -4250,37 +4247,37 @@ async function runScannerSearch() {
         analyzedItem.name = `"${urlInfo.host}" 링크 상품 후기·스펙 분석`;
       }
       if (urlInfo.isUrl) {
-        analyzedItem.brand = urlInfo.host.includes('ohou.se') ? '오늘의집' : (urlInfo.host.includes('coupang') ? '쿠팡' : (data.host || 'URL LINK'));
+        analyzedItem.brand = urlInfo.host.includes('ohou.se') ? '오늘의집' : (urlInfo.host.includes('coupang') ? '쿠팡' : (data.host || '링크 상품'));
         analyzedItem.sourceUrl = urlInfo.url;
       }
       if (Array.isArray(data.youtubeVideos) && data.youtubeVideos.length) {
         analyzedItem.youtubeVideos = data.youtubeVideos;
         const firstCh = data.youtubeVideos[0].channel;
         analyzedItem.creatorPick = {
-          source: `유튜브 '${firstCh}' 외 실후기 영상 ${data.youtubeVideos.length}건 감지`,
+          source: `유튜브 '${firstCh}' 외 실후기 영상 ${data.youtubeVideos.length}건`,
           sponsored: false,
           crossCount: data.youtubeVideos.length
         };
       }
       if (urlInfo.isUrl && !detectedTitle && data.urlStatus !== 'ok') {
-        urlStatusNote = '쇼핑몰 보안 정책으로 상품명 자동 추출이 제한되어, 아래 유튜브·블로그 후기 교차 링크와 2초 품목 선택을 함께 띄웠습니다.';
+        urlStatusNote = '쇼핑몰 보안 정책으로 상품명을 바로 못 읽었어요. 아래 유튜브·블로그 후기 버튼으로 확인하거나 2초 품목을 선택해 보세요.';
       }
       engineLabel = data.youtubeVideos && data.youtubeVideos.length
-        ? `실시간 링크 + 유튜브 후기 ${data.youtubeVideos.length}건 드릴`
-        : '실시간 스펙·후기 교차 드릴';
+        ? `유튜브 실후기 ${data.youtubeVideos.length}건 연결됨`
+        : '실시간 후기·스펙 요약';
     }
   } catch {
     // Graceful client fallback when running on static server or offline
     analyzedItem = buildSyntheticAnalysis(fallbackText);
     if (urlInfo.isUrl) {
       analyzedItem.name = `"${urlInfo.host}" 링크 상품 분석`;
-      analyzedItem.brand = urlInfo.host.includes('ohou.se') ? '오늘의집' : (urlInfo.host.includes('coupang') ? '쿠팡' : 'URL SCAN');
+      analyzedItem.brand = urlInfo.host.includes('ohou.se') ? '오늘의집' : (urlInfo.host.includes('coupang') ? '쿠팡' : '링크 상품');
       analyzedItem.sourceUrl = urlInfo.url;
     } else if (pendingScanImage) {
       analyzedItem.name = rawInput || imageNote || `첨부 사진 스펙 분석`;
-      analyzedItem.brand = 'IMAGE SCAN';
+      analyzedItem.brand = '사진 분석';
     }
-    engineLabel = '실시간 키워드·후기 교차 드릴';
+    engineLabel = '실시간 후기·스펙 요약';
   } finally {
     if (analyzeBtn) {
       analyzeBtn.disabled = false;
@@ -4299,7 +4296,7 @@ async function runScannerSearch() {
   }
 
   // Temporarily populate searchInput with inferred query/name for similar-item matching
-  openScannerResults(`SCAN · ${rawInput || analyzedItem.name}`);
+  openScannerResults(`검색 결과 · ${rawInput || analyzedItem.name}`);
   const savedSearchVal = searchInput.value;
   if (urlInfo.isUrl || !rawInput) {
     searchInput.value = analyzedItem.name || analyzedItem.category || '';
@@ -4309,7 +4306,8 @@ async function runScannerSearch() {
 
   const isShortUrl = urlInfo.isUrl && /ozip\.me|link\.coupang\.com|coupa\.ng|bit\.ly|me2\.do|naver\.me|han\.gl/i.test(urlInfo.host);
   const needsRefineChips = Boolean(
-    analyzedItem && (analyzedItem.isGenericFallback || isShortUrl || (analyzedItem.chips && analyzedItem.chips.includes('실측 60cm 체크')))
+    (urlInfo.isUrl || pendingScanImage)
+    && (isShortUrl || (analyzedItem && analyzedItem.isGenericFallback && !(analyzedItem.youtubeVideos && analyzedItem.youtubeVideos.length)))
   );
 
   renderCustomScanResult({
@@ -7609,6 +7607,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope92').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope93').catch(() => {});
   }
 }
