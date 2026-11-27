@@ -2,10 +2,10 @@
   /* SEED-inspired Semantic Role Tokens */
   --bg-layer-basement: #F4F6F9;
   --bg-layer-default: #FFFFFF;
-  --fg-neutral: #141B29;
-  --fg-neutral-muted: #536076;
-  --fg-neutral-subtle: #7A8699;
-  --stroke-neutral-weak: rgba(20, 27, 41, 0.08);
+  --fg-neutral: #111827;
+  --fg-neutral-muted: #1E293B;
+  --fg-neutral-subtle: #334155;
+  --stroke-neutral-weak: rgba(20, 27, 41, 0.1);
 
   --bg: var(--bg-layer-basement);
   --surface: var(--bg-layer-default);
@@ -51,6 +51,10 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: auto; }
+input::placeholder, textarea::placeholder {
+  color: #334155;
+  opacity: 1;
+}
 
 body {
   margin: 0;
@@ -3226,7 +3230,7 @@ input[type="range"] { width: 100%; accent-color: var(--ink); cursor: pointer; }
   border-bottom: 0;
 }
 .seed-list-item.is-off {
-  opacity: 0.7;
+  opacity: 0.9;
 }
 .seed-list-item.is-on .trait-state-pill {
   background: var(--accent);

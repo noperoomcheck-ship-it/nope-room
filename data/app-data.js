@@ -1,12 +1,12 @@
 // NOPE! v9 — 235종 실상품 DB 연결 + 30문항 정밀 분기 + 14개 공간 처방 타입
-import { ITEMS_DB } from './products-db.js?v=nope83';
+import { ITEMS_DB } from './products-db.js?v=nope84';
 import {
   STYLE_MOODS,
   ROOM_TONES,
   TARGET_CATEGORIES,
   ROOM_BASE_OPTIONS,
   getRoomBaseRescue
-} from './mood-palettes.js?v=nope83';
+} from './mood-palettes.js?v=nope84';
 export {
   ITEMS_DB,
   STYLE_MOODS,
@@ -265,28 +265,28 @@ export const ITEM_SWAP_REASONS = {
 export const WISH_CATEGORIES = {
   spacious: {
     id: 'spacious',
-    name: '여백 · 개방감 중심형',
+    name: '넓고 트여 보이는 느낌',
     wishShort: '방이 넓어 보였으면 좋겠어요',
     linkedMoods: '화이트 미니멀 / 모노 · 스틸',
     summary: '평수 대비 시야가 트여야 답답하지 않은 구조예요. 바닥이 드러나는 슬림 프레임 가구와 밝은 톤 베이스를 유지하는 것이 핵심입니다.'
   },
   storage: {
     id: 'storage',
-    name: '실속 · 수납 집중형',
+    name: '수납 공간이 넉넉한 방',
     wishShort: '평수 대비 수납이 많았으면 좋겠어요',
     linkedMoods: '내추럴 오크 / 화이트 미니멀',
-    summary: '작은 평수에서 수납 효율을 최대한 뽑아야 하는 조건이에요. 전면이 가려지는 도어형 수납장과 침대 하부 수납으로 시각 노이즈를 줄이는 게 유리합니다.'
+    summary: '작은 평수에서 수납 효율을 최대한 뽑아야 하는 조건이에요. 전면이 가려지는 도어형 수납장과 침대 하부 수납으로 시각적 어수선함을 줄이는 게 유리합니다.'
   },
   moodlight: {
     id: 'moodlight',
-    name: '아늑 · 무드등 분위기형',
+    name: '은은한 조명과 아늑한 분위기',
     wishShort: '너무 밝지 않고 무드등 위주로 아늑했으면 해요',
     linkedMoods: '월넛 · 미드센추리 / 세이지 · 테라코타',
     summary: '저녁 휴식감과 간접조명 무드가 중요한 공간이에요. 2700K 확산광 스탠드와 내추럴·월넛 계열 질감을 매치하면 눈이 훨씬 편해집니다.'
   },
   easycare: {
     id: 'easycare',
-    name: '단정 · 관리 편의형',
+    name: '청소와 관리가 편한 방',
     wishShort: '청소와 관리가 쉬웠으면 좋겠어요',
     linkedMoods: '버터 · 파스텔 / 화이트 미니멀',
     summary: '청소·세탁 스트레스를 줄여야 오래 정돈되는 생활 패턴이에요. 커버 분리 세탁이 가능한 패브릭과 틈새 먼지가 적은 완제품 가구가 잘 맞습니다.'
@@ -295,23 +295,23 @@ export const WISH_CATEGORIES = {
 
 export const TASTE_INSIGHTS = {
   plant: {
-    label: '초록 식물 · 흙 화분 취향',
+    label: '식물 · 화분 포인트',
     detail: '무난한 가구들 사이에 싱그러운 초록 잎과 흙 화분 하나를 둬서 방에 생기를 불어넣는 스타일이에요.'
   },
   object: {
-    label: '포근한 러그 · 패브릭 촉감 취향',
+    label: '원목·패브릭 질감 포인트',
     detail: '발에 닿는 도톰한 러그나 원목·천 소재처럼 손끝에 닿을 때 기분 좋은 포근한 질감을 중시하는 스타일이에요.'
   },
   moodlight: {
-    label: '은은한 단스탠드 · 간접 불빛 취향',
+    label: '따뜻한 간접조명 포인트',
     detail: '큰 가구는 담백하게 두고, 형광등을 끈 뒤 따뜻한 단스탠드·간접등 불빛으로 밤 분위기를 채우는 스타일이에요.'
   },
   tableware: {
-    label: '예쁜 컵 · 그릇 · 색감 취향',
+    label: '컵 · 그릇 · 색감 포인트',
     detail: '매일 손에 닿는 머그컵, 유리잔, 작은 트레이에 톡톡 튀는 색감을 얹어 일상의 만족감을 챙기는 스타일이에요.'
   },
   minimal: {
-    label: '깔끔 여백 · 미니멀 취향',
+    label: '비워두는 여백 중심',
     detail: '불필요한 소품은 최대한 줄이고, 바닥과 책상이 훤히 비어 보이는 깔끔함 그 자체에서 편안함을 느끼는 스타일이에요.'
   }
 };
@@ -319,45 +319,45 @@ export const TASTE_INSIGHTS = {
 export const SPACE_MBTI_TYPES = [
   {
     id: 'minimalist',
-    code: 'M-CLN · 여백 깔끔 미니멀리스트',
+    code: '여백이 편한 미니멀 스타일',
     headline: '여백과 깔끔함에서 마음이 편해지는 타입',
-    summary: '물건이 적고 시야가 탁 트여 있을수록 스트레스가 확 줄어드는 깔끔파예요. 가구는 도어가 닫히는 수납 위주로 고르고, 색상은 최대 2가지만 남기면 방이 훨씬 넓어 보여요.'
+    summary: '물건이 적고 시야가 탁 트여 있을수록 편안함을 느끼는 스타일이에요. 가구는 도어가 닫히는 수납 위주로 고르고, 색상은 최대 2가지만 남기면 방이 훨씬 넓어 보여요.'
   },
   {
     id: 'maximal',
-    code: 'V-MXM · 취향 가득 맥시멀리스트',
+    code: '취향 소품이 많은 맥시멀 스타일',
     headline: '예쁜 소품과 취향으로 방을 채울수록 행복한 타입',
-    summary: '무조건 비우기보다 내가 좋아하는 그릇, 컵, 조명, 포스터가 눈에 보일 때 가장 기분이 좋아지는 타입이에요. 오픈 선반과 가림 박스를 1:1 비율로 섞어 두면 지저분해 보이지 않으면서 취향을 맘껏 펼칠 수 있어요.'
+    summary: '무조건 비우기보다 내가 좋아하는 그릇, 컵, 조명, 포스터가 눈에 보일 때 기분이 좋아지는 스타일이에요. 오픈 선반과 가림 박스를 1:1 비율로 섞어 두면 정돈되면서도 취향을 잘 살릴 수 있어요.'
   },
   {
     id: 'texture',
-    code: 'T-WRM · 포근한 질감 수집가',
+    code: '원목·패브릭 질감 중심 스타일',
     headline: '나무·천·흙처럼 따뜻한 촉감에서 만족감을 느끼는 타입',
     summary: '차가운 플라스틱이나 반짝이는 소재보다 원목 가구, 도톰한 면 이불, 도자기 컵처럼 손끝에 닿는 부드럽고 포근한 질감을 좋아해요. 촉감이 살아 있는 소품 하나만 더해도 방 분위기가 확 살아납니다.'
   },
   {
     id: 'green',
-    code: 'G-BOT · 초록 생명력 힐러',
+    code: '식물과 자연 색감 중심 스타일',
     headline: '식물과 자연 색감에서 쉼을 얻는 타입',
     summary: '바깥 풍경이 들어오듯 방 안에 초록 잎과 자연스러운 색이 있을 때 가장 편안함을 느껴요. 침대 옆이나 창가에 관리 쉬운 화분 1~2개만 두어도 방 전체가 카페처럼 달라집니다.'
   },
   {
     id: 'color',
-    code: 'C-CLR · 포인트 컬러 큐레이터',
-    headline: '작은 색감 포인트로 기분을 바꾸는 센스파 타입',
-    summary: '큰 가구는 무난하고 질리지 않는 톤으로 고르되, 머그컵·쿠션·단스탠드 같은 작은 소품에서 톡톡 튀는 색감을 즐기는 타입이에요. 계절마다 소품 색만 바꿔줘도 새로 이사 온 기분을 낼 수 있어요.'
+    code: '작은 소품 컬러 포인트 스타일',
+    headline: '작은 색감 포인트로 기분을 바꾸는 타입',
+    summary: '큰 가구는 무난하고 질리지 않는 톤으로 고르되, 머그컵·쿠션·단스탠드 같은 작은 소품에서 색감을 즐기는 스타일이에요. 계절마다 소품 색만 바꿔줘도 새로 이사 온 기분을 낼 수 있어요.'
   },
   {
     id: 'modern',
-    code: 'F-MOD · 선이 반듯한 모더너',
+    code: '선과 마감이 깔끔한 모던 스타일',
     headline: '군더더기 없는 직선과 정돈된 분위기를 좋아하는 타입',
-    summary: '알록달록한 장식보다 모노 스틸·화이트처럼 선이 깔끔하게 떨어지는 실용적 공간에서 집중력과 안정감을 느껴요. 전선과 생활용품을 케이스에 깔끔히 숨겨주면 만족도가 두 배로 올라갑니다.'
+    summary: '알록달록한 장식보다 모노 스틸·화이트처럼 선이 깔끔하게 떨어지는 실용적 공간에서 안정감을 느껴요. 전선과 생활용품을 케이스에 깔끔히 숨겨주면 완성도가 훨씬 올라갑니다.'
   },
   {
     id: 'lighting',
-    code: 'L-GLW · 은은한 빛 분위기 수집가',
-    headline: '따뜻한 단스탠드와 간접 불빛으로 방 무드를 완성하는 타입',
-    summary: '큰 가구는 담백하게 두고 천장 형광등을 끈 뒤, 2700K 전구색 단스탠드나 집게 조명 하나로 공간의 감도를 끌어올리는 타입이에요. 눈부심 없는 갓 조명과 콘센트 동선만 맞춰도 집이 카페처럼 변합니다.'
+    code: '따뜻한 간접조명 중심 스타일',
+    headline: '따뜻한 단스탠드와 간접 불빛으로 방 분위기를 만드는 타입',
+    summary: '큰 가구는 담백하게 두고 천장 형광등을 끈 뒤, 2700K 전구색 단스탠드나 집게 조명 하나로 분위기를 살리는 스타일이에요. 눈부심 없는 갓 조명과 콘센트 동선만 맞춰도 집이 훨씬 아늑해집니다.'
   }
 ];
 
@@ -552,7 +552,7 @@ export const QUIZ_QUESTIONS = [
     quickKeep: false,
     chapter: 'STEP 3 · 생활·관리',
     title: '평소 청소기·물걸레질은 얼마나 자주 하시나요?',
-    reasonHint: '주 1회 이하라면 오픈 선반·우드 블라인드·샤기 러그는 2주 만에 먼지 지옥이 돼요.',
+    reasonHint: '주 1회 이하라면 오픈 선반·우드 블라인드·샤기 러그는 먼지가 금방 쌓여요.',
     options: [
       { label: '주 1회 이하 또는 생각날 때 몰아서 청소', scores: { dustRisk: 14, fabricRisk: 6 } },
       { label: '주 2~3회 꾸준히 청소기 돌림', scores: { dustRisk: 6, fabricRisk: 3 } },
@@ -709,9 +709,9 @@ export const QUIZ_QUESTIONS = [
     title: '품목 1개당 생각 중인 현실 예산대는?',
     reasonHint: '5만 원 이하 초저가 구간엔 시트지 들뜸·얇은 철제·흡착 낙하 함정이 집중돼 있어요.',
     options: [
-      { label: '5만 원 이하 초가성비 위주 (부담 없는 가격)', budgetTier: 'low', scores: { assemblyRisk: 7, depositRisk: 4 } },
-      { label: '5~15만 원대 실속형 (가성비+내구 균형)', budgetTier: 'mid', scores: { assemblyRisk: 3 } },
-      { label: '15만 원 이상 오래 쓸 튼튼한 스펙 우선', budgetTier: 'high', scores: { assemblyRisk: 1 } }
+      { label: '5만 원 이하 (부담 없는 가격 중심)', budgetTier: 'low', scores: { assemblyRisk: 7, depositRisk: 4 } },
+      { label: '5~15만 원대 (가성비와 내구 균형)', budgetTier: 'mid', scores: { assemblyRisk: 3 } },
+      { label: '15만 원 이상 (오래 쓸 튼튼한 스펙 우선)', budgetTier: 'high', scores: { assemblyRisk: 1 } }
     ]
   },
   {
@@ -733,7 +733,7 @@ export const QUIZ_QUESTIONS = [
     reasonHint: '최종 처방전 타입과 최우선 경고 1순위를 결정합니다.',
     options: [
       { label: '벽지·장판 손상으로 퇴실 보증금 깎이는 것', worstFear: 'deposit', scores: { depositRisk: 8 } },
-      { label: '먼지·세탁 관리가 안 돼서 청소 지옥 겪는 것', worstFear: 'dust', scores: { dustRisk: 8, fabricRisk: 5 } },
+      { label: '먼지·세탁 관리가 어려워서 청소 부담이 커지는 것', worstFear: 'dust', scores: { dustRisk: 8, fabricRisk: 5 } },
       { label: '흔들리고 삐걱대다 금방 망가지는 것', worstFear: 'trouble', scores: { assemblyRisk: 8 } },
       { label: '동선이 막혀서 방이 좁고 답답해지는 것', worstFear: 'space', scores: { spaceStress: 8 } }
     ]
@@ -745,8 +745,8 @@ export const QUIZ_RESULTS = [
     id: 'pet-allergy-shield',
     code: 'TYPE 01',
     condition: (s, ctx) => (ctx.hasPet || ctx.hasAllergy) && (s.dustRisk >= 20 || s.fabricRisk >= 16),
-    badge: '반려동물·비염 털먼지 방어형',
-    tagline: '일반 감성 패브릭·러그를 들이면 털·진드기 지옥에 바로 빠지는 민감 공간',
+    badge: '털·먼지 관리에 특히 민감한 방',
+    tagline: '일반 패브릭·러그를 들이면 털과 먼지가 금방 쌓여 관리가 힘들어지는 조건이에요',
     top3: ['장모 샤기·부클레 절대 금지', '단모 워셔블·도어형 수납 통일', '주 1회 침구·러그 탈취 루틴'],
     avoidItems: ['장모 샤기 러그', '부클레 패브릭 소파', '오픈 파이프 행거'],
     altItems: ['단모 워셔블 러그', '이케아 클리판/쇠데르함', '도어형 옷장'],
@@ -759,8 +759,8 @@ export const QUIZ_RESULTS = [
     id: 'deposit-silk-wall',
     code: 'TYPE 02',
     condition: (s, ctx) => (ctx.isTenant && ctx.wallMaterial === 'silk' && s.depositRisk >= 18) || (ctx.worstFear === 'deposit' && s.depositRisk >= 22),
-    badge: '월세·실크벽지 보증금 사수형',
-    tagline: '못질·시트지·코맨드 테이프 한 번 잘못 붙였다가 퇴실 수리비 폭탄 맞기 쉬운 타입',
+    badge: '월세·벽지 원상복구 주의가 필요한 방',
+    tagline: '못질·시트지·접착 테이프를 잘못 붙였다가 퇴실 수리비를 물기 쉬운 조건이에요',
     top3: ['실크벽지 위 접착 테이프 금지(꼭꼬핀만)', '시트지·우드블라인드 절대 제외', '입주 당일 하자 기록 카톡 전송'],
     avoidItems: ['점착식 시트지 벽지', '3M 코맨드(실크벽지)', '우드 블라인드'],
     altItems: ['꼭꼬핀 쉬폰 커튼', '무인양품 PP 서랍', '스텐304 압축 욕실선반'],
@@ -773,13 +773,13 @@ export const QUIZ_RESULTS = [
     id: 'humid-ground-mold',
     code: 'TYPE 03',
     condition: (s, ctx) => (ctx.hasMoistureRisk || ctx.isGroundFloor || ctx.needsIndoorDrying) && s.smellRisk >= 18,
-    badge: '결로·습기 곰팡이 차단형',
-    tagline: '환기 약하고 습한 환경이라 바닥 매트·패브릭·합판 가구 관리가 까다로운 타입',
+    badge: '환기·습기 관리가 중요한 방',
+    tagline: '환기가 약하고 습기가 머물기 쉬워 바닥 매트·패브릭 관리에 신경 써야 해요',
     top3: ['바닥 직결 접이식 매트·하드 규조토 제외', '통풍 깔판 + 서큘레이터 환기', '욕실 흡착 대신 스텐304 압축선반'],
     avoidItems: ['하드 규조토 매트', '흡착 욕실 선반', '장모 샤기 러그'],
     altItems: ['소프트 규조토', '스텐304 압축 욕실선반', '사이잘룩 단모 러그'],
     lifeTips: [
-      { title: '실내 빨래 건조 땐 창문+선풍기 15분', desc: '습기가 벽과 매트리스 밑에 고이지 않도록 샤워·빨래 직후 15분 환기 타이머를 돌리는 게 곰팡이 방어에 가장 효과적이에요.', itemLabel: '탁상 서큘레이터 · 제습제', itemKeyword: '저소음 탁상 서큘레이터' },
+      { title: '실내 빨래 건조 땐 창문+선풍기 15분', desc: '습기가 벽과 매트리스 밑에 고이지 않도록 샤워·빨래 직후 15분 환기 타이머를 돌리는 게 곰팡이 예방에 가장 효과적이에요.', itemLabel: '탁상 서큘레이터 · 제습제', itemKeyword: '저소음 탁상 서큘레이터' },
       { title: '돌 규조토 대신 세탁 가능한 소프트 매트', desc: '습한 욕실에선 하드 규조토가 금방 막히고 깨지기 쉬워요. 빨아 쓰는 소프트 규조토와 녹 안 스는 스텐304 선반이 안전합니다.', itemLabel: '워셔블 소프트 규조토 매트', itemKeyword: '소프트 규조토 발매트' }
     ]
   },
@@ -787,8 +787,8 @@ export const QUIZ_RESULTS = [
     id: 'duplex-micro-path',
     code: 'TYPE 04',
     condition: (s, ctx) => (ctx.isDuplex || ctx.narrowPath || ctx.needsFloorSpace) && s.spaceStress >= 24,
-    badge: '초미니·복층 동선 사수형',
-    tagline: '바닥 면적 몇 십 cm만 낭비해도 문 열림·사다리·보행 동선이 바로 막히는 타입',
+    badge: '좁은 통로·동선 확보가 우선인 방',
+    tagline: '바닥 면적 몇 십 cm만 낭비해도 문 열림과 걷는 동선이 바로 막히기 쉬워요',
     top3: ['바닥 다리 있는 스탠드 거울·조명 제외', '보행 폭 60cm·문 열림 반경 실측', '도어후크·클립형 공중 수납 활용'],
     avoidItems: ['스탠드 전신거울', '1인용 리클라이너', '오픈 선반'],
     altItems: ['도어후크 거울', '클립형 조명', '불투명 리빙박스'],
@@ -801,8 +801,8 @@ export const QUIZ_RESULTS = [
     id: 'stair-heavy-ban',
     code: 'TYPE 05',
     condition: (s, ctx) => (ctx.noElevator || ctx.frequentMover) && (s.assemblyRisk >= 18 || s.depositRisk >= 16),
-    badge: '계단 운반·이사 빈번 경량형',
-    tagline: '40kg대 대형 합판 서랍장이나 분해 불가 침대를 들였다가 이사 때 감당 안 되는 타입',
+    badge: '이동·운반이 쉬운 가벼운 가구 추천',
+    tagline: '40kg대 대형 합판 서랍장이나 분해가 어려운 침대는 이사할 때 부담이 커져요',
     top3: ['40kg+ 말름·브림네스 수납침대 제외', '모듈형 PP 서랍·완제품 우선', '재조립 시 헐거워지는 저가 PB 피하기'],
     avoidItems: ['이케아 말름·브림네스', '이케아 헬메르·알렉스·에케트', '허니콤 저가 MDF 책상'],
     altItems: ['무인양품 PP 서랍', '한샘 샘책장(기사 시공)', '두닷 콰트로'],
@@ -815,8 +815,8 @@ export const QUIZ_RESULTS = [
     id: 'desk-honeycomb-ban',
     code: 'TYPE 06',
     condition: (s, ctx) => ctx.heavyDeskLoad && (ctx.budgetTier === 'low' || s.assemblyRisk >= 14),
-    badge: '재택·모니터암 상판 강도 중시형',
-    tagline: '예쁘고 싼 책상에 모니터암을 달았다가 상판이 푹 꺼지고 흔들리기 쉬운 타입',
+    badge: '모니터암 하중을 버티는 튼튼한 책상 필요',
+    tagline: '얇고 가벼운 책상에 모니터암을 달면 상판이 꺼지거나 흔들리기 쉬워요',
     top3: ['속 빈 종이 벌집 심재 책상 절대 금지', 'E0 풀판 18T+ & 스틸 프레임 선택', '내 키 맞는 의자·책상 높이 맞춤'],
     avoidItems: ['허니콤 저가 MDF 책상', '저가 전자레인지 선반', '마켓비 MKB 캐비닛'],
     altItems: ['두닷 콰트로', '클립형 조명', '무인양품 PP 서랍'],
@@ -829,8 +829,8 @@ export const QUIZ_RESULTS = [
     id: 'dust-collector',
     code: 'TYPE 07',
     condition: (s, ctx) => s.dustRisk >= 26 && s.fabricRisk < 24,
-    badge: '먼지 콜렉터형',
-    tagline: '예쁜 오픈 행거·선반을 골랐다가 먼지·정리 스트레스를 껴안기 쉬운 타입',
+    badge: '먼지 쌓이는 오픈 수납 피해야 할 방',
+    tagline: '트여 있는 행거·선반을 고르면 먼지가 금방 쌓여 정리 스트레스가 커져요',
     top3: ['오픈 행거 → 커버·도어형 교체', '우드 블라인드·장모 러그 제외', '주 1회 10분 환기·청소 알람'],
     avoidItems: ['오픈 파이프 행거', '우드 블라인드', '오픈 선반'],
     altItems: ['도어형 옷장', '단모 워셔블 러그', '불투명 리빙박스'],
@@ -843,8 +843,8 @@ export const QUIZ_RESULTS = [
     id: 'fabric-sponge',
     code: 'TYPE 08',
     condition: (s, ctx) => s.fabricRisk >= 26 || s.smellRisk >= 24 || (ctx.smallWasher && s.fabricRisk >= 18),
-    badge: '냄새·세탁 불가 기피형',
-    tagline: '조리 냄새나 음료가 한 번 스며들면 작은 세탁기로는 복구 불가능해지는 타입',
+    badge: '세탁·환기 쉬운 패브릭 위주 추천',
+    tagline: '냄새나 얼룩이 한 번 배면 작은 세탁기로는 빨기 어려워 관리 부담이 커져요',
     top3: ['커버 분리 불가 소파·대형 러그 금지', '집 세탁기 들어가는 단모·방수 원단', '식사 후 15분 환기 타이머'],
     avoidItems: ['비분리형 패브릭 소파', '장모 샤기 러그', '부클레 패브릭 소파'],
     altItems: ['이케아 클리판/쇠데르함', '단모 폴리 러그', '단모 워셔블 러그'],
@@ -857,8 +857,8 @@ export const QUIZ_RESULTS = [
     id: 'visual-minimal',
     code: 'TYPE 09',
     condition: (s, ctx) => ctx.visualClutterSensitive && s.dustRisk >= 16,
-    badge: '시각 노이즈 차단 미니멀형',
-    tagline: '수납이 오픈되어 물건 색깔이 보이기 시작하면 바로 방이 어지럽고 피곤해지는 타입',
+    badge: '물건이 안 보이게 가리는 수납 추천',
+    tagline: '오픈 수납에 생활용품 색깔이 보이기 시작하면 방이 금방 어지러워 보여요',
     top3: ['오픈 행거·투명 서랍 제외', '화이트/단색 불투명 리빙박스 통일', '전선·멀티탭 박스 숨기기'],
     avoidItems: ['오픈 선반', '오픈 파이프 행거', '무타공 압축봉 행거'],
     altItems: ['도어형 옷장', '불투명 리빙박스', '무인양품 PP 서랍'],
@@ -871,8 +871,8 @@ export const QUIZ_RESULTS = [
     id: 'assembly-panic',
     code: 'TYPE 10',
     condition: (s, ctx) => s.assemblyRisk >= 22 || ctx.diySkill === 'none',
-    badge: '무공구·완제품 우선형',
-    tagline: '반제품 조립 가구 뜯었다가 드라이버·철판 나사 때문에 시작부터 지치는 타입',
+    badge: '조립 없이 바로 쓰는 완제품 추천',
+    tagline: '부품이 많고 공구가 필요한 조립 가구는 시작부터 지치고 마감도 틀어지기 쉬워요',
     top3: ['철판·부품 많은 DIY 가구 거르기', '완제품·기사 방문설치 우선 선택', '필요시 USB 미니 전동드라이버 구비'],
     avoidItems: ['이케아 헬메르·알렉스·에케트', '마켓비 MKB 캐비닛', '허니콤 저가 MDF 책상'],
     altItems: ['무인양품 PP 서랍', '리바트 로넌·한샘 샘책장', '두닷 콰트로'],
@@ -885,8 +885,8 @@ export const QUIZ_RESULTS = [
     id: 'maximal-storage-pro',
     code: 'TYPE 11',
     condition: (s, ctx) => ctx.density === 'maximal' && (ctx.wishId === 'storage' || s.spaceStress >= 18),
-    badge: '맥시멀 짐 수납 최적화형',
-    tagline: '옷·취향 소품이 많은데 수납 깊이와 하중을 못 맞춰 방이 금방 넘치기 쉬운 타입',
+    badge: '짐이 많아 넉넉한 수납이 필요한 방',
+    tagline: '옷·소품이 많은 편이라 수납 깊이와 버티는 하중을 못 맞추면 방이 금방 넘쳐요',
     top3: ['약한 압축봉 대신 바닥 지지형 수납', '수직 공간+불투명 박스 모듈화', '계절 옷 압축팩 분리 보관'],
     avoidItems: ['무타공 압축봉 행거', '오픈 파이프 행거', '1인용 리클라이너'],
     altItems: ['도어형 옷장', '불투명 리빙박스', '무인양품 PP 서랍'],
@@ -899,8 +899,8 @@ export const QUIZ_RESULTS = [
     id: 'warm-lighting-curator',
     code: 'TYPE 12',
     condition: (s, ctx) => ctx.lightingPref === 'mood' && (ctx.wishId === 'moodlight' || ctx.tasteId === 'moodlight' || ctx.tasteId === 'object'),
-    badge: '간접조명·질감 큐레이터형',
-    tagline: '눈 시린 저가 네온등·공간 차지하는 큰 스탠드 대신 빛과 촉감 균형이 중요한 타입',
+    badge: '간접조명과 포근한 소재가 어울리는 방',
+    tagline: '눈 시린 조명이나 자리만 차지하는 스탠드 대신 은은한 빛과 촉감이 중요한 방이에요',
     top3: ['눈 부신 LED 네온·싸구려 아크릴 제외', '2700~3000K 전구색 집게·단스탠드', '침대/책상 옆 최소 면적 배치'],
     avoidItems: ['스탠드 전신거울', '비분리형 패브릭 소파'],
     altItems: ['클립형 조명', '도어후크 거울', '이케아 클리판/쇠데르함'],
@@ -913,8 +913,8 @@ export const QUIZ_RESULTS = [
     id: 'budget-spec-hunter',
     code: 'TYPE 13',
     condition: (s, ctx) => ctx.budgetTier === 'low' && (s.dustRisk + s.depositRisk + s.assemblyRisk >= 32),
-    badge: '5만원 이하 저가 함정 회피형',
-    tagline: '초가성비 가격만 보고 샀다가 시트지 들뜸·흡착 추락·불량 마감으로 돈 두 번 쓰기 쉬운 타입',
+    badge: '저가 가구 내구도·마감 주의 필요',
+    tagline: '싼 가격만 보고 샀다가 시트지 들뜸·흡착 추락으로 금방 다시 사기 쉬운 조건이에요',
     top3: ['1만원 미만 흡착·허니콤 저가템 거르기', '작은 소품만 저가, 핵심 가구는 스펙 확인', '최저평점 사진 리뷰 먼저 읽기'],
     avoidItems: ['흡착 욕실 선반', '허니콤 저가 MDF 책상', '하드 규조토 매트'],
     altItems: ['스텐304 압축 욕실선반', '소프트 규조토', '무인양품 PP 서랍'],
@@ -927,13 +927,13 @@ export const QUIZ_RESULTS = [
     id: 'survival-pro',
     code: 'TYPE 14',
     condition: () => true,
-    badge: '스펙 방어 만렙 실속형',
-    tagline: '예쁜 감성도 챙기면서 관리·치수·보증금 기준까지 꼼꼼히 거르는 균형파 타입',
+    badge: '관리와 실용성 균형이 잡힌 방',
+    tagline: '예쁜 분위기도 챙기면서 관리·치수·보증금 기준까지 두루 살피는 조건이에요',
     top3: ['내 키 맞는 핵심 가구 스펙 고정', '사기 전 A vs B 비교 & 판독기 체크', '주기 알람 .ics 캘린더 연동'],
     avoidItems: ['허니콤 저가 MDF 책상', '하드 규조토 매트'],
     altItems: ['두닷 콰트로', '무인양품 PP 서랍', '소프트 규조토'],
     lifeTips: [
-      { title: '새 매트리스·의자는 방수 커버로 수명 연장', desc: '좋은 가구일수록 방수 커버·다리 펠트 같은 작은 보호 장비만 추가해 줘도 3~4년 뒤 중고 방어와 보증금 보호에 유리해요.', itemLabel: '생활방수 매트리스 커버', itemKeyword: '생활방수 매트리스 커버' },
+      { title: '새 매트리스·의자는 방수 커버로 수명 연장', desc: '좋은 가구일수록 방수 커버·다리 펠트 같은 작은 보호 장비만 추가해 줘도 오래 깨끗하게 쓰고 보증금 손실도 막아줍니다.', itemLabel: '생활방수 매트리스 커버', itemKeyword: '생활방수 매트리스 커버' },
       { title: '월 1회 필터·배수구 루틴 등록하기', desc: '루틴 탭의 .ics 파일을 캘린더에 넣어두면 청소 시기를 놓쳐 악취·먼지가 쌓이는 일을 깔끔하게 막을 수 있어요.', itemLabel: '배수구 발포 클리너', itemKeyword: '배수구 발포 클리너' }
     ]
   }

@@ -22,11 +22,11 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope83';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope83';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope83';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope83';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope83';
+} from './data/app-data.js?v=nope84';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope84';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope84';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope84';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope84';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -1531,8 +1531,8 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
       </div>
 
       <div class="defense-stat-bar" style="margin-bottom:4px;">
-        <span>예상 손실 방어</span>
-        <strong>약 ${savedMan}만 원 절약</strong>
+        <span>예상 절약 금액</span>
+        <strong>약 ${savedMan}만 원</strong>
       </div>
       <p class="defense-basis-note">원상복구 도배·폐기·재구매 평균 비용 기준</p>
 
@@ -2386,8 +2386,8 @@ function renderDefenseCounter() {
   const estWon = count * 75000 + (savedProfile ? (savedProfile.estimatedSavedWon || 0) : 0);
   const man = Math.round(estWon / 10000);
   bar.innerHTML = count > 0
-    ? `<span>지금까지 NOPE 판독 <strong>${count}건</strong> 확인</span><strong>예상 손실 약 ${man}만 원 방어 중</strong>`
-    : `<span>${escapeHtml(savedProfile.nickname || '내')} 방 맞춤 방어 기준 적용 중</span><strong>예상 ${Math.round((savedProfile.estimatedSavedWon || 180000) / 10000)}만 원 절약</strong>`;
+    ? `<span>지금까지 NOPE 판독 <strong>${count}건</strong> 확인</span><strong>약 ${man}만 원 절약 기준</strong>`
+    : `<span>${escapeHtml(savedProfile.nickname || '내')} 방 맞춤 기준 적용 중</span><strong>예상 ${Math.round((savedProfile.estimatedSavedWon || 180000) / 10000)}만 원 절약</strong>`;
   bar.classList.remove('hidden');
 }
 
@@ -4390,7 +4390,7 @@ function renderToneMatcher() {
     <div class="matcher-profile-summary">
       ${savedProfile
         ? `<span class="matcher-profile-kicker">${escapeHtml(savedProfile.pyeongLabel || '원룸')} 기준</span>
-           <strong class="matcher-profile-main">${escapeHtml(wishCat ? `${wishCat.name}으로 추천 중` : `${savedProfile.toneName} 무드 기준`)}</strong>`
+           <strong class="matcher-profile-main">${escapeHtml(wishCat ? `${wishCat.name}` : `${savedProfile.toneName} 무드 기준`)}</strong>`
         : `<span class="matcher-profile-kicker">맞춤 추천 전</span>
            <strong class="matcher-profile-main">내 방 설문하면 평수·취향에 맞춰 정렬돼요</strong>`
       }
@@ -6371,6 +6371,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope83').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope84').catch(() => {});
   }
 }
