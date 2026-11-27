@@ -1,7 +1,9 @@
-const CACHE_NAME = 'nope-v84';
+const CACHE_NAME = 'nope-v85';
 const ASSETS = [
   './',
   './index.html',
+  './privacy.html',
+  './terms.html',
   './styles.css',
   './app.js',
   './data/app-data.js',

@@ -12,23 +12,23 @@
   <meta property="og:url" content="https://nope-room.vercel.app/" />
   <meta property="og:title" content="NOPE! | 내 방에 들이기 전, 딱 한 번만 의심해 보기" />
   <meta property="og:description" content="월세·좁은방·반려동물 조건으로 가구 스펙 판독, 피할 특징 자동 제외 필터, A vs B 비교까지 40초 진단." />
-  <meta property="og:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope84" />
+  <meta property="og:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope85" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="NOPE! | 실상품 자취 스펙 판독" />
   <meta name="twitter:description" content="예쁜 사진 빼고, 실제 판매 중인 가구의 단점·원상복구·치수 근거를 판독하는 앱" />
-  <meta name="twitter:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope84" />
+  <meta name="twitter:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope85" />
   <meta name="theme-color" content="#F4F6F9" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="NOPE!" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=nope84" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=nope85" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css" />
-  <link rel="manifest" href="./manifest.json?v=nope84" />
-  <link rel="stylesheet" href="./styles.css?v=nope84" />
+  <link rel="manifest" href="./manifest.json?v=nope85" />
+  <link rel="stylesheet" href="./styles.css?v=nope85" />
 </head>
 <body>
   <div id="app-splash" class="app-splash" aria-hidden="true">
@@ -109,6 +109,14 @@
               <button id="home-retake-btn" class="home-text-sub-btn" type="button">방 조건 다시 테스트하기 ↺</button>
             </div>
           </div>
+
+          <footer class="app-legal-footer" aria-label="약관 및 데이터 안내">
+            <button type="button" class="legal-footer-btn" data-open-policy="terms">이용약관</button>
+            <span class="legal-sep" aria-hidden="true">·</span>
+            <button type="button" class="legal-footer-btn is-strong" data-open-policy="privacy">개인정보처리방침</button>
+            <span class="legal-sep" aria-hidden="true">·</span>
+            <button type="button" class="legal-footer-btn" id="footer-data-manage-btn">데이터 관리</button>
+          </footer>
         </div>
 
         <div id="quiz-nickname" class="card hidden stage-animate nickname-card">
@@ -124,6 +132,17 @@
               <strong>🔬 30문항 정밀 진단</strong>
               <span>세부 동선·환경 포함</span>
             </button>
+          </div>
+          <div id="quiz-consent-box" class="consent-box">
+            <label class="consent-row">
+              <input id="quiz-consent-required" type="checkbox" />
+              <span class="consent-text"><strong>[필수]</strong> 이용약관 및 개인정보 수집·이용 동의</span>
+              <button type="button" class="consent-view-btn" data-open-policy="privacy">보기 ›</button>
+            </label>
+            <label class="consent-row">
+              <input id="quiz-consent-marketing" type="checkbox" />
+              <span class="consent-text">[선택] 맞춤 가구·혜택 알림 수신 동의</span>
+            </label>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">
             <button id="nickname-next-btn" class="btn-primary btn-full" type="button" disabled>방 정보 입력 시작하기 →</button>
@@ -496,9 +515,14 @@
     <div id="account-sheet-panel" class="sheet-panel"></div>
   </div>
 
+  <!-- Terms & Privacy Policy Sheet -->
+  <div id="legal-sheet-backdrop" class="sheet-backdrop hidden" role="dialog" aria-modal="true">
+    <div id="legal-sheet-panel" class="sheet-panel"></div>
+  </div>
+
   <canvas id="share-canvas" width="1080" height="1920" class="hidden"></canvas>
   <div id="toast" class="toast hidden"></div>
 
-  <script type="module" src="./app.js?v=nope84"></script>
+  <script type="module" src="./app.js?v=nope85"></script>
 </body>
 </html>

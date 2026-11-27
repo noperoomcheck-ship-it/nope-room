@@ -22,11 +22,11 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope84';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope84';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope84';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope84';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope84';
+} from './data/app-data.js?v=nope85';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope85';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope85';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope85';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope85';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -44,7 +44,8 @@ const STORAGE_KEYS = {
   pwaDismissed: 'nope_pwa_dismissed_v1',
   excludeTraits: 'nope_exclude_traits_v1',
   analytics: 'nope_analytics_v1',
-  homeRotation: 'nope_home_rot_v1'
+  homeRotation: 'nope_home_rot_v1',
+  legalConsent: 'nope_legal_consent_v1'
 };
 
 const state = {
@@ -420,10 +421,130 @@ function runViewTransition(updateFn) {
   updateFn();
 }
 
+const legalSheetBackdrop = document.getElementById('legal-sheet-backdrop');
+const legalSheetPanel = document.getElementById('legal-sheet-panel');
+const LEGAL_POLICY_VERSION = '2026-11-28';
+
+function loadLegalConsent() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.legalConsent) || 'null');
+    return raw && typeof raw === 'object' ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveLegalConsent(required, marketing = false) {
+  const payload = {
+    required: Boolean(required),
+    marketing: Boolean(marketing),
+    version: LEGAL_POLICY_VERSION,
+    consentedAt: new Date().toISOString()
+  };
+  try {
+    localStorage.setItem(STORAGE_KEYS.legalConsent, JSON.stringify(payload));
+  } catch {
+    // ignore storage quota errors
+  }
+  return payload;
+}
+
+function closeLegalSheet() {
+  if (legalSheetBackdrop) legalSheetBackdrop.classList.add('hidden');
+  syncBodyScrollLock();
+}
+
+function renderLegalSheet(activeTab = 'privacy') {
+  if (!legalSheetPanel) return;
+  const tab = activeTab === 'terms' ? 'terms' : 'privacy';
+  const bodyHtml = tab === 'privacy' ? `
+    <h4>1. 수집하는 개인정보 항목 및 방법</h4>
+    <p><strong>비회원 진단·도구 이용:</strong> 닉네임, 방 크기·거주 형태(월세/전세/자가)·주거 조건, 찜한 가구, 입주점검 메모는 이용자 기기(<code>localStorage</code>)에만 저장되며 외부 서버로 전송되지 않습니다.</p>
+    <p><strong>계정 연동(선택):</strong> 카카오·Google 연동 또는 이메일 연결 시 이메일 및 계정 식별자를 동기화 목적으로만 사용합니다.</p>
+    <p><strong>이미지 판독(선택):</strong> 첨부한 사진은 브라우저 내 미리보기 및 판독 보조로만 처리하며 서버에 영구 저장하지 않습니다.</p>
+    <h4>2. 보유·이용 기간 및 파기</h4>
+    <p>앱 내 「내 데이터 전체 삭제 · 동의 철회」 실행 또는 계정 연동 해제 시 즉시 파기합니다.</p>
+    <h4>3. 외부 쇼핑몰 이동 및 문의</h4>
+    <p>쿠팡·오늘의집·컬리 등 외부 이동 후에는 각 판매처 정책이 적용됩니다. 문의: <strong>nope.room.app@gmail.com</strong></p>
+  ` : `
+    <h4>1. 서비스 이용 안내</h4>
+    <p>NOPE!는 자취방 조건에 맞춘 가구·생활용품 스펙 판독, 치수 가이드, 입주점검 기록 도구를 제공합니다.</p>
+    <h4>2. 판독·치수·절약 수치 면책 고지</h4>
+    <p>PASS / CHECK / NOPE 판정, 예상 절약 금액, 치수 가이드는 구매 판단을 돕기 위한 <strong>참고 정보</strong>입니다. 실제 상품 규격·하중·시공 조건 및 원상복구 가능 여부는 판매처 최신 정보와 임대차 계약을 우선 확인해 주세요.</p>
+    <h4>3. 외부 커머스 및 제휴 고지</h4>
+    <p>외부 쇼핑몰의 가격·재고·배송·환불 책임은 각 판매처에 있으며, 제휴 링크 활성화 시 관련 법령에 따라 수수료 안내 문구를 표시합니다.</p>
+  `;
+
+  legalSheetPanel.innerHTML = `
+    <div class="sheet-grabber" aria-hidden="true"></div>
+    <div class="sheet-head" style="margin-bottom:12px;">
+      <h2 class="sheet-title" style="margin:2px 0;">약관 및 개인정보 안내</h2>
+      <button class="sheet-close" id="close-legal-sheet-btn" type="button" aria-label="닫기">×</button>
+    </div>
+    <div class="legal-tabs-bar" role="tablist">
+      <button type="button" class="legal-tab-btn ${tab === 'privacy' ? 'active' : ''}" data-legal-tab="privacy">개인정보처리방침</button>
+      <button type="button" class="legal-tab-btn ${tab === 'terms' ? 'active' : ''}" data-legal-tab="terms">이용약관·고지</button>
+    </div>
+    <div class="legal-doc-body">${bodyHtml}</div>
+    <div class="legal-doc-links">
+      <a href="./${tab === 'privacy' ? 'privacy' : 'terms'}.html" target="_blank" rel="noopener noreferrer">전체 페이지로 보기 ↗</a>
+      <span class="text-tertiary">시행일 ${LEGAL_POLICY_VERSION}</span>
+    </div>
+  `;
+
+  document.getElementById('close-legal-sheet-btn').addEventListener('click', closeLegalSheet);
+  legalSheetPanel.querySelectorAll('[data-legal-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => renderLegalSheet(btn.dataset.legalTab));
+  });
+}
+
+function openLegalSheet(tab = 'privacy') {
+  renderLegalSheet(tab);
+  if (legalSheetBackdrop) legalSheetBackdrop.classList.remove('hidden');
+  syncBodyScrollLock();
+}
+
+if (legalSheetBackdrop) {
+  legalSheetBackdrop.addEventListener('click', (e) => {
+    if (e.target === legalSheetBackdrop) closeLegalSheet();
+  });
+}
+
+function clearAllUserDataAndReset() {
+  Object.values(STORAGE_KEYS).forEach((key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // ignore storage errors
+    }
+  });
+  state.nickname = '';
+  state.quizIndex = 0;
+  state.quizAnswers = [];
+  state.homePreAnswers = [];
+  state.excludedTraits = new Set();
+  state.homeRotationOffset = 0;
+  if (nicknameInputEl) nicknameInputEl.value = '';
+  updateSavedProfileBadge();
+  updateWishlistBadge();
+  updateAuthBadge();
+  renderExcludeTraitsBars();
+  renderScannerProfileNudge();
+  renderToneMatcher();
+  renderCompareView();
+  renderChecklist();
+  renderCycleAlarms();
+  closeAccountSheet();
+  switchTab('home');
+  showHomeStage('cover');
+  showToast('저장된 데이터와 동의를 모두 삭제했어요');
+}
+
 function syncBodyScrollLock() {
   const detailOpen = Boolean(sheetBackdrop && !sheetBackdrop.classList.contains('hidden'));
   const accountOpen = Boolean(accountSheetBackdrop && !accountSheetBackdrop.classList.contains('hidden'));
-  document.body.classList.toggle('modal-open', detailOpen || accountOpen);
+  const legalOpen = Boolean(legalSheetBackdrop && !legalSheetBackdrop.classList.contains('hidden'));
+  document.body.classList.toggle('modal-open', detailOpen || accountOpen || legalOpen);
 }
 
 function switchTab(tabName) {
@@ -628,13 +749,20 @@ function showHomeStage(stage) {
 
 const nicknameNextBtn = document.getElementById('nickname-next-btn');
 const nicknameErrorMsg = document.getElementById('nickname-error-msg');
+const quizConsentReq = document.getElementById('quiz-consent-required');
+const quizConsentMkt = document.getElementById('quiz-consent-marketing');
+const quizConsentBox = document.getElementById('quiz-consent-box');
 
 function syncNicknameNextState() {
   const hasName = Boolean(nicknameInputEl.value.trim());
-  if (nicknameNextBtn) nicknameNextBtn.disabled = !hasName;
+  const hasConsent = !quizConsentReq || quizConsentReq.checked;
+  if (nicknameNextBtn) nicknameNextBtn.disabled = !(hasName && hasConsent);
   if (hasName) {
     nicknameInputEl.classList.remove('is-error');
     if (nicknameErrorMsg) nicknameErrorMsg.classList.add('hidden');
+  }
+  if (hasConsent && quizConsentBox) {
+    quizConsentBox.classList.remove('is-error');
   }
 }
 
@@ -679,6 +807,9 @@ function startQuiz(useHomePreselect = true) {
   if (saved && saved.nickname && !nicknameInputEl.value) {
     nicknameInputEl.value = saved.nickname;
   }
+  const consent = loadLegalConsent();
+  if (quizConsentReq) quizConsentReq.checked = Boolean(consent && consent.required);
+  if (quizConsentMkt) quizConsentMkt.checked = Boolean(consent && consent.marketing);
   syncNicknameNextState();
   showHomeStage('nickname');
   setTimeout(() => nicknameInputEl.focus(), 80);
@@ -694,6 +825,12 @@ function confirmNicknameAndStartQuestions() {
     nicknameInputEl.focus();
     return;
   }
+  if (quizConsentReq && !quizConsentReq.checked) {
+    if (quizConsentBox) quizConsentBox.classList.add('is-error');
+    showToast('필수 약관 및 개인정보 수집·이용에 동의해 주세요.');
+    return;
+  }
+  saveLegalConsent(true, Boolean(quizConsentMkt && quizConsentMkt.checked));
   state.nickname = raw;
   state.quizIndex = 0;
   state.quizAnswers = [];
@@ -705,6 +842,7 @@ function confirmNicknameAndStartQuestions() {
 nicknameNextBtn.addEventListener('click', confirmNicknameAndStartQuestions);
 document.getElementById('nickname-back-btn').addEventListener('click', () => showHomeStage('cover'));
 nicknameInputEl.addEventListener('input', syncNicknameNextState);
+if (quizConsentReq) quizConsentReq.addEventListener('change', syncNicknameNextState);
 nicknameInputEl.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') confirmNicknameAndStartQuestions();
 });
@@ -6137,28 +6275,57 @@ function renderAccountSheet(tab = activeAccountTab) {
           <h3 style="margin:2px 0 4px;">${escapeHtml(acc.email || acc.label)}</h3>
           <p class="text-secondary" style="font-size:12.5px;margin-bottom:12px;">
             ${acc.provider === 'supabase'
-              ? 'Supabase 계정에 진단·찜·점검 기록이 동기화되어 있습니다.'
+              ? '계정에 진단·찜·점검 기록이 동기화되어 있습니다.'
               : '이 기기에 저장 중입니다.'}
           </p>
           <div style="display:flex;gap:8px;">
-            <button type="button" id="export-room-backup-btn" class="btn-secondary btn-sm" style="flex:1;">백업 파일(.json) 저장</button>
-            <button type="button" id="logout-account-btn" class="btn-ghost btn-sm">로그아웃</button>
+            <button type="button" id="logout-account-btn" class="btn-secondary btn-sm" style="flex:1;">연결 해제(로그아웃)</button>
           </div>
         ` : `
           <h3 style="margin:2px 0 6px;">회원가입은 저장할 때만!</h3>
-          <p class="text-secondary" style="font-size:12.5px;margin-bottom:14px;line-height:1.5;">
+          <p class="text-secondary" style="font-size:12.5px;margin-bottom:12px;line-height:1.5;">
             찜한 가구 <strong>${wishlist.length}건</strong>과 진단·점검 기록을 다른 기기에서도 이어볼 때만 연결하세요.
           </p>
+          ${(() => {
+            const consent = loadLegalConsent();
+            const reqChecked = Boolean(consent && consent.required) ? 'checked' : '';
+            const mktChecked = Boolean(consent && consent.marketing) ? 'checked' : '';
+            return `
+              <div id="auth-consent-box" class="consent-box" style="margin:0 0 12px;">
+                <label class="consent-row">
+                  <input id="auth-consent-required" type="checkbox" ${reqChecked} />
+                  <span class="consent-text"><strong>[필수]</strong> 이용약관 및 개인정보 수집·연동 동의</span>
+                  <button type="button" class="consent-view-btn" data-open-policy="privacy">보기 ›</button>
+                </label>
+                <label class="consent-row">
+                  <input id="auth-consent-marketing" type="checkbox" ${mktChecked} />
+                  <span class="consent-text">[선택] 맞춤 가구·혜택 알림 수신 동의</span>
+                </label>
+              </div>
+            `;
+          })()}
           <button type="button" id="oauth-kakao-btn" class="auth-provider-btn is-kakao">카카오로 3초 시작하기</button>
           <button type="button" id="oauth-google-btn" class="auth-provider-btn is-google">Google 계정으로 계속하기</button>
           <div class="auth-email-row">
-            <input id="auth-email-input" type="text" placeholder="이메일 주소 입력 (매직링크/로컬 저장)" aria-label="이메일 주소" />
+            <input id="auth-email-input" type="text" placeholder="이메일 주소 입력" aria-label="이메일 주소" />
             <button id="auth-email-submit-btn" type="button" class="btn-primary btn-sm">연결</button>
           </div>
         `}
       </div>
+
+      <div class="auth-box" style="margin-top:10px;">
+        <strong style="display:block;font-size:13px;font-weight:800;margin-bottom:8px;">내 데이터 관리 · 권리 행사</strong>
+        <button type="button" id="export-room-backup-btn" class="btn-secondary btn-sm btn-full">내 방 데이터 백업 (.json) 내려받기</button>
+        <button type="button" id="clear-all-user-data-btn" class="data-danger-btn">내 데이터 전체 삭제 · 동의 철회</button>
+        <div class="app-legal-footer" style="margin-top:12px;padding:6px 0 0;">
+          <button type="button" class="legal-footer-btn" data-open-policy="terms">이용약관</button>
+          <span class="legal-sep" aria-hidden="true">·</span>
+          <button type="button" class="legal-footer-btn is-strong" data-open-policy="privacy">개인정보처리방침</button>
+        </div>
+      </div>
+
       <div class="sync-status-box">
-        <strong>상태:</strong> ${hasLiveSupabase() ? 'Supabase 실시간 인증·DB 연동 활성' : '로컬 저장 모드 (실서버 배포 시 app-mvp/data/supabase-config.js에 URL·Key만 입력하면 카카오·구글 로그인 즉시 작동)'}
+        <strong>저장 방식:</strong> ${hasLiveSupabase() ? '클라우드 동기화 활성' : '이 기기(브라우저)에 안전하게 로컬 저장 중'}
       </div>
     `}
   `;
@@ -6197,15 +6364,44 @@ function renderAccountSheet(tab = activeAccountTab) {
     });
   }
 
+  const requireAuthConsent = () => {
+    const reqEl = document.getElementById('auth-consent-required');
+    const mktEl = document.getElementById('auth-consent-marketing');
+    const boxEl = document.getElementById('auth-consent-box');
+    if (reqEl && !reqEl.checked) {
+      if (boxEl) boxEl.classList.add('is-error');
+      showToast('계정 연동을 위해 필수 약관·개인정보 수집에 동의해 주세요.');
+      return false;
+    }
+    if (boxEl) boxEl.classList.remove('is-error');
+    saveLegalConsent(true, Boolean(mktEl && mktEl.checked));
+    return true;
+  };
+
+  const authReqCheckbox = document.getElementById('auth-consent-required');
+  if (authReqCheckbox) {
+    authReqCheckbox.addEventListener('change', () => {
+      const boxEl = document.getElementById('auth-consent-box');
+      if (authReqCheckbox.checked && boxEl) boxEl.classList.remove('is-error');
+    });
+  }
+
   const kakaoBtn = document.getElementById('oauth-kakao-btn');
-  if (kakaoBtn) kakaoBtn.addEventListener('click', () => startSupabaseOAuth('kakao'));
+  if (kakaoBtn) kakaoBtn.addEventListener('click', () => {
+    if (!requireAuthConsent()) return;
+    startSupabaseOAuth('kakao');
+  });
 
   const googleBtn = document.getElementById('oauth-google-btn');
-  if (googleBtn) googleBtn.addEventListener('click', () => startSupabaseOAuth('google'));
+  if (googleBtn) googleBtn.addEventListener('click', () => {
+    if (!requireAuthConsent()) return;
+    startSupabaseOAuth('google');
+  });
 
   const emailSubmitBtn = document.getElementById('auth-email-submit-btn');
   if (emailSubmitBtn) {
     emailSubmitBtn.addEventListener('click', () => {
+      if (!requireAuthConsent()) return;
       const val = (document.getElementById('auth-email-input').value || '').trim();
       if (!val || !val.includes('@')) {
         showToast('올바른 이메일 주소를 입력해 주세요.');
@@ -6229,6 +6425,27 @@ function renderAccountSheet(tab = activeAccountTab) {
     });
   }
 
+  const clearAllBtn = document.getElementById('clear-all-user-data-btn');
+  if (clearAllBtn) {
+    let armed = false;
+    clearAllBtn.addEventListener('click', () => {
+      if (!armed) {
+        armed = true;
+        clearAllBtn.textContent = '정말 모두 삭제할까요? 한 번 더 누르면 삭제';
+        setTimeout(() => {
+          if (armed) {
+            armed = false;
+            if (document.body.contains(clearAllBtn)) {
+              clearAllBtn.textContent = '내 데이터 전체 삭제 · 동의 철회';
+            }
+          }
+        }, 4500);
+        return;
+      }
+      clearAllUserDataAndReset();
+    });
+  }
+
   const logoutBtn = document.getElementById('logout-account-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
@@ -6238,6 +6455,18 @@ function renderAccountSheet(tab = activeAccountTab) {
     });
   }
 }
+
+document.addEventListener('click', (e) => {
+  const policyTrigger = e.target && e.target.closest ? e.target.closest('[data-open-policy]') : null;
+  if (policyTrigger) {
+    openLegalSheet(policyTrigger.dataset.openPolicy);
+    return;
+  }
+  const manageTrigger = e.target && e.target.closest ? e.target.closest('#footer-data-manage-btn') : null;
+  if (manageTrigger) {
+    openAccountSheet('auth');
+  }
+});
 
 function openAccountSheet(tab = 'wishlist') {
   renderAccountSheet(tab);
@@ -6371,6 +6600,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope84').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope85').catch(() => {});
   }
 }
