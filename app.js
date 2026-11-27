@@ -22,11 +22,11 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope87';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope87';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope87';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope87';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope87';
+} from './data/app-data.js?v=nope88';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope88';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope88';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope88';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope88';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -2854,7 +2854,7 @@ function openDetailSheet(item) {
       </div>
     </div>
 
-    <div class="seed-segmented" id="sheet-depth-seg" role="tablist" aria-label="상세 보기 깊이 선택">
+    <div class="seed-segmented is-two" id="sheet-depth-seg" role="tablist" aria-label="상세 보기 깊이 선택">
       <button type="button" class="seed-seg-btn active" data-sheet-depth="summary">요약 · 구매</button>
       <button type="button" class="seed-seg-btn" data-sheet-depth="deep">스펙 · 리뷰 해부</button>
     </div>
@@ -7209,6 +7209,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope87').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope88').catch(() => {});
   }
 }

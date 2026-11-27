@@ -3184,6 +3184,9 @@ input[type="range"] { width: 100%; accent-color: var(--ink); cursor: pointer; }
   border-radius: 9px;
   margin: 12px 0;
 }
+.seed-segmented.is-two {
+  grid-template-columns: repeat(2, 1fr);
+}
 .seed-seg-btn {
   border: 0;
   border-radius: 6px;
