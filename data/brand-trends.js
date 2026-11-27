@@ -22,6 +22,33 @@ export const BRAND_WATCHLIST = [
 
 export const BRAND_TRENDS = [
   {
+    id: 'trend-20261128-xiaomi-recall',
+    date: '2026.11.28',
+    brand: 'XIAOMI',
+    domain: '소형가전·주방',
+    type: '이슈·주의',
+    title: '샤오미 일부 보조배터리(PB2030MI) 자발적 리콜 및 유통 기기 모델명 확인 안내',
+    summary: '33W 20000mAh 보조배터리(PB2030MI) 등 과열 우려가 보고된 일부 배터리·소형기기 자발적 리콜 공지가 있어, 기존 보유 제품이나 직구·중고 구매 전 제품 하단 모델명 대조가 필요합니다.'
+  },
+  {
+    id: 'trend-20261128-muji-notice',
+    date: '2026.11.28',
+    brand: 'MUJI',
+    domain: '생활·수납',
+    type: '이슈·주의',
+    title: '무인양품 글로벌 시스템 점검 및 공식몰 공지·정품 유통 확인 권장',
+    summary: '본사 물류·온라인 시스템 보안 점검 이슈 이후 공식 앱·스토어 공지사항과 정식 수입 제품 여부를 확인하고, 사칭 링크·비공식 리셀 주의를 당부하고 있습니다.'
+  },
+  {
+    id: 'trend-20261128-hanssem-qc',
+    date: '2026.11.28',
+    brand: 'HANSSEM',
+    domain: '공간·가구',
+    type: '이슈·주의',
+    title: '보급형 시트지·랩핑 가구 필름 박리 및 친환경 등급(E0) 스펙 점검 체크',
+    summary: '과거 한샘 주방 랩핑 도어 무상 교체 사례처럼 저가 PVC 필름·MDF 가구는 습기·열기에 따른 들뜸과 포름알데히드 방출 등급(E0 이상) 및 모서리 엣지 마감 확인이 중요합니다.'
+  },
+  {
     id: 'trend-20261128-carepod',
     date: '2026.11.28',
     brand: 'CAREPOD',
