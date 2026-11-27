@@ -22,11 +22,11 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope85';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope85';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope85';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope85';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope85';
+} from './data/app-data.js?v=nope86';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope86';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope86';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope86';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope86';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -45,7 +45,8 @@ const STORAGE_KEYS = {
   excludeTraits: 'nope_exclude_traits_v1',
   analytics: 'nope_analytics_v1',
   homeRotation: 'nope_home_rot_v1',
-  legalConsent: 'nope_legal_consent_v1'
+  legalConsent: 'nope_legal_consent_v1',
+  feedback: 'nope_feedback_v1'
 };
 
 const state = {
@@ -565,6 +566,8 @@ function switchTab(tabName) {
       else if (state.scannerMode === 'matcher') renderToneMatcher();
     } else if (tabName === 'home') {
       updateSavedProfileBadge();
+    } else if (tabName === 'my') {
+      renderMyPage('main');
     }
     window.scrollTo({ top: 0, behavior: 'instant' });
   });
@@ -6069,6 +6072,10 @@ function recoverSupabaseSessionFromHash() {
 function closeAccountSheet() {
   if (accountSheetBackdrop) accountSheetBackdrop.classList.add('hidden');
   syncBodyScrollLock();
+  const tabMy = document.getElementById('tab-my');
+  if (tabMy && tabMy.classList.contains('active')) {
+    renderMyPage('main');
+  }
 }
 
 function parsePriceTierManWon(tierStr) {
@@ -6464,9 +6471,475 @@ document.addEventListener('click', (e) => {
   }
   const manageTrigger = e.target && e.target.closest ? e.target.closest('#footer-data-manage-btn') : null;
   if (manageTrigger) {
-    openAccountSheet('auth');
+    switchTab('my');
   }
 });
+
+// ---------------- Tab 5: My Page (Account, Settings, Support, Legal) ----------------
+const APP_VERSION_STR = 'v1.0.0';
+const SUPPORT_EMAIL = 'nope.room.app@gmail.com';
+
+const APP_NOTICES = [
+  {
+    date: '2026.11.28',
+    title: '계정 설정 · 고객지원(마이 탭) 오픈',
+    body: '마이 탭에서 계정 연동, 알림 수신 설정, 데이터 백업, 공지사항, 의견 남기기, 서비스 탈퇴까지 한 곳에서 관리할 수 있습니다.'
+  },
+  {
+    date: '2026.11.27',
+    title: '실상품 235종 스펙 판독 데이터 반영',
+    body: '월세 타공 제한, 소형 세탁기(9kg 이하) 세탁 여부, 모니터암 상판 하중 기준 판독 데이터를 최신 품목으로 보강했습니다.'
+  },
+  {
+    date: '2026.11.25',
+    title: '집주인 제출용 입주 하자 점검표 업데이트',
+    body: '루틴 탭에서 구역별 하자·수압 기록을 작성해 카톡·문자용 텍스트나 .txt 파일로 바로 내보낼 수 있습니다.'
+  }
+];
+
+const APP_FAQS = [
+  {
+    q: '로그인 없이도 방 진단과 판독을 쓸 수 있나요?',
+    a: '네. 로그인 없이도 모든 기능을 바로 이용할 수 있으며, 응답과 찜 목록은 이 기기 브라우저에 자동 저장됩니다. 다른 기기와 이어보려면 마이 탭에서 계정을 연결하세요.'
+  },
+  {
+    q: '저장한 닉네임이나 방 조건을 수정하고 싶어요.',
+    a: '마이 탭 상단에서 닉네임을 바로 바꾸거나, 내 방 진단 리포트 › 또는 홈 화면 하단에서 방 조건을 다시 테스트할 수 있습니다.'
+  },
+  {
+    q: '검색 결과에 원하는 제품이 나오지 않을 때는요?',
+    a: '판독 탭 검색창에 상품명이나 쇼핑몰 링크를 그대로 입력하면 키워드 기반으로 즉시 판독하며, 마이 › 의견 남기기로 상품 추가를 제보하실 수 있습니다.'
+  },
+  {
+    q: '서비스 탈퇴 및 저장 데이터 삭제는 어떻게 하나요?',
+    a: '마이 탭 하단 「서비스 탈퇴 · 내 데이터 전체 삭제」에서 언제든 기기와 계정의 진단·찜·점검 데이터 및 약관 동의를 즉시 삭제할 수 있습니다.'
+  }
+];
+
+function loadFeedbackHistory() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(STORAGE_KEYS.feedback) || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFeedbackEntry(kind, text) {
+  const list = loadFeedbackHistory();
+  list.unshift({
+    id: `fb_${Date.now()}`,
+    kind,
+    text,
+    date: formatTodayDot()
+  });
+  try {
+    localStorage.setItem(STORAGE_KEYS.feedback, JSON.stringify(list.slice(0, 15)));
+  } catch {
+    // ignore quota errors
+  }
+  return list.slice(0, 15);
+}
+
+function openSavedProfileReportFromMy() {
+  const saved = loadSavedRoomProfile();
+  if (!saved) {
+    switchTab('home');
+    startQuiz(true);
+    return;
+  }
+  const profile = QUIZ_RESULTS.find((r) => r.id === saved.profileId) || QUIZ_RESULTS[QUIZ_RESULTS.length - 1];
+  if (saved.nickname) state.nickname = saved.nickname;
+  const mbtiObj = (saved.mbtiId && SPACE_MBTI_TYPES.find((m) => m.id === saved.mbtiId)) || SPACE_MBTI_TYPES[0];
+  switchTab('home');
+  renderQuizResultView(
+    profile,
+    saved.dangerScore,
+    saved.pyeongLabel || '6~7평',
+    saved.toneName || '화이트 미니멀',
+    saved.nickname || '자취러',
+    mbtiObj.code,
+    saved.secondaryRisks || [],
+    saved.dynamicAvoid || null,
+    saved.dynamicAlt || null,
+    saved.analysisBasis || [],
+    saved.estimatedSavedWon || 180000,
+    saved.questionCount || 15
+  );
+}
+
+function renderMyPage(subView = 'main') {
+  const mainEl = document.getElementById('my-main-view');
+  const subEl = document.getElementById('my-sub-view');
+  if (!mainEl || !subEl) return;
+
+  if (subView !== 'main') {
+    mainEl.classList.add('hidden');
+    subEl.classList.remove('hidden');
+    renderMySubView(subView, subEl);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    return;
+  }
+
+  subEl.classList.add('hidden');
+  mainEl.classList.remove('hidden');
+
+  const acc = loadAccountSession();
+  const saved = loadSavedRoomProfile();
+  const wishlist = loadWishlist();
+  const consent = loadLegalConsent();
+  const mktOn = Boolean(consent && consent.marketing);
+  const excludeOn = state.excludedTraits.size > 0;
+  const displayName = (acc && (acc.label || acc.email))
+    || (saved && saved.nickname ? `${saved.nickname}님` : '방문자님');
+  const roomLine = saved && saved.pyeongLabel
+    ? `${saved.pyeongLabel} · ${saved.toneName || ''}`
+    : '저장된 방 조건이 아직 없어요';
+  const authPillText = acc
+    ? (acc.provider === 'supabase' ? '클라우드 연동' : '계정 연결됨')
+    : '로그인 전';
+
+  mainEl.innerHTML = `
+    <div class="my-profile-card">
+      <div class="my-profile-top">
+        <div>
+          <div class="my-profile-name">${escapeHtml(displayName)}</div>
+          <div class="my-profile-sub">${escapeHtml(roomLine)}</div>
+        </div>
+        <span class="my-account-pill ${acc ? '' : 'is-guest'}">${authPillText}</span>
+      </div>
+      ${saved ? `
+        <div id="my-nick-edit-wrap" class="my-inline-edit-row hidden">
+          <input id="my-nick-edit-input" type="text" maxlength="12" value="${escapeHtml(saved.nickname || '')}" placeholder="닉네임 입력" aria-label="닉네임 수정" />
+          <button type="button" id="my-nick-save-btn" class="btn-primary btn-sm">저장</button>
+        </div>
+      ` : ''}
+      <div class="my-profile-actions">
+        <button type="button" id="my-auth-action-btn" class="btn-primary btn-sm">${acc ? '계정·동기화 관리' : '로그인 · 계정 연결'}</button>
+        <button type="button" id="my-wish-action-btn" class="btn-secondary btn-sm">찜한 가구 (${wishlist.length})</button>
+      </div>
+    </div>
+
+    <div class="my-sec-title">내 활동</div>
+    <div class="seed-list">
+      <button type="button" class="seed-list-item" id="my-nav-report">
+        <div class="seed-list-main">
+          <span class="seed-list-title">${saved ? '내 방 진단 리포트' : '40초 내 방 진단 시작하기'}</span>
+          <span class="seed-list-sub">${saved ? `${escapeHtml(saved.pyeongLabel)} · 피할 특징·추천 대안 보기` : '방 크기와 거주 조건을 등록해 맞춤 판독 받기'}</span>
+        </div>
+        <span class="my-row-chevron">›</span>
+      </button>
+      ${saved ? `
+        <button type="button" class="seed-list-item" id="my-toggle-nick-edit">
+          <div class="seed-list-main">
+            <span class="seed-list-title">닉네임 변경</span>
+            <span class="seed-list-sub">현재: ${escapeHtml(saved.nickname || '자취러')}</span>
+          </div>
+          <span class="my-row-chevron">›</span>
+        </button>
+      ` : ''}
+      <button type="button" class="seed-list-item" id="my-export-backup">
+        <div class="seed-list-main">
+          <span class="seed-list-title">내 데이터 백업 (.json)</span>
+          <span class="seed-list-sub">진단 결과·찜 목록·입주점검표 파일 저장</span>
+        </div>
+        <span class="my-row-chevron">›</span>
+      </button>
+    </div>
+
+    <div class="my-sec-title">앱 설정</div>
+    <div class="seed-list">
+      <label class="seed-list-item" style="cursor:pointer;">
+        <div class="seed-list-main">
+          <span class="seed-list-title">맞춤 가구·혜택 알림 수신</span>
+          <span class="seed-list-sub">선택 동의 · 언제든 켜고 끌 수 있어요</span>
+        </div>
+        <input id="my-mkt-switch" type="checkbox" class="seed-switch" ${mktOn ? 'checked' : ''} />
+      </label>
+      <label class="seed-list-item" style="cursor:pointer;">
+        <div class="seed-list-main">
+          <span class="seed-list-title">검색 시 피할 특징 자동 제외</span>
+          <span class="seed-list-sub">${excludeOn ? `${state.excludedTraits.size}개 필터 적용 중` : '제외 필터 꺼짐'}</span>
+        </div>
+        <input id="my-exclude-switch" type="checkbox" class="seed-switch" ${excludeOn ? 'checked' : ''} />
+      </label>
+      <div class="seed-list-item" style="cursor:default;">
+        <div class="seed-list-main">
+          <span class="seed-list-title">앱 정보 · 버전</span>
+        </div>
+        <span class="my-row-value">${APP_VERSION_STR}</span>
+      </div>
+    </div>
+
+    <div class="my-sec-title">소식 · 고객지원</div>
+    <div class="seed-list">
+      <button type="button" class="seed-list-item" data-my-sub="notices">
+        <div class="seed-list-main">
+          <span class="seed-list-title">공지사항</span>
+          <span class="seed-list-sub">${escapeHtml(APP_NOTICES[0].title)}</span>
+        </div>
+        <span class="my-row-chevron">›</span>
+      </button>
+      <button type="button" class="seed-list-item" data-my-sub="support">
+        <div class="seed-list-main">
+          <span class="seed-list-title">고객센터 · 자주 묻는 질문</span>
+          <span class="seed-list-sub">이용 안내 및 문의처 (${SUPPORT_EMAIL})</span>
+        </div>
+        <span class="my-row-chevron">›</span>
+      </button>
+      <button type="button" class="seed-list-item" data-my-sub="feedback">
+        <div class="seed-list-main">
+          <span class="seed-list-title">의견 남기기 · 상품 제보</span>
+          <span class="seed-list-sub">불편 사항이나 추가할 가구·용품 알려주세요</span>
+        </div>
+        <span class="my-row-chevron">›</span>
+      </button>
+    </div>
+
+    <div class="my-sec-title">약관 및 계정</div>
+    <div class="seed-list">
+      <button type="button" class="seed-list-item" data-open-policy="terms">
+        <div class="seed-list-main"><span class="seed-list-title">이용약관 및 판독 고지</span></div>
+        <span class="my-row-chevron">›</span>
+      </button>
+      <button type="button" class="seed-list-item" data-open-policy="privacy">
+        <div class="seed-list-main"><span class="seed-list-title">개인정보처리방침</span></div>
+        <span class="my-row-chevron">›</span>
+      </button>
+      ${acc ? `
+        <button type="button" class="seed-list-item" id="my-logout-btn">
+          <div class="seed-list-main">
+            <span class="seed-list-title">로그아웃</span>
+            <span class="seed-list-sub">이 기기에 로컬 데이터는 유지됩니다</span>
+          </div>
+          <span class="my-row-chevron">›</span>
+        </button>
+      ` : ''}
+      <button type="button" class="seed-list-item is-danger" data-my-sub="withdraw">
+        <div class="seed-list-main">
+          <span class="seed-list-title">서비스 탈퇴 · 내 데이터 전체 삭제</span>
+          <span class="seed-list-sub">동의 철회 및 저장 기록 즉시 파기</span>
+        </div>
+        <span class="my-row-chevron">›</span>
+      </button>
+    </div>
+  `;
+
+  document.getElementById('my-auth-action-btn').addEventListener('click', () => openAccountSheet('auth'));
+  document.getElementById('my-wish-action-btn').addEventListener('click', () => openAccountSheet('wishlist'));
+  document.getElementById('my-nav-report').addEventListener('click', openSavedProfileReportFromMy);
+
+  const toggleNickBtn = document.getElementById('my-toggle-nick-edit');
+  if (toggleNickBtn) {
+    toggleNickBtn.addEventListener('click', () => {
+      const wrap = document.getElementById('my-nick-edit-wrap');
+      if (wrap) {
+        wrap.classList.toggle('hidden');
+        const inp = document.getElementById('my-nick-edit-input');
+        if (inp && !wrap.classList.contains('hidden')) inp.focus();
+      }
+    });
+  }
+
+  const saveNickBtn = document.getElementById('my-nick-save-btn');
+  if (saveNickBtn) {
+    saveNickBtn.addEventListener('click', () => {
+      const inp = document.getElementById('my-nick-edit-input');
+      const nextNick = inp ? inp.value.trim() : '';
+      if (!nextNick) {
+        showToast('닉네임을 1자 이상 입력해 주세요.');
+        return;
+      }
+      const cur = loadSavedRoomProfile();
+      if (cur) {
+        cur.nickname = nextNick;
+        localStorage.setItem(STORAGE_KEYS.roomProfile, JSON.stringify(cur));
+      }
+      state.nickname = nextNick;
+      updateSavedProfileBadge();
+      renderScannerProfileNudge();
+      renderMyPage('main');
+      showToast('닉네임을 변경했어요');
+    });
+  }
+
+  document.getElementById('my-export-backup').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(gatherUserRoomSnapshot(), null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nope-my-room-${formatTodayDot().replace(/\./g, '')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('내 방 데이터 백업(.json) 저장 완료');
+  });
+
+  const mktSwitch = document.getElementById('my-mkt-switch');
+  if (mktSwitch) {
+    mktSwitch.addEventListener('change', () => {
+      const cur = loadLegalConsent();
+      saveLegalConsent(Boolean(cur && cur.required), mktSwitch.checked);
+      showToast(mktSwitch.checked ? '맞춤 알림 수신 동의가 켜졌어요' : '맞춤 알림 수신 동의를 해제했어요');
+    });
+  }
+
+  const exSwitch = document.getElementById('my-exclude-switch');
+  if (exSwitch) {
+    exSwitch.addEventListener('change', () => {
+      if (exSwitch.checked) {
+        const cur = loadSavedRoomProfile();
+        const recs = (cur && Array.isArray(cur.recommendedTraitIds) && cur.recommendedTraitIds.length)
+          ? cur.recommendedTraitIds
+          : NOPE_TRAIT_RULES.slice(0, 3).map((r) => r.id);
+        state.excludedTraits = new Set(recs);
+        showToast('검색 시 피할 특징 자동 제외를 켰어요');
+      } else {
+        state.excludedTraits.clear();
+        showToast('피할 특징 자동 제외를 껐어요');
+      }
+      saveExcludedTraits();
+      renderExcludeTraitsBars();
+      updateSavedProfileBadge();
+      renderMyPage('main');
+    });
+  }
+
+  const logoutBtn = document.getElementById('my-logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      saveAccountSession(null);
+      renderMyPage('main');
+      showToast('로그아웃했어요');
+    });
+  }
+
+  mainEl.querySelectorAll('[data-my-sub]').forEach((btn) => {
+    btn.addEventListener('click', () => renderMyPage(btn.dataset.mySub));
+  });
+}
+
+function renderMySubView(subView, container) {
+  const backHead = `
+    <div class="step-back-bar">
+      <button type="button" id="my-sub-back-btn" class="btn-ghost btn-sm">← 마이로</button>
+    </div>
+  `;
+
+  if (subView === 'notices') {
+    container.innerHTML = `
+      ${backHead}
+      <div class="my-sub-card">
+        <h2 class="my-sub-title">공지사항</h2>
+        ${APP_NOTICES.map((n) => `
+          <div class="my-notice-item">
+            <div class="my-notice-date">${escapeHtml(n.date)}</div>
+            <div class="my-notice-head">${escapeHtml(n.title)}</div>
+            <p class="my-notice-body">${escapeHtml(n.body)}</p>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else if (subView === 'support') {
+    container.innerHTML = `
+      ${backHead}
+      <div class="my-sub-card">
+        <h2 class="my-sub-title">고객센터 · 자주 묻는 질문</h2>
+        ${APP_FAQS.map((f) => `
+          <div class="my-notice-item">
+            <div class="my-notice-head">${escapeHtml(f.q)}</div>
+            <p class="my-notice-body">${escapeHtml(f.a)}</p>
+          </div>
+        `).join('')}
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--stroke-neutral-weak);display:flex;flex-direction:column;gap:8px;">
+          <button type="button" id="my-copy-support-email" class="btn-secondary btn-full">문의 메일 복사 (${SUPPORT_EMAIL})</button>
+          <a href="mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('[NOPE! 문의]')}" class="btn-primary btn-full" style="text-align:center;text-decoration:none;">메일 앱으로 문의하기 →</a>
+        </div>
+      </div>
+    `;
+    const copyBtn = document.getElementById('my-copy-support-email');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => copyTextToClipboard(SUPPORT_EMAIL, '문의 이메일을 복사했어요'));
+    }
+  } else if (subView === 'feedback') {
+    const history = loadFeedbackHistory();
+    container.innerHTML = `
+      ${backHead}
+      <div class="my-sub-card">
+        <h2 class="my-sub-title">의견 남기기 · 상품 제보</h2>
+        <div id="fb-kind-row" class="chips-row" style="margin-bottom:12px;">
+          <button type="button" class="chip active-chip" data-fb-kind="누락 상품 제보" style="background:var(--ink);color:#FFFFFF;">누락 상품 제보</button>
+          <button type="button" class="chip" data-fb-kind="불편·오류 신고">불편·오류 신고</button>
+          <button type="button" class="chip" data-fb-kind="기능 제안">기능 제안</button>
+        </div>
+        <textarea id="my-feedback-input" class="my-textarea" maxlength="500" placeholder="판독이 필요한 가구 이름이나 개선 의견을 자유롭게 적어주세요."></textarea>
+        <button type="button" id="my-feedback-submit" class="btn-primary btn-full" style="margin-top:10px;">의견 보내기</button>
+        ${history.length ? `
+          <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--stroke-neutral-weak);">
+            <div style="font-size:12.5px;font-weight:800;margin-bottom:6px;">남긴 의견 (${history.length}건)</div>
+            ${history.slice(0, 5).map((h) => `
+              <div class="my-notice-item">
+                <div class="my-notice-date">${escapeHtml(h.kind)} · ${escapeHtml(h.date)}</div>
+                <p class="my-notice-body" style="color:var(--fg-neutral);margin-top:2px;">${escapeHtml(h.text)}</p>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+    let selectedKind = '누락 상품 제보';
+    container.querySelectorAll('[data-fb-kind]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        selectedKind = btn.dataset.fbKind;
+        container.querySelectorAll('[data-fb-kind]').forEach((b) => {
+          const active = b === btn;
+          b.style.background = active ? 'var(--ink)' : '';
+          b.style.color = active ? '#FFFFFF' : '';
+        });
+      });
+    });
+    const subBtn = document.getElementById('my-feedback-submit');
+    if (subBtn) {
+      subBtn.addEventListener('click', () => {
+        const val = (document.getElementById('my-feedback-input').value || '').trim();
+        if (val.length < 3) {
+          showToast('의견을 3자 이상 입력해 주세요.');
+          return;
+        }
+        saveFeedbackEntry(selectedKind, val);
+        trackEvent('feedback_submit', { kind: selectedKind });
+        showToast('소중한 의견이 저장됐어요. 감사합니다!');
+        renderMySubView('feedback', container);
+      });
+    }
+  } else if (subView === 'withdraw') {
+    const acc = loadAccountSession();
+    container.innerHTML = `
+      ${backHead}
+      <div class="my-sub-card">
+        <h2 class="my-sub-title" style="color:var(--accent);">서비스 탈퇴 · 데이터 삭제</h2>
+        <p class="my-notice-body" style="color:var(--fg-neutral);margin-bottom:12px;">
+          탈퇴 및 삭제를 진행하면 아래 정보가 즉시 지워지며 되돌릴 수 없습니다.
+        </p>
+        <div class="seed-list" style="margin-bottom:14px;">
+          <div class="seed-list-item" style="cursor:default;"><span class="seed-list-title">내 방 진단 프로필 및 제외 필터 설정</span></div>
+          <div class="seed-list-item" style="cursor:default;"><span class="seed-list-title">찜한 가구 목록 및 최근 판독 기록</span></div>
+          <div class="seed-list-item" style="cursor:default;"><span class="seed-list-title">입주 하자 점검표 · 주기 알람 · 남긴 의견</span></div>
+          <div class="seed-list-item" style="cursor:default;"><span class="seed-list-title">이용약관 및 개인정보 수집 동의 내역${acc ? ' · 계정 연결' : ''}</span></div>
+        </div>
+        <button type="button" id="my-confirm-withdraw-btn" class="data-danger-btn" style="padding:13px;">네, 모든 데이터를 삭제하고 탈퇴합니다</button>
+      </div>
+    `;
+    const withdrawBtn = document.getElementById('my-confirm-withdraw-btn');
+    if (withdrawBtn) {
+      withdrawBtn.addEventListener('click', () => {
+        clearAllUserDataAndReset();
+      });
+    }
+  }
+
+  const backBtn = document.getElementById('my-sub-back-btn');
+  if (backBtn) backBtn.addEventListener('click', () => renderMyPage('main'));
+}
 
 function openAccountSheet(tab = 'wishlist') {
   renderAccountSheet(tab);
@@ -6600,6 +7073,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope85').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope86').catch(() => {});
   }
 }
