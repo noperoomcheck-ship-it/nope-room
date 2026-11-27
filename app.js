@@ -22,11 +22,11 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope80';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope80';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope80';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope80';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope80';
+} from './data/app-data.js?v=nope81';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope81';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope81';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope81';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope81';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -1208,7 +1208,6 @@ function renderTasteSummaryStage(data) {
       <button id="taste-retake-btn" class="btn-ghost btn-sm">다시 테스트 ↺</button>
     </div>
     <div class="card taste-summary-card">
-      <span class="micro-label" style="display:block;margin-bottom:6px;">SPACE TYPE SUMMARY</span>
       <h2 class="taste-headline">${escapeHtml(nickname)}님의 방 타입은<br /><span style="color:var(--accent)">${escapeHtml(spaceMbti.code)}</span></h2>
 
       <div class="mbti-verdict-banner">
@@ -1279,7 +1278,7 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
     <div class="card">
       <div class="result-score-row">
         <div>
-          <span class="micro-label">${escapeHtml(nickname)}님의 방 리포트 · ${escapeHtml(pyeongLabel)}</span>
+          <span class="micro-label">${escapeHtml(nickname)} · ${escapeHtml(pyeongLabel)}</span>
           <h2>${escapeHtml(profile.badge)}</h2>
           <p class="text-secondary" style="margin-top:4px;">${escapeHtml(profile.tagline)}</p>
           ${secondaryRisks && secondaryRisks.length ? `
@@ -2428,7 +2427,6 @@ function openDetailSheet(item) {
   const depCls = isPass && item.specs.deposit <= 2 ? 'score-safe' : (item.specs.deposit >= 4 ? 'score-high' : '');
   const trbCls = isPass && item.specs.trouble <= 2 ? 'score-safe' : (item.specs.trouble >= 4 ? 'score-high' : '');
 
-  const whyKicker = isPass ? 'WHY PASS?' : (isWarn ? 'WHY CHECK?' : 'WHY NOPE?');
   const whyBoxCls = isPass ? 'is-pass' : (isWarn ? 'is-warn' : 'is-nope');
   const whySentence = item.oneLiner || (isPass ? goodLine : checkLine) || goodLine;
   const wished = isWishlistedItem(item.id);
@@ -2461,10 +2459,6 @@ function openDetailSheet(item) {
     </div>
 
     <div class="sheet-why-box ${whyBoxCls}">
-      <div class="sheet-why-head">
-        <span class="sheet-why-kicker">${whyKicker}</span>
-        <span class="verdict-pill ${v.cls} is-solid">${v.text}</span>
-      </div>
       <p class="sheet-why-sentence">${escapeHtml(whySentence)}</p>
     </div>
 
@@ -2596,7 +2590,6 @@ function openDetailSheet(item) {
 
     ${rescuePatch ? `
       <div id="sheet-sol-rescue" class="sheet-rescue-box hidden">
-        <span class="sheet-rescue-kicker">교체 비용 0원 · 기존 가구 살리기</span>
         <strong class="sheet-rescue-title">${escapeHtml(rescuePatch.symptom)}</strong>
         <span class="sheet-rescue-saving">${escapeHtml(rescuePatch.costSaving)}</span>
         <ul class="sheet-rescue-steps">
@@ -3739,7 +3732,6 @@ function renderCompareView() {
       <div class="compare-reco-section">
         <div class="compare-reco-head">
           <div>
-            <span class="micro-label">${targetCategory ? 'SAME-CATEGORY MATCH' : (savedProfile ? 'PERSONAL SURVEY PICK' : 'POPULAR PICKS')}</span>
             <h3 class="compare-reco-section-title">${surveyTitle}</h3>
           </div>
           ${!savedProfile ? `<button type="button" id="compare-go-survey-btn" class="btn-ghost btn-sm" style="color:var(--accent);font-weight:800;">1분 설문 →</button>` : ''}
@@ -4199,9 +4191,6 @@ function renderToneMatcher() {
 
     <div class="seed-seg-panel ${activeMatcherTab === 'rescue' ? '' : 'hidden'}" data-mt-panel="rescue">
       <div class="base-rescue-card ${state.matcherRoomBase === 'clean-white' ? 'is-clean' : ''}" style="margin-bottom:14px;">
-        <div class="base-rescue-head">
-          <span class="base-rescue-kicker">내 방 바탕 보완 · ${escapeHtml(baseRescue.baseLabel)}</span>
-        </div>
         <p class="base-rescue-title">${escapeHtml(baseRescue.headline)}</p>
         <div class="base-rescue-avoid">
           <strong>피할 실수</strong>${escapeHtml(baseRescue.avoidLine)}
@@ -4674,7 +4663,8 @@ function renderScaleQuizHint() {
 function renderHumanScaleDiagram() {
   const s = calcHumanScale(state.scaleHeight, state.scaleMode);
   const modeInfo = HUMAN_SCALE_MODES[state.scaleMode];
-  document.getElementById('scale-stage-badge').textContent = `${s.heightCm}CM · ${modeInfo.label}`;
+  const scaleBadgeEl = document.getElementById('scale-stage-badge');
+  if (scaleBadgeEl) scaleBadgeEl.textContent = `${s.heightCm}CM · ${modeInfo.label}`;
   document.getElementById('scale-mode-note').textContent = modeInfo.note;
 
   renderArchitecturalSvg(s);
@@ -4807,7 +4797,6 @@ function renderGapStorageFinder() {
     ` : ''}
 
     <div class="gap-shop-box">
-      <span class="micro-label">GAP FIT ITEM</span>
       <strong class="gap-shop-title">${escapeHtml(activeOpt.shopLabel)}</strong>
       <div class="dual-link-row">
         <a href="${shopUrls.coupang}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="padding:11px 10px;font-size:13px;">쿠팡 보기 →</a>
@@ -5437,7 +5426,6 @@ function renderSharedArrivalBanner(profileId, nick) {
   }
   const cleanNick = (nick || '친구').slice(0, 12);
   banner.innerHTML = `
-    <span class="shared-arrival-kicker">SHARED ROOM RESULT</span>
     <p class="shared-arrival-title">${escapeHtml(cleanNick)}님의 방은 <span style="color:var(--accent)">'${escapeHtml(target.badge)}'</span>!</p>
     <p class="shared-arrival-sub">${escapeHtml(target.tagline)} · 내 방은 몇 점인지 1분 진단해 보세요.</p>
   `;
@@ -5829,8 +5817,7 @@ function renderAccountSheet(tab = activeAccountTab) {
     <div class="sheet-grabber" aria-hidden="true"></div>
     <div class="sheet-head" style="margin-bottom:14px;">
       <div>
-        <span class="micro-label">MY ROOM & SAVE</span>
-        <h2 class="sheet-title" style="margin:6px 0 2px;">내 방 후보 · 조합 점검</h2>
+        <h2 class="sheet-title" style="margin:2px 0;">내 방 후보 · 조합 점검</h2>
       </div>
       <button class="sheet-close" id="close-account-sheet-btn" type="button" aria-label="닫기">×</button>
     </div>
@@ -5872,7 +5859,6 @@ function renderAccountSheet(tab = activeAccountTab) {
         </div>
         ${combo.complements.length ? `
           <div class="wishlist-comp-box">
-            <span class="micro-label">MISSING COMPANIONS · 1초 보완</span>
             <h3 class="wishlist-comp-heading">이 조합에 빠진 보완템 ${combo.complements.length}종</h3>
             ${combo.complements.map((comp) => {
               const cvm = verdictMeta(comp.verdict);
@@ -5904,29 +5890,27 @@ function renderAccountSheet(tab = activeAccountTab) {
       ` : `
         <div class="auth-box" style="text-align:center;">
           <strong style="display:block;font-size:14.5px;margin-bottom:6px;">아직 찜한 가구가 없어요</strong>
-          <p class="text-secondary" style="font-size:12.5px;margin-bottom:14px;">제품 판독이나 톤·무드 매처에서 가구를 눌러 우측 상단 <strong>♡ 저장</strong>을 누르면 예산·톤 조합·보완템까지 한 번에 계산해 드려요.</p>
+          <p class="text-secondary" style="font-size:12.5px;margin-bottom:14px;">가구 상세에서 <strong>♡ 저장</strong>을 누르면 예산과 톤 조합을 계산해 드려요.</p>
           <button type="button" id="wish-go-scanner-btn" class="btn-primary btn-full">${ITEMS_DB.length}종 가구 둘러보기 →</button>
         </div>
       `}
     ` : `
       <div class="auth-box">
         ${acc ? `
-          <span class="micro-label">${acc.provider === 'supabase' ? 'CLOUD CONNECTED' : 'LOCAL BACKUP ACTIVE'}</span>
-          <h3 style="margin:6px 0 4px;">${escapeHtml(acc.email || acc.label)}</h3>
+          <h3 style="margin:2px 0 4px;">${escapeHtml(acc.email || acc.label)}</h3>
           <p class="text-secondary" style="font-size:12.5px;margin-bottom:12px;">
             ${acc.provider === 'supabase'
-              ? 'Supabase 클라우드 계정에 내 방 진단·찜 목록·점검 기록이 연결되어 있습니다.'
-              : '현재 이 브라우저(기기)에 내 방 프로필과 찜 목록이 안전하게 저장되어 있습니다. Supabase 키 연결 시 클라우드로 자동 동기화됩니다.'}
+              ? 'Supabase 계정에 진단·찜·점검 기록이 동기화되어 있습니다.'
+              : '이 기기에 저장 중입니다.'}
           </p>
           <div style="display:flex;gap:8px;">
             <button type="button" id="export-room-backup-btn" class="btn-secondary btn-sm" style="flex:1;">백업 파일(.json) 저장</button>
             <button type="button" id="logout-account-btn" class="btn-ghost btn-sm">로그아웃</button>
           </div>
         ` : `
-          <span class="micro-label">LAZY AUTH · ZERO FRICTION</span>
-          <h3 style="margin:6px 0 6px;">회원가입은 저장할 때만!</h3>
+          <h3 style="margin:2px 0 6px;">회원가입은 저장할 때만!</h3>
           <p class="text-secondary" style="font-size:12.5px;margin-bottom:14px;line-height:1.5;">
-            1분 진단·스캐너는 로그인 없이 바로 쓰고, 내 방 결과·찜한 가구 <strong>${wishlist.length}건</strong>·입주 점검 기록을 이어보고 싶을 때만 저장하세요.
+            찜한 가구 <strong>${wishlist.length}건</strong>과 진단·점검 기록을 다른 기기에서도 이어볼 때만 연결하세요.
           </p>
           <button type="button" id="oauth-kakao-btn" class="auth-provider-btn is-kakao">카카오로 3초 시작하기</button>
           <button type="button" id="oauth-google-btn" class="auth-provider-btn is-google">Google 계정으로 계속하기</button>
@@ -6149,6 +6133,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope80').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope81').catch(() => {});
   }
 }

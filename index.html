@@ -12,23 +12,23 @@
   <meta property="og:url" content="https://nope-room.vercel.app/" />
   <meta property="og:title" content="NOPE! | 내 방에 들이기 전, 딱 한 번만 의심해 보기" />
   <meta property="og:description" content="월세·좁은방·반려동물 조건으로 가구 스펙 판독, 피할 특징 자동 제외 필터, A vs B 비교까지 40초 진단." />
-  <meta property="og:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope80" />
+  <meta property="og:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope81" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="NOPE! | 실상품 자취 스펙 판독" />
   <meta name="twitter:description" content="예쁜 사진 빼고, 실제 판매 중인 가구의 단점·원상복구·치수 근거를 판독하는 앱" />
-  <meta name="twitter:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope80" />
+  <meta name="twitter:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope81" />
   <meta name="theme-color" content="#F4F6F9" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="NOPE!" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=nope80" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=nope81" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css" />
-  <link rel="manifest" href="./manifest.json?v=nope80" />
-  <link rel="stylesheet" href="./styles.css?v=nope80" />
+  <link rel="manifest" href="./manifest.json?v=nope81" />
+  <link rel="stylesheet" href="./styles.css?v=nope81" />
 </head>
 <body>
   <div id="app-splash" class="app-splash" aria-hidden="true">
@@ -67,7 +67,6 @@
         </div>
 
         <div id="quiz-nickname" class="card hidden stage-animate nickname-card">
-          <span class="micro-label" style="display:block;margin-bottom:8px;">ROOM PROFILE SETUP</span>
           <h2 class="nickname-title" style="margin-bottom:18px;">먼저, 방 주인의<br />닉네임을 알려주세요.</h2>
           <input id="nickname-input" class="nickname-input" type="text" maxlength="12" placeholder="예: 지수, 민호, 루미" autocomplete="off" />
           <p id="nickname-error-msg" class="nickname-error hidden">닉네임을 1자 이상 입력해 주세요.</p>
@@ -124,16 +123,10 @@
               <rect class="nope-scan-beam" x="17" y="18" width="54" height="2.4" rx="1.2" fill="#E11D48"/>
             </svg>
           </div>
-          <span class="micro-label" style="display:block;margin-bottom:8px;">ROOM ANALYSIS</span>
           <h2 id="analyzing-title" class="analyzing-title">자취방을 분석중이에요</h2>
           <p id="analyzing-step-text" class="analyzing-sub">입력하신 평수와 거주 조건을 확인하고 있어요…</p>
           <div class="progress-bar analyzing-bar">
             <div id="analyzing-progress-fill" class="progress-fill"></div>
-          </div>
-          <div class="analyzing-checklist" aria-hidden="true">
-            <div id="an-step-1" class="an-step is-active"><span class="an-dot"></span><span>01 · 평수와 동선 조건 확인</span></div>
-            <div id="an-step-2" class="an-step"><span class="an-dot"></span><span>02 · 방 톤과 공간 MBTI 매칭</span></div>
-            <div id="an-step-3" class="an-step"><span class="an-dot"></span><span>03 · 자취생활 팁 · 추천템 정리</span></div>
           </div>
         </div>
 
@@ -198,7 +191,7 @@
         <div id="scanner-stage-results" class="hidden stage-animate">
           <div class="step-back-bar">
             <button id="scanner-reset-btn" class="btn-ghost btn-sm">← 다시 검색</button>
-            <span id="scanner-active-label" class="micro-label">RESULTS</span>
+            <span id="scanner-active-label" class="micro-label"></span>
           </div>
           <div id="verdict-filter-bar" class="verdict-filter-bar">
             <button class="vfilter-btn active" data-verdict="ALL">전체</button>
@@ -256,10 +249,6 @@
 
         <div id="scale-stage-height" class="stage-animate">
           <div class="gate-top" style="margin-bottom:14px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-              <span class="micro-label">HUMAN SCALE · LIVE</span>
-              <span id="scale-stage-badge" class="micro-label" style="color:var(--ink);">168CM</span>
-            </div>
             <h2 class="gate-headline">치수 안 맞으면<br />예쁜 가구도 <span style="color:var(--accent)">NOPE</span>.</h2>
 
             <div class="slider-card" style="margin-top:6px;">
@@ -278,7 +267,6 @@
 
           <div class="diagram-frame" id="human-scale-svg-wrap"></div>
           <div class="diagram-caption-box">
-            <span class="diagram-caption-title">TIP!</span>
             <p class="diagram-caption-text" id="scale-mode-note"></p>
           </div>
           <div class="specs-grid" id="scale-specs-grid"></div>
@@ -287,17 +275,16 @@
 
         <div id="scale-stage-gap" class="hidden stage-animate">
           <div class="gate-top">
-            <span class="micro-label">DEAD SPACE STORAGE</span>
             <h2 class="gate-headline">바닥 0cm 쓰고<br /><span style="color:var(--accent)">빈틈 수납</span> 늘리기.</h2>
           </div>
 
           <div class="matcher-block" style="margin-top:16px;">
-            <span class="matcher-step-label">01 · 어디 빈틈을 살릴까요?</span>
+            <span class="matcher-step-label">빈틈 위치</span>
             <div id="gap-zone-row" class="chips-row"></div>
           </div>
 
           <div class="matcher-block">
-            <span class="matcher-step-label">02 · 우리 방 실제 여유 크기는?</span>
+            <span class="matcher-step-label">여유 크기</span>
             <div id="gap-size-row" class="gap-size-grid"></div>
           </div>
 
@@ -309,27 +296,23 @@
       <section id="tab-routine" class="tab-panel">
         <div id="routine-stage-menu" class="editorial-gate stage-animate">
           <div class="gate-top">
-            <span class="micro-label">ROUTINE</span>
             <h2 class="gate-headline">오늘 필요한 도구,<br />하나만 고르세요.</h2>
 
             <div class="menu-step-list">
               <button class="menu-step-btn" data-open-seg="timers">
                 <div>
-                  <span class="menu-step-num">01 / TIMER</span>
                   <div class="menu-step-title">환기 · 세탁 원클릭 타이머</div>
                 </div>
                 <strong>→</strong>
               </button>
               <button class="menu-step-btn" data-open-seg="cycles">
                 <div>
-                  <span class="menu-step-num">02 / CYCLES</span>
                   <div class="menu-step-title">세탁·배수구·필터 주기 알림</div>
                 </div>
                 <strong>→</strong>
               </button>
               <button class="menu-step-btn" data-open-seg="checklist">
                 <div>
-                  <span class="menu-step-num">03 / CHECKLIST</span>
                   <div class="menu-step-title">집주인 제출용 입주 하자 · 수압 점검</div>
                 </div>
                 <strong>→</strong>
@@ -342,7 +325,6 @@
         <div id="seg-timers" class="hidden stage-animate">
           <div class="step-back-bar">
             <button class="btn-ghost btn-sm routine-back-btn">← 목록</button>
-            <span class="micro-label">01 · TIMER</span>
           </div>
           <div class="card">
             <div class="quick-timer-strip" id="preset-timer-buttons"></div>
@@ -367,7 +349,6 @@
         <div id="seg-cycles" class="hidden stage-animate">
           <div class="step-back-bar">
             <button class="btn-ghost btn-sm routine-back-btn">← 목록</button>
-            <span class="micro-label">02 · CYCLES</span>
           </div>
           <div class="card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -381,14 +362,12 @@
         <div id="seg-checklist" class="hidden stage-animate">
           <div class="step-back-bar">
             <button class="btn-ghost btn-sm routine-back-btn">← 목록</button>
-            <span class="micro-label">03 · DEPOSIT GUARD</span>
           </div>
 
           <div class="card">
             <div class="inspect-header-top">
               <div>
-                <span class="micro-label">MOVE-IN INSPECTION</span>
-                <h3 style="margin-top:4px;">집주인 제출용 하자·수압 기록장</h3>
+                <h3>집주인 제출용 하자·수압 기록장</h3>
               </div>
               <button id="inspect-reset-btn" class="btn-ghost btn-sm" type="button">초기화</button>
             </div>
@@ -420,8 +399,7 @@
           </div>
 
           <div class="card">
-            <span class="micro-label">KAKAO · SMS EXPORT</span>
-            <h3 style="margin-top:4px;">집주인 전달용 점검 리포트</h3>
+            <h3>집주인 전달용 점검 리포트</h3>
             <pre id="inspect-report-preview" class="inspect-report-preview"></pre>
             <div class="inspect-export-actions">
               <button id="copy-inspect-report-btn" type="button" class="btn-primary btn-full">카톡·문자용 텍스트 복사</button>
@@ -476,6 +454,6 @@
   <canvas id="share-canvas" width="1080" height="1920" class="hidden"></canvas>
   <div id="toast" class="toast hidden"></div>
 
-  <script type="module" src="./app.js?v=nope80"></script>
+  <script type="module" src="./app.js?v=nope81"></script>
 </body>
 </html>
