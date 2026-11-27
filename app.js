@@ -22,11 +22,11 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope79';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope79';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope79';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope79';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope79';
+} from './data/app-data.js?v=nope80';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope80';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope80';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope80';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope80';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -1329,7 +1329,7 @@ function renderQuizResultView(profile, dangerScore, pyeongLabel = '6~7평', tone
                   <span class="seed-list-title">${escapeHtml(r.nopeLabel)}</span>
                   <span class="seed-list-sub">${escapeHtml(r.desc)}</span>
                 </div>
-                <span class="trait-state-pill" style="${isOn ? 'background:var(--accent);color:#fff;' : 'background:var(--surface-muted);color:var(--ink-secondary);'}">${isOn ? '제외 ON' : '제외 OFF'}</span>
+                <span class="trait-state-pill">${isOn ? '제외 ON' : '제외 OFF'}</span>
               </button>
             `;
           }).join('')}
@@ -6149,6 +6149,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope79').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope80').catch(() => {});
   }
 }
