@@ -12,23 +12,23 @@
   <meta property="og:url" content="https://nope-room.vercel.app/" />
   <meta property="og:title" content="NOPE! | 내 방에 들이기 전, 딱 한 번만 의심해 보기" />
   <meta property="og:description" content="월세·좁은방·반려동물 조건으로 가구 스펙 판독, 피할 특징 자동 제외 필터, A vs B 비교까지 40초 진단." />
-  <meta property="og:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope91" />
+  <meta property="og:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope92" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="NOPE! | 실상품 자취 스펙 판독" />
   <meta name="twitter:description" content="예쁜 사진 빼고, 실제 판매 중인 가구의 단점·원상복구·치수 근거를 판독하는 앱" />
-  <meta name="twitter:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope91" />
+  <meta name="twitter:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope92" />
   <meta name="theme-color" content="#F4F6F9" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="NOPE!" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=nope91" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=nope92" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css" />
-  <link rel="manifest" href="./manifest.json?v=nope91" />
-  <link rel="stylesheet" href="./styles.css?v=nope91" />
+  <link rel="manifest" href="./manifest.json?v=nope92" />
+  <link rel="stylesheet" href="./styles.css?v=nope92" />
 </head>
 <body>
   <div id="app-splash" class="app-splash" aria-hidden="true">
@@ -60,9 +60,13 @@
             <h1 id="home-headline" class="gate-headline">사기 전에 딱 한 번,<br /><span style="color:var(--accent)">실후기와 스펙부터 확인해 보세요.</span></h1>
 
             <div class="home-scan-card">
-              <div class="search-row" style="margin-top:0;">
-                <input id="guest-search-input" type="text" placeholder="상품명 · 브랜드 또는 쇼핑몰 링크" />
-                <button id="guest-analyze-btn" class="btn-primary" type="button">확인</button>
+              <div class="home-weapon-head">
+                <span class="home-weapon-pill">링크 · 미등록 상품 즉시 해부</span>
+                <span class="home-weapon-sub">상품명·링크만 넣으면 유튜브·실후기 단점과 대안까지 바로 찾아드려요</span>
+              </div>
+              <div class="search-row" style="margin-top:8px;">
+                <input id="guest-search-input" type="text" placeholder="미등록 상품 링크 · 제품명 붙여넣기" />
+                <button id="guest-analyze-btn" class="btn-primary" type="button">분석</button>
               </div>
               <div class="home-quick-actions">
                 <button id="guest-compare-btn" class="home-sub-action-btn" type="button">⚖️ 두 제품 A vs B 비교</button>
@@ -128,9 +132,13 @@
             <h1 class="gate-headline" style="font-size:1.4rem;">지금 고민 중인 제품,<br />후기와 내 방 기준까지 바로 확인하세요.</h1>
 
             <div class="home-scan-card">
-              <div class="search-row" style="margin-top:0;">
-                <input id="home-search-input" type="text" placeholder="상품명 · 브랜드 또는 쇼핑몰 링크" />
-                <button id="home-analyze-btn" class="btn-primary" type="button">확인</button>
+              <div class="home-weapon-head">
+                <span class="home-weapon-pill">링크 · 미등록 상품 즉시 해부</span>
+                <span class="home-weapon-sub">DB에 없는 상품도 링크·제품명만 넣으면 유튜브·후기를 바로 요약해요</span>
+              </div>
+              <div class="search-row" style="margin-top:8px;">
+                <input id="home-search-input" type="text" placeholder="미등록 상품 링크 · 제품명 붙여넣기" />
+                <button id="home-analyze-btn" class="btn-primary" type="button">분석</button>
               </div>
               <div class="home-quick-actions">
                 <button id="home-photo-scan-btn" class="home-sub-action-btn" type="button">📷 상세 캡처 첨부</button>
@@ -583,6 +591,6 @@
   <canvas id="share-canvas" width="1080" height="1920" class="hidden"></canvas>
   <div id="toast" class="toast hidden"></div>
 
-  <script type="module" src="./app.js?v=nope91"></script>
+  <script type="module" src="./app.js?v=nope92"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nope-v91';
+const CACHE_NAME = 'nope-v92';
 const ASSETS = [
   './',
   './index.html',
@@ -35,6 +35,9 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
+    return;
+  }
   event.respondWith(
     fetch(event.request)
       .then((res) => {
