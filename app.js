@@ -22,11 +22,11 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope81';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope81';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope81';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope81';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope81';
+} from './data/app-data.js?v=nope82';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope82';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope82';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope82';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope82';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -43,7 +43,8 @@ const STORAGE_KEYS = {
   account: 'nope_account_v1',
   pwaDismissed: 'nope_pwa_dismissed_v1',
   excludeTraits: 'nope_exclude_traits_v1',
-  analytics: 'nope_analytics_v1'
+  analytics: 'nope_analytics_v1',
+  homeRotation: 'nope_home_rot_v1'
 };
 
 const state = {
@@ -51,6 +52,10 @@ const state = {
   quizDepth: 'quick',
   quizIndex: 0,
   quizAnswers: [],
+  homePyeong: '4~5평 이하',
+  homeTenure: 'monthly',
+  homePreAnswers: [],
+  homeRotationOffset: 0,
   scannerMode: 'search',
   selectedFilter: '전체',
   selectedVerdict: 'ALL',
@@ -264,6 +269,7 @@ function toggleExcludeTrait(traitId) {
   trackEvent('exclude_filter_toggle', { trait: traitId, enabled });
   saveExcludedTraits();
   renderExcludeTraitsBars();
+  updateSavedProfileBadge();
   if (scannerResults && !scannerResults.classList.contains('hidden')) {
     renderItems();
   }
@@ -338,6 +344,7 @@ function renderExcludeTraitsBars() {
         state.excludedTraits.clear();
         saveExcludedTraits();
         renderExcludeTraitsBars();
+        updateSavedProfileBadge();
         if (scannerResults && !scannerResults.classList.contains('hidden')) {
           renderItems();
         }
@@ -435,6 +442,8 @@ function switchTab(tabName) {
       renderScannerProfileNudge();
       if (state.scannerMode === 'compare') renderCompareView();
       else if (state.scannerMode === 'matcher') renderToneMatcher();
+    } else if (tabName === 'home') {
+      updateSavedProfileBadge();
     }
     window.scrollTo({ top: 0, behavior: 'instant' });
   });
@@ -482,18 +491,126 @@ function loadSavedRoomProfile() {
   }
 }
 
+function initHomeRotationOffset() {
+  try {
+    const prev = parseInt(localStorage.getItem(STORAGE_KEYS.homeRotation) || '0', 10);
+    const next = Number.isFinite(prev) ? (prev + 1) % 120 : 0;
+    localStorage.setItem(STORAGE_KEYS.homeRotation, String(next));
+    state.homeRotationOffset = next;
+  } catch {
+    state.homeRotationOffset = 0;
+  }
+}
+
+function getHomeRotationItems(savedProfile, rotIdx = 0) {
+  const activeExcludeRules = [...state.excludedTraits]
+    .map((id) => NOPE_TRAIT_RULES.find((r) => r.id === id))
+    .filter(Boolean);
+
+  const passPool = ITEMS_DB.filter((it) => {
+    if (it.verdict !== 'PASS') return false;
+    if (activeExcludeRules.some((r) => itemMatchesTraitRule(it, r))) return false;
+    if (savedProfile && getPersonalFitAlerts(it, savedProfile).some((al) => al.tone === 'danger')) return false;
+    return true;
+  })
+    .map((it) => {
+      const toneBonus = savedProfile && Array.isArray(it.tones) && it.tones.includes(savedProfile.toneId) ? 6 : 0;
+      return { item: it, score: surveyFitBonus(it, savedProfile) + toneBonus };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 12)
+    .map((x) => x.item);
+
+  const nopePool = ITEMS_DB.filter((it) => {
+    if (it.verdict === 'NOPE') return true;
+    if (activeExcludeRules.some((r) => itemMatchesTraitRule(it, r))) return true;
+    return Boolean(savedProfile && getPersonalFitAlerts(it, savedProfile).some((al) => al.tone === 'danger'));
+  })
+    .map((it) => {
+      const alerts = savedProfile ? getPersonalFitAlerts(it, savedProfile) : [];
+      const hasDanger = alerts.some((al) => al.tone === 'danger');
+      const matchesEx = activeExcludeRules.some((r) => itemMatchesTraitRule(it, r));
+      const score = (it.verdict === 'NOPE' ? 4 : 0) + (hasDanger ? 6 : 0) + (matchesEx ? 5 : 0);
+      return { item: it, score, alert: alerts.find((al) => al.tone === 'danger') || alerts[0] || null };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 12);
+
+  const picked = [];
+  const pLen = passPool.length;
+  const nLen = nopePool.length;
+  for (let i = 0; i < 2; i += 1) {
+    if (pLen > 0) {
+      const passItem = passPool[(rotIdx * 2 + i) % pLen];
+      picked.push({ item: passItem, kind: 'pass', note: passItem.oneLiner || passItem.goodLine || '' });
+    }
+    if (nLen > 0) {
+      const nopeEntry = nopePool[(rotIdx * 2 + i) % nLen];
+      const nopeNote = nopeEntry.alert
+        ? `${nopeEntry.alert.shortBadge.replace(/^내 방 체크:\s*/, '')} · 대안 보기`
+        : (nopeEntry.item.oneLiner || nopeEntry.item.checkLine || '');
+      picked.push({ item: nopeEntry.item, kind: 'nope', note: nopeNote });
+    }
+  }
+  return picked;
+}
+
+function renderHomeRotationList(savedProfile) {
+  const listEl = document.getElementById('home-rotation-list');
+  const titleEl = document.getElementById('home-rot-title');
+  if (!listEl) return;
+  if (titleEl) {
+    const nick = savedProfile && savedProfile.nickname ? `${savedProfile.nickname}님` : '내 방';
+    titleEl.textContent = `${nick} 맞춤 · 추천 & 피할 품목`;
+  }
+  const entries = getHomeRotationItems(savedProfile, state.homeRotationOffset);
+  listEl.innerHTML = entries.map(({ item, kind, note }) => `
+    <button type="button" class="seed-list-item" data-home-item-id="${escapeHtml(item.id)}">
+      <div class="seed-list-main">
+        <span class="seed-list-title">${escapeHtml(item.name)}</span>
+        <span class="seed-list-sub">${escapeHtml(item.priceTier || '')}${note ? ` · ${escapeHtml(note)}` : ''}</span>
+      </div>
+      <span class="home-rot-pill ${kind === 'pass' ? 'is-pass' : 'is-nope'}">${kind === 'pass' ? '추천 PASS' : '비추 NOPE!'}</span>
+    </button>
+  `).join('');
+
+  listEl.querySelectorAll('[data-home-item-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = ITEMS_DB.find((x) => x.id === btn.dataset.homeItemId);
+      if (!target) return;
+      trackEvent('home_rotation_open', { id: target.id, verdict: target.verdict });
+      openDetailSheet(target);
+    });
+  });
+}
+
 function updateSavedProfileBadge() {
   const saved = loadSavedRoomProfile();
-  const startBtn = document.getElementById('start-quiz-btn');
-  if (!saved || !saved.pyeongLabel) {
-    savedProfileBtn.classList.add('hidden');
-    if (startBtn) startBtn.innerHTML = '내 방 속 <span class="dot">NOPE!</span> 찾기';
+  const guestGateEl = document.getElementById('home-guest-gate');
+  const savedDashEl = document.getElementById('home-saved-dashboard');
+  const hasProfile = Boolean(saved && saved.pyeongLabel);
+
+  if (guestGateEl) guestGateEl.classList.toggle('hidden', hasProfile);
+  if (savedDashEl) savedDashEl.classList.toggle('hidden', !hasProfile);
+
+  if (!hasProfile) {
+    if (savedProfileBtn) savedProfileBtn.classList.add('hidden');
     return;
   }
-  const nickPrefix = saved.nickname ? `${saved.nickname}님의 공간 성격 · ` : '내 공간 성격 · ';
-  savedProfileBtn.textContent = `${nickPrefix}${saved.toneName} · ${saved.pyeongLabel} (결과 보기 →)`;
-  savedProfileBtn.classList.remove('hidden');
-  if (startBtn) startBtn.textContent = '내 공간 성격 · 무드 다시 테스트하기';
+
+  const nick = saved.nickname ? `${saved.nickname}님` : '내 방';
+  const excludeCount = state.excludedTraits.size;
+  if (savedProfileBtn) {
+    savedProfileBtn.innerHTML = `
+      <div class="home-profile-banner-meta">
+        <strong>${escapeHtml(nick)} · ${escapeHtml(saved.pyeongLabel)} · ${escapeHtml(saved.toneName || '')}</strong>
+        <span>${excludeCount ? `제외 필터 ${excludeCount}개 적용 중` : '내 방 조건 저장됨'}</span>
+      </div>
+      <span class="home-profile-banner-go">리포트 ›</span>
+    `;
+    savedProfileBtn.classList.remove('hidden');
+  }
+  renderHomeRotationList(saved);
 }
 
 function showHomeStage(stage) {
@@ -519,10 +636,43 @@ function syncNicknameNextState() {
   }
 }
 
-function startQuiz() {
+function buildHomePreAnswers() {
+  const q1 = QUIZ_QUESTIONS.find((q) => q.id === 'q1');
+  const pickedSizeOpt = q1 && q1.options.find((o) => o.pyeong === state.homePyeong);
+  const sizeAnswer = pickedSizeOpt || { pyeong: state.homePyeong || '4~5평 이하', scores: { spaceStress: 14, dustRisk: 3 } };
+
+  const tenureMap = {
+    monthly: {
+      label: '월세 (원상복구 필수)',
+      contractLabel: '월세 (못질 금지)',
+      contractType: 'no-nail',
+      isTenant: true,
+      scores: { depositRisk: 14, spaceStress: 4 }
+    },
+    jeonse: {
+      label: '전세 · 반전세 (원상복구)',
+      contractLabel: '전세 (못질 금지)',
+      contractType: 'no-nail',
+      isTenant: true,
+      scores: { depositRisk: 10, spaceStress: 2 }
+    },
+    owner: {
+      label: '자가 (타공 자유)',
+      contractLabel: '자가 (타공 자유)',
+      contractType: 'free',
+      isOwner: true,
+      scores: { depositRisk: 1 }
+    }
+  };
+  const tenureAnswer = tenureMap[state.homeTenure] || tenureMap.monthly;
+  return [sizeAnswer, tenureAnswer];
+}
+
+function startQuiz(useHomePreselect = true) {
   clearAnalysisTimers();
   state.quizIndex = 0;
   state.quizAnswers = [];
+  state.homePreAnswers = useHomePreselect ? buildHomePreAnswers() : [];
   const saved = loadSavedRoomProfile();
   if (saved && saved.nickname && !nicknameInputEl.value) {
     nicknameInputEl.value = saved.nickname;
@@ -557,6 +707,24 @@ nicknameInputEl.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') confirmNicknameAndStartQuestions();
 });
 
+document.querySelectorAll('#home-size-pills [data-home-pyeong]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    state.homePyeong = btn.dataset.homePyeong;
+    document.querySelectorAll('#home-size-pills [data-home-pyeong]').forEach((b) => {
+      b.classList.toggle('active', b === btn);
+    });
+  });
+});
+
+document.querySelectorAll('#home-tenure-pills [data-home-tenure]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    state.homeTenure = btn.dataset.homeTenure;
+    document.querySelectorAll('#home-tenure-pills [data-home-tenure]').forEach((b) => {
+      b.classList.toggle('active', b === btn);
+    });
+  });
+});
+
 document.querySelectorAll('.quiz-depth-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     state.quizDepth = btn.dataset.quizDepth === 'full' ? 'full' : 'quick';
@@ -569,7 +737,7 @@ document.querySelectorAll('.quiz-depth-btn').forEach((btn) => {
 savedProfileBtn.addEventListener('click', () => {
   const saved = loadSavedRoomProfile();
   if (!saved) {
-    startQuiz();
+    startQuiz(true);
     return;
   }
   const profile = QUIZ_RESULTS.find((r) => r.id === saved.profileId) || QUIZ_RESULTS[QUIZ_RESULTS.length - 1];
@@ -578,28 +746,81 @@ savedProfileBtn.addEventListener('click', () => {
     state.matcherTone = saved.toneId;
     renderToneMatcher();
   }
-  renderTasteSummaryStage({
-    nickname: saved.nickname || '자취러',
-    pyeongLabel: saved.pyeongLabel || '6~7평',
-    wishId: saved.wishId || 'spacious',
-    toneId: saved.toneId || 'white-minimal',
-    toneName: saved.toneName || '화이트 미니멀',
-    tasteId: saved.tasteId || 'plant',
-    density: saved.density || 'balanced',
-    mbtiId: saved.mbtiId || '',
-    activity: saved.activity || '자취 생활',
-    secondaryRisks: saved.secondaryRisks || [],
-    dynamicAvoid: saved.dynamicAvoid || null,
-    dynamicAlt: saved.dynamicAlt || null,
-    analysisBasis: saved.analysisBasis || [],
-    estimatedSavedWon: saved.estimatedSavedWon || 180000,
-    questionCount: saved.questionCount || 15,
+  const mbtiObj = (saved.mbtiId && SPACE_MBTI_TYPES.find((m) => m.id === saved.mbtiId)) || SPACE_MBTI_TYPES[0];
+  renderQuizResultView(
     profile,
-    dangerScore: saved.dangerScore
-  });
+    saved.dangerScore,
+    saved.pyeongLabel || '6~7평',
+    saved.toneName || '화이트 미니멀',
+    saved.nickname || '자취러',
+    mbtiObj.code,
+    saved.secondaryRisks || [],
+    saved.dynamicAvoid || null,
+    saved.dynamicAlt || null,
+    saved.analysisBasis || [],
+    saved.estimatedSavedWon || 180000,
+    saved.questionCount || 15
+  );
 });
 
-document.getElementById('start-quiz-btn').addEventListener('click', startQuiz);
+const runHomeSearch = () => {
+  const homeInput = document.getElementById('home-search-input');
+  const q = homeInput ? homeInput.value.trim() : '';
+  switchTab('scanner');
+  setScannerMode('search');
+  if (q && searchInput) {
+    searchInput.value = q;
+    runScannerSearch();
+  } else if (searchInput) {
+    searchInput.focus();
+  }
+};
+const homeAnalyzeBtn = document.getElementById('home-analyze-btn');
+const homeSearchInput = document.getElementById('home-search-input');
+if (homeAnalyzeBtn) homeAnalyzeBtn.addEventListener('click', runHomeSearch);
+if (homeSearchInput) {
+  homeSearchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') runHomeSearch();
+  });
+}
+
+const homePhotoScanBtn = document.getElementById('home-photo-scan-btn');
+if (homePhotoScanBtn) {
+  homePhotoScanBtn.addEventListener('click', () => {
+    switchTab('scanner');
+    setScannerMode('search');
+    if (itemImageInput) itemImageInput.click();
+  });
+}
+
+const homeCompareBtn = document.getElementById('home-compare-btn');
+if (homeCompareBtn) {
+  homeCompareBtn.addEventListener('click', () => {
+    switchTab('scanner');
+    setScannerMode('compare');
+  });
+}
+
+const homeRotRefreshBtn = document.getElementById('home-rot-refresh-btn');
+if (homeRotRefreshBtn) {
+  homeRotRefreshBtn.addEventListener('click', () => {
+    state.homeRotationOffset += 1;
+    try {
+      localStorage.setItem(STORAGE_KEYS.homeRotation, String(state.homeRotationOffset));
+    } catch {
+      // ignore storage errors
+    }
+    const saved = loadSavedRoomProfile();
+    if (saved) renderHomeRotationList(saved);
+  });
+}
+
+const homeRetakeBtn = document.getElementById('home-retake-btn');
+if (homeRetakeBtn) {
+  homeRetakeBtn.addEventListener('click', () => startQuiz(false));
+}
+
+document.getElementById('start-quiz-btn').addEventListener('click', () => startQuiz(true));
 const coverDirectScanBtn = document.getElementById('cover-direct-scan-btn');
 if (coverDirectScanBtn) {
   coverDirectScanBtn.addEventListener('click', () => {
@@ -609,7 +830,7 @@ if (coverDirectScanBtn) {
 }
 
 function getFlattenedQuizAnswers() {
-  const flat = [];
+  const flat = [...(state.homePreAnswers || [])];
   state.quizAnswers.forEach((entry) => {
     if (Array.isArray(entry)) flat.push(...entry);
     else if (entry) flat.push(entry);
@@ -619,7 +840,9 @@ function getFlattenedQuizAnswers() {
 
 function getActiveQuizQuestions() {
   const flat = getFlattenedQuizAnswers();
+  const skipPre = state.homePreAnswers && state.homePreAnswers.length > 0;
   return QUIZ_QUESTIONS.filter((q) => {
+    if (skipPre && (q.id === 'q1' || q.id === 'q7')) return false;
     if (state.quizDepth === 'quick' && q.quickKeep === false) return false;
     return !q.condition || q.condition(flat);
   });
@@ -853,10 +1076,15 @@ function startRoomAnalysisLoading() {
   }, 1980));
 }
 
-function getQuizScoreBounds(activeQs = getActiveQuizQuestions()) {
+function getQuizScoreBounds(activeQs = null) {
+  const flat = getFlattenedQuizAnswers();
+  const qs = activeQs || QUIZ_QUESTIONS.filter((q) => {
+    if (state.quizDepth === 'quick' && q.quickKeep === false) return false;
+    return !q.condition || q.condition(flat);
+  });
   let minPossible = 0;
   let maxPossible = 0;
-  activeQs.forEach((q) => {
+  qs.forEach((q) => {
     const sums = q.options.map((o) => Object.values(o.scores || {}).reduce((a, b) => a + b, 0));
     if (q.multiSelect) {
       const sorted = [...sums].sort((a, b) => a - b);
@@ -995,7 +1223,8 @@ function finalizeRoomAnalysis() {
     else worstFear = 'space';
   }
 
-  const questionCount = state.quizAnswers.length || getActiveQuizQuestions().length;
+  const preCnt = state.homePreAnswers ? state.homePreAnswers.length : 0;
+  const questionCount = (state.quizAnswers.length || getActiveQuizQuestions().length) + preCnt;
 
   const ctx = {
     pyeongLabel, wishId, toneId, tasteId, density, contractLabel, optionLevel,
@@ -6078,6 +6307,8 @@ function initAppSplash() {
 
 // ---------------- Boot ----------------
 initAppSplash();
+initHomeRotationOffset();
+loadExcludedTraits();
 const savedInitProfile = loadSavedRoomProfile();
 if (savedInitProfile && savedInitProfile.toneId) {
   state.matcherTone = savedInitProfile.toneId;
@@ -6089,7 +6320,6 @@ updateWishlistBadge();
 updateAuthBadge();
 recoverSupabaseSessionFromHash();
 loadRoomBaseState();
-loadExcludedTraits();
 renderExcludeTraitsBars();
 loadScaleState();
 updateScaleInputsUI();
@@ -6133,6 +6363,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope81').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope82').catch(() => {});
   }
 }
