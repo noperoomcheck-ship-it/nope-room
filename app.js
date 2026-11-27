@@ -22,11 +22,11 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope82';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope82';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope82';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope82';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope82';
+} from './data/app-data.js?v=nope83';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope83';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope83';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope83';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope83';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -546,9 +546,11 @@ function getHomeRotationItems(savedProfile, rotIdx = 0) {
     }
     if (nLen > 0) {
       const nopeEntry = nopePool[(rotIdx * 2 + i) % nLen];
-      const nopeNote = nopeEntry.alert
-        ? `${nopeEntry.alert.shortBadge.replace(/^내 방 체크:\s*/, '')} · 대안 보기`
-        : (nopeEntry.item.oneLiner || nopeEntry.item.checkLine || '');
+      const nopeNote = nopeEntry.item.verdict === 'NOPE'
+        ? (nopeEntry.item.oneLiner || nopeEntry.item.checkLine || '')
+        : (nopeEntry.alert
+          ? `${nopeEntry.alert.shortBadge.replace(/^내 방 체크:\s*/, '')} · 대안 보기`
+          : (nopeEntry.item.oneLiner || nopeEntry.item.checkLine || ''));
       picked.push({ item: nopeEntry.item, kind: 'nope', note: nopeNote });
     }
   }
@@ -817,7 +819,13 @@ if (homeRotRefreshBtn) {
 
 const homeRetakeBtn = document.getElementById('home-retake-btn');
 if (homeRetakeBtn) {
-  homeRetakeBtn.addEventListener('click', () => startQuiz(false));
+  homeRetakeBtn.addEventListener('click', () => {
+    const guestGateEl = document.getElementById('home-guest-gate');
+    const savedDashEl = document.getElementById('home-saved-dashboard');
+    if (guestGateEl) guestGateEl.classList.remove('hidden');
+    if (savedDashEl) savedDashEl.classList.add('hidden');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  });
 }
 
 document.getElementById('start-quiz-btn').addEventListener('click', () => startQuiz(true));
@@ -6363,6 +6371,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope82').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope83').catch(() => {});
   }
 }
