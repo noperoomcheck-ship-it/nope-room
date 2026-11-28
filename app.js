@@ -22,12 +22,12 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope99';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope99';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope99';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope99';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope99';
-import { BRAND_TRENDS } from './data/brand-trends.js?v=nope99';
+} from './data/app-data.js?v=nope100';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope100';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope100';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope100';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope100';
+import { BRAND_TRENDS } from './data/brand-trends.js?v=nope100';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -765,129 +765,56 @@ function hasExplicitInterestDomain() {
   }
 }
 
-function buildHomeInterestNudgeHtml(activeDomainObj, wishlistCount) {
+function buildHomeInterestCtaHtml(activeDomainObj, wishlistCount) {
   const hasDomain = hasExplicitInterestDomain();
-  if (hasDomain && wishlistCount > 0) {
-    return `
-      <div class="home-interest-saved-bar">
-        <span>관심 분야 <strong>${escapeHtml(activeDomainObj.label)}</strong> · 담은 품목 <strong>${wishlistCount}개</strong></span>
-        <button type="button" class="home-interest-manage-btn" data-open-wish-picker="1">내 품목 관리 ›</button>
-      </div>
-    `;
-  }
   if (!hasDomain && wishlistCount === 0) {
     return `
-      <div class="home-nudge-banner">
-        <div class="home-nudge-copy">
-          <strong>관심 분야나 고민 중인 품목을 등록해 보세요</strong>
-          <span>위에서 분야 1개를 고르거나 아래 제품에서 ♡ 담기를 누르면 신제품·주의 소식을 먼저 모아드려요.</span>
-        </div>
-        <button type="button" class="home-nudge-btn" data-open-wish-picker="1">인기 품목 담기 ›</button>
-      </div>
+      <button type="button" class="home-interest-cta-btn is-nudge" data-open-wish-picker="1">
+        <span>📌 관심 분야 · 품목 등록하고 내 소식만 모아보기</span>
+        <strong>등록하기 ›</strong>
+      </button>
     `;
   }
-  if (!hasDomain) {
-    return `
-      <div class="home-nudge-banner">
-        <div class="home-nudge-copy">
-          <strong>관심 분야도 1개 골라두시겠어요?</strong>
-          <span>담아둔 ${wishlistCount}개 품목 외에 관련 신제품·리콜 주의 이슈도 맨 위에 띄워드릴게요.</span>
-        </div>
-      </div>
-    `;
-  }
+  const parts = [];
+  if (hasDomain) parts.push(activeDomainObj.label);
+  if (wishlistCount > 0) parts.push(`품목 ${wishlistCount}개`);
   return `
-    <div class="home-nudge-banner">
-      <div class="home-nudge-copy">
-        <strong>${escapeHtml(activeDomainObj.label)} 고민 중인 품목도 담아보세요</strong>
-        <span>♡ 담기를 눌러두면 예상 예산과 빠진 보완템을 바로 계산해 드려요.</span>
-      </div>
-      <button type="button" class="home-nudge-btn" data-open-wish-picker="1">품목 고르기 ›</button>
-    </div>
+    <button type="button" class="home-interest-cta-btn" data-open-wish-picker="1">
+      <span>내 관심 (${escapeHtml(parts.join(' · '))}) 소식·품목 관리</span>
+      <strong>열기 ›</strong>
+    </button>
   `;
 }
 
-function renderHomeInterestSection(chipsId, feedId) {
-  const chipsEl = document.getElementById(chipsId);
+function renderHomeInterestSection(feedId) {
   const feedEl = document.getElementById(feedId);
-  if (!chipsEl || !feedEl) return;
+  if (!feedEl) return;
 
   const activeId = HOME_INTEREST_DOMAINS.some((d) => d.id === state.homeInterestDomain)
     ? state.homeInterestDomain
     : 'ALL';
   const activeDomainObj = HOME_INTEREST_DOMAINS.find((d) => d.id === activeId) || HOME_INTEREST_DOMAINS[0];
   const wishlist = loadWishlist();
-  const wishIds = new Set(wishlist.map((w) => w.id));
-
-  chipsEl.innerHTML = HOME_INTEREST_DOMAINS.map((d) => `
-    <button type="button" class="home-interest-chip ${d.id === activeId ? 'active' : ''}" data-interest-domain="${escapeHtml(d.id)}" role="tab" aria-selected="${d.id === activeId ? 'true' : 'false'}">${escapeHtml(d.label)}</button>
-  `).join('');
-
-  chipsEl.querySelectorAll('[data-interest-domain]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const nextId = btn.dataset.interestDomain || 'ALL';
-      const changed = nextId !== state.homeInterestDomain;
-      state.homeInterestDomain = nextId;
-      try {
-        localStorage.setItem(STORAGE_KEYS.interestDomain, state.homeInterestDomain);
-      } catch {
-        // ignore storage errors
-      }
-      if (changed && nextId !== 'ALL') {
-        const pickedObj = HOME_INTEREST_DOMAINS.find((d) => d.id === nextId);
-        showToast(`${pickedObj ? pickedObj.label : nextId} 관심 분야를 등록했어요`);
-        trackEvent('interest_domain_select', { domain: nextId });
-      }
-      renderAllHomeInterestFeeds();
-    });
-  });
-
   const matchingTrends = BRAND_TRENDS.filter((t) => matchHomeInterestTrend(t, activeId)).slice(0, 2);
-  const pickedItems = pickHomeInterestItems(activeId);
-  const nudgeHtml = buildHomeInterestNudgeHtml(activeDomainObj, wishlist.length);
+  const headlines = matchingTrends.length ? matchingTrends : BRAND_TRENDS.slice(0, 2);
+  const ctaHtml = buildHomeInterestCtaHtml(activeDomainObj, wishlist.length);
 
   feedEl.innerHTML = `
-    ${nudgeHtml}
-    ${matchingTrends.length ? `
-      <div class="home-trend-stack">
-        ${matchingTrends.map((t) => `
-          <button type="button" class="home-trend-card" data-open-trends="${escapeHtml(t.id)}">
+    <div class="home-headline-list">
+      ${headlines.map((t) => `
+        <button type="button" class="home-headline-item" data-open-trends="${escapeHtml(t.id)}">
+          <div class="home-headline-main">
             <div class="trend-meta-row">
               <span class="trend-pill ${t.type === '이슈·주의' ? 'is-issue' : 'is-new'}">${escapeHtml(t.type)}</span>
-              <span class="home-trend-brand">${escapeHtml(t.brand)} · ${escapeHtml(t.domain)} · ${escapeHtml(t.date)}</span>
+              <span class="home-trend-brand">${escapeHtml(t.brand)} · ${escapeHtml(t.date)}</span>
             </div>
-            <strong class="home-trend-title">${escapeHtml(t.title)}</strong>
-            <p class="home-trend-summary">${escapeHtml(t.summary)}</p>
-          </button>
-        `).join('')}
-      </div>
-    ` : ''}
-    <div class="seed-list" style="margin-top:10px;">
-      ${pickedItems.map((it) => {
-        const vm = verdictMeta(it.verdict);
-        const brief = (it.reviewPulse && it.reviewPulse.ratingSummary) || it.oneLiner || '';
-        const creatorHtml = it.creatorPick && it.creatorPick.source
-          ? `<span class="home-creator-pill">🎙️ ${escapeHtml(it.creatorPick.source)}${it.creatorPick.sponsored === false ? ' · 비협찬' : ''}</span>`
-          : '';
-        const saved = wishIds.has(it.id);
-        return `
-          <div class="seed-list-item home-feed-row">
-            <button type="button" class="home-feed-main-btn" data-interest-item-id="${escapeHtml(it.id)}">
-              ${creatorHtml}
-              <span class="seed-list-title">${escapeHtml(it.name)}</span>
-              <span class="seed-list-sub">${escapeHtml(it.priceTier || '')}${brief ? ` · ${escapeHtml(brief)}` : ''}</span>
-            </button>
-            <div class="home-feed-right">
-              <span class="home-rot-pill ${it.verdict === 'PASS' ? 'is-pass' : 'is-nope'}">${escapeHtml(vm.text)}</span>
-              <button type="button" class="home-wish-toggle-btn ${saved ? 'is-saved' : ''}" data-home-wish-id="${escapeHtml(it.id)}" aria-label="${saved ? '관심 품목 해제' : '관심 품목 담기'}">${saved ? '♥ 담김' : '♡ 담기'}</button>
-            </div>
+            <strong class="home-headline-title">${escapeHtml(t.title)}</strong>
           </div>
-        `;
-      }).join('')}
+          <span class="my-row-chevron" aria-hidden="true">›</span>
+        </button>
+      `).join('')}
     </div>
-    <button type="button" class="home-interest-more-btn" data-browse-domain="${escapeHtml(activeDomainObj.scanCat || '')}">
-      ${activeId === 'ALL' ? `전체 ${ITEMS_DB.length}종 제품 둘러보기 →` : `${escapeHtml(activeDomainObj.label)} 전체 제품 보기 →`}
-    </button>
+    ${ctaHtml}
   `;
 
   feedEl.querySelectorAll('[data-open-wish-picker]').forEach((btn) => {
@@ -902,53 +829,11 @@ function renderHomeInterestSection(chipsId, feedId) {
       renderMyPage('notices');
     });
   });
-
-  feedEl.querySelectorAll('[data-interest-item-id]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const target = ITEMS_DB.find((x) => x.id === btn.dataset.interestItemId);
-      if (target) openDetailSheet(target);
-    });
-  });
-
-  feedEl.querySelectorAll('[data-home-wish-id]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const target = ITEMS_DB.find((x) => x.id === btn.dataset.homeWishId);
-      if (target) {
-        const nowSaved = toggleWishlistItem(target);
-        trackEvent('home_quick_wishlist', { id: target.id, saved: nowSaved });
-      }
-    });
-  });
-
-  const moreBtn = feedEl.querySelector('[data-browse-domain]');
-  if (moreBtn) {
-    moreBtn.addEventListener('click', () => {
-      const cat = moreBtn.dataset.browseDomain;
-      switchTab('scanner');
-      setScannerMode('search');
-      if (cat) {
-        state.selectedFilter = { label: cat, type: 'cat', value: cat };
-        state.activePassRuleId = '';
-        searchInput.value = '';
-        customOutEl.innerHTML = '';
-        openScannerResults(cat);
-        renderItems();
-      } else {
-        state.selectedFilter = { label: '전체', type: 'all', value: '전체' };
-        state.activePassRuleId = '';
-        searchInput.value = '';
-        customOutEl.innerHTML = '';
-        openScannerResults(`전체 ${ITEMS_DB.length}종`);
-        renderItems();
-      }
-    });
-  }
 }
 
 function renderAllHomeInterestFeeds() {
-  renderHomeInterestSection('guest-interest-chips', 'guest-interest-feed');
-  renderHomeInterestSection('saved-interest-chips', 'saved-interest-feed');
+  renderHomeInterestSection('guest-interest-feed');
+  renderHomeInterestSection('saved-interest-feed');
 }
 
 function renderHomeRotationList(savedProfile) {
@@ -1285,11 +1170,11 @@ if (homeRetakeBtn) {
   homeRetakeBtn.addEventListener('click', () => {
     const guestGateEl = document.getElementById('home-guest-gate');
     const savedDashEl = document.getElementById('home-saved-dashboard');
+    const roomHeroEl = document.getElementById('home-room-hero-card');
     if (guestGateEl) guestGateEl.classList.remove('hidden');
     if (savedDashEl) savedDashEl.classList.add('hidden');
-    setRoomQuizAccordion(true);
-    if (roomQuizToggleBtn) {
-      roomQuizToggleBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (roomHeroEl) {
+      roomHeroEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   });
 }
@@ -7006,11 +6891,20 @@ function renderAccountSheet(tab = activeAccountTab) {
     </div>
 
     <div class="account-tabs-bar">
-      <button type="button" class="account-tab-btn ${tab === 'wishlist' ? 'active' : ''}" data-acc-tab="wishlist">찜한 상품 (${wishlist.length})</button>
+      <button type="button" class="account-tab-btn ${tab === 'wishlist' ? 'active' : ''}" data-acc-tab="wishlist">내 관심 · 찜 (${wishlist.length})</button>
       <button type="button" class="account-tab-btn ${tab === 'auth' ? 'active' : ''}" data-acc-tab="auth">${acc ? '내 계정 연동됨' : '3초 로그인·백업'}</button>
     </div>
 
     ${tab === 'wishlist' ? `
+      <div class="sheet-interest-box">
+        <span class="sheet-interest-label">관심 분야 (홈 신제품·이슈 맞춤)</span>
+        <div class="home-interest-chips" style="padding-bottom:2px;">
+          ${HOME_INTEREST_DOMAINS.map((d) => {
+            const active = (state.homeInterestDomain || 'ALL') === d.id;
+            return `<button type="button" class="home-interest-chip ${active ? 'active' : ''}" data-sheet-domain="${escapeHtml(d.id)}">${escapeHtml(d.label)}</button>`;
+          }).join('')}
+        </div>
+      </div>
       ${wishlist.length ? `
         <div class="wishlist-combo-card">
           <div class="wishlist-budget-row">
@@ -7163,6 +7057,26 @@ function renderAccountSheet(tab = activeAccountTab) {
   document.getElementById('close-account-sheet-btn').addEventListener('click', closeAccountSheet);
   accountSheetPanel.querySelectorAll('[data-acc-tab]').forEach((btn) => {
     btn.addEventListener('click', () => renderAccountSheet(btn.dataset.accTab));
+  });
+
+  accountSheetPanel.querySelectorAll('[data-sheet-domain]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const nextId = btn.dataset.sheetDomain || 'ALL';
+      const changed = nextId !== state.homeInterestDomain;
+      state.homeInterestDomain = nextId;
+      try {
+        localStorage.setItem(STORAGE_KEYS.interestDomain, nextId);
+      } catch {
+        // ignore storage errors
+      }
+      if (changed && nextId !== 'ALL') {
+        const pickedObj = HOME_INTEREST_DOMAINS.find((d) => d.id === nextId);
+        showToast(`${pickedObj ? pickedObj.label : nextId} 관심 분야를 등록했어요`);
+        trackEvent('interest_domain_select', { domain: nextId });
+      }
+      renderAllHomeInterestFeeds();
+      renderAccountSheet('wishlist');
+    });
   });
 
   accountSheetPanel.querySelectorAll('[data-wish-open]').forEach((el) => {
@@ -7572,16 +7486,7 @@ function renderMyPage(subView = 'main') {
   document.getElementById('my-wish-action-btn').addEventListener('click', () => openAccountSheet('wishlist'));
   const myOnboardBtn = document.getElementById('my-nav-interest-onboard');
   if (myOnboardBtn) {
-    myOnboardBtn.addEventListener('click', () => {
-      if (!hasExplicitInterestDomain()) {
-        switchTab('home');
-        const targetEl = document.getElementById('saved-interest-chips') || document.getElementById('guest-interest-chips');
-        if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        showToast('관심 분야를 1개 눌러 등록해 보세요');
-      } else {
-        openAccountSheet('wishlist');
-      }
-    });
+    myOnboardBtn.addEventListener('click', () => openAccountSheet('wishlist'));
   }
   document.getElementById('my-nav-report').addEventListener('click', openSavedProfileReportFromMy);
 
@@ -7979,6 +7884,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope99').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope100').catch(() => {});
   }
 }
