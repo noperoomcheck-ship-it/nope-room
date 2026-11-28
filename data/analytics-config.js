@@ -5,6 +5,6 @@
 
 export const ANALYTICS_CONFIG = {
   gaMeasurementId: '',
-  vercelWebAnalytics: false,
+  vercelWebAnalytics: true,
   localLogEnabled: true
 };
