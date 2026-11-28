@@ -22,12 +22,12 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope98';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope98';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope98';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope98';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope98';
-import { BRAND_TRENDS } from './data/brand-trends.js?v=nope98';
+} from './data/app-data.js?v=nope99';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope99';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope99';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope99';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope99';
+import { BRAND_TRENDS } from './data/brand-trends.js?v=nope99';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -756,6 +756,57 @@ function pickHomeInterestItems(domainId) {
   return [passPick, cautionPick, thirdPick].filter(Boolean);
 }
 
+function hasExplicitInterestDomain() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.interestDomain);
+    return Boolean(saved && saved !== 'ALL');
+  } catch {
+    return false;
+  }
+}
+
+function buildHomeInterestNudgeHtml(activeDomainObj, wishlistCount) {
+  const hasDomain = hasExplicitInterestDomain();
+  if (hasDomain && wishlistCount > 0) {
+    return `
+      <div class="home-interest-saved-bar">
+        <span>관심 분야 <strong>${escapeHtml(activeDomainObj.label)}</strong> · 담은 품목 <strong>${wishlistCount}개</strong></span>
+        <button type="button" class="home-interest-manage-btn" data-open-wish-picker="1">내 품목 관리 ›</button>
+      </div>
+    `;
+  }
+  if (!hasDomain && wishlistCount === 0) {
+    return `
+      <div class="home-nudge-banner">
+        <div class="home-nudge-copy">
+          <strong>관심 분야나 고민 중인 품목을 등록해 보세요</strong>
+          <span>위에서 분야 1개를 고르거나 아래 제품에서 ♡ 담기를 누르면 신제품·주의 소식을 먼저 모아드려요.</span>
+        </div>
+        <button type="button" class="home-nudge-btn" data-open-wish-picker="1">인기 품목 담기 ›</button>
+      </div>
+    `;
+  }
+  if (!hasDomain) {
+    return `
+      <div class="home-nudge-banner">
+        <div class="home-nudge-copy">
+          <strong>관심 분야도 1개 골라두시겠어요?</strong>
+          <span>담아둔 ${wishlistCount}개 품목 외에 관련 신제품·리콜 주의 이슈도 맨 위에 띄워드릴게요.</span>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="home-nudge-banner">
+      <div class="home-nudge-copy">
+        <strong>${escapeHtml(activeDomainObj.label)} 고민 중인 품목도 담아보세요</strong>
+        <span>♡ 담기를 눌러두면 예상 예산과 빠진 보완템을 바로 계산해 드려요.</span>
+      </div>
+      <button type="button" class="home-nudge-btn" data-open-wish-picker="1">품목 고르기 ›</button>
+    </div>
+  `;
+}
+
 function renderHomeInterestSection(chipsId, feedId) {
   const chipsEl = document.getElementById(chipsId);
   const feedEl = document.getElementById(feedId);
@@ -765,6 +816,8 @@ function renderHomeInterestSection(chipsId, feedId) {
     ? state.homeInterestDomain
     : 'ALL';
   const activeDomainObj = HOME_INTEREST_DOMAINS.find((d) => d.id === activeId) || HOME_INTEREST_DOMAINS[0];
+  const wishlist = loadWishlist();
+  const wishIds = new Set(wishlist.map((w) => w.id));
 
   chipsEl.innerHTML = HOME_INTEREST_DOMAINS.map((d) => `
     <button type="button" class="home-interest-chip ${d.id === activeId ? 'active' : ''}" data-interest-domain="${escapeHtml(d.id)}" role="tab" aria-selected="${d.id === activeId ? 'true' : 'false'}">${escapeHtml(d.label)}</button>
@@ -772,11 +825,18 @@ function renderHomeInterestSection(chipsId, feedId) {
 
   chipsEl.querySelectorAll('[data-interest-domain]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      state.homeInterestDomain = btn.dataset.interestDomain || 'ALL';
+      const nextId = btn.dataset.interestDomain || 'ALL';
+      const changed = nextId !== state.homeInterestDomain;
+      state.homeInterestDomain = nextId;
       try {
         localStorage.setItem(STORAGE_KEYS.interestDomain, state.homeInterestDomain);
       } catch {
         // ignore storage errors
+      }
+      if (changed && nextId !== 'ALL') {
+        const pickedObj = HOME_INTEREST_DOMAINS.find((d) => d.id === nextId);
+        showToast(`${pickedObj ? pickedObj.label : nextId} 관심 분야를 등록했어요`);
+        trackEvent('interest_domain_select', { domain: nextId });
       }
       renderAllHomeInterestFeeds();
     });
@@ -784,8 +844,10 @@ function renderHomeInterestSection(chipsId, feedId) {
 
   const matchingTrends = BRAND_TRENDS.filter((t) => matchHomeInterestTrend(t, activeId)).slice(0, 2);
   const pickedItems = pickHomeInterestItems(activeId);
+  const nudgeHtml = buildHomeInterestNudgeHtml(activeDomainObj, wishlist.length);
 
   feedEl.innerHTML = `
+    ${nudgeHtml}
     ${matchingTrends.length ? `
       <div class="home-trend-stack">
         ${matchingTrends.map((t) => `
@@ -807,15 +869,19 @@ function renderHomeInterestSection(chipsId, feedId) {
         const creatorHtml = it.creatorPick && it.creatorPick.source
           ? `<span class="home-creator-pill">🎙️ ${escapeHtml(it.creatorPick.source)}${it.creatorPick.sponsored === false ? ' · 비협찬' : ''}</span>`
           : '';
+        const saved = wishIds.has(it.id);
         return `
-          <button type="button" class="seed-list-item" data-interest-item-id="${escapeHtml(it.id)}">
-            <div class="seed-list-main">
+          <div class="seed-list-item home-feed-row">
+            <button type="button" class="home-feed-main-btn" data-interest-item-id="${escapeHtml(it.id)}">
               ${creatorHtml}
               <span class="seed-list-title">${escapeHtml(it.name)}</span>
               <span class="seed-list-sub">${escapeHtml(it.priceTier || '')}${brief ? ` · ${escapeHtml(brief)}` : ''}</span>
+            </button>
+            <div class="home-feed-right">
+              <span class="home-rot-pill ${it.verdict === 'PASS' ? 'is-pass' : 'is-nope'}">${escapeHtml(vm.text)}</span>
+              <button type="button" class="home-wish-toggle-btn ${saved ? 'is-saved' : ''}" data-home-wish-id="${escapeHtml(it.id)}" aria-label="${saved ? '관심 품목 해제' : '관심 품목 담기'}">${saved ? '♥ 담김' : '♡ 담기'}</button>
             </div>
-            <span class="home-rot-pill ${it.verdict === 'PASS' ? 'is-pass' : 'is-nope'}">${escapeHtml(vm.text)}</span>
-          </button>
+          </div>
         `;
       }).join('')}
     </div>
@@ -823,6 +889,10 @@ function renderHomeInterestSection(chipsId, feedId) {
       ${activeId === 'ALL' ? `전체 ${ITEMS_DB.length}종 제품 둘러보기 →` : `${escapeHtml(activeDomainObj.label)} 전체 제품 보기 →`}
     </button>
   `;
+
+  feedEl.querySelectorAll('[data-open-wish-picker]').forEach((btn) => {
+    btn.addEventListener('click', () => openAccountSheet('wishlist'));
+  });
 
   feedEl.querySelectorAll('[data-open-trends]').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -837,6 +907,17 @@ function renderHomeInterestSection(chipsId, feedId) {
     btn.addEventListener('click', () => {
       const target = ITEMS_DB.find((x) => x.id === btn.dataset.interestItemId);
       if (target) openDetailSheet(target);
+    });
+  });
+
+  feedEl.querySelectorAll('[data-home-wish-id]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const target = ITEMS_DB.find((x) => x.id === btn.dataset.homeWishId);
+      if (target) {
+        const nowSaved = toggleWishlistItem(target);
+        trackEvent('home_quick_wishlist', { id: target.id, saved: nowSaved });
+      }
     });
   });
 
@@ -6617,6 +6698,7 @@ function loadWishlist() {
 function saveWishlist(items) {
   localStorage.setItem(STORAGE_KEYS.wishlist, JSON.stringify(items));
   updateWishlistBadge();
+  if (typeof renderAllHomeInterestFeeds === 'function') renderAllHomeInterestFeeds();
   syncCloudRoomDataIfAuthed();
 }
 
@@ -6991,8 +7073,33 @@ function renderAccountSheet(tab = activeAccountTab) {
       ` : `
         <div class="auth-box" style="text-align:center;">
           <strong style="display:block;font-size:14.5px;margin-bottom:6px;">아직 찜한 상품이 없어요</strong>
-          <p class="text-secondary" style="font-size:12.5px;margin-bottom:14px;">제품 상세에서 <strong>♡ 저장</strong>을 누르면 예산과 조합 점검을 계산해 드려요.</p>
+          <p class="text-secondary" style="font-size:12.5px;margin-bottom:14px;">제품 상세나 아래 추천 품목에서 <strong>♡ 담기</strong>를 누르면 예산과 조합 점검을 계산해 드려요.</p>
           <button type="button" id="wish-go-scanner-btn" class="btn-primary btn-full">${ITEMS_DB.length}종 제품 둘러보기 →</button>
+          ${(() => {
+            const domainPass = ITEMS_DB.filter((it) => it.verdict === 'PASS' && matchHomeInterestItem(it, state.homeInterestDomain));
+            const starterList = (domainPass.length >= 3 ? domainPass : ITEMS_DB.filter((it) => it.verdict === 'PASS'))
+              .slice()
+              .sort((a, b) => ((b.creatorPick ? 2 : 0) + (b.reviewPulse ? 1 : 0)) - ((a.creatorPick ? 2 : 0) + (a.reviewPulse ? 1 : 0)))
+              .slice(0, 3);
+            if (!starterList.length) return '';
+            const activeDomainLabel = hasExplicitInterestDomain()
+              ? (HOME_INTEREST_DOMAINS.find((d) => d.id === state.homeInterestDomain)?.label || state.homeInterestDomain)
+              : '인기';
+            return `
+              <div class="wish-starter-wrap">
+                <span class="wish-starter-label">많이 담는 ${escapeHtml(activeDomainLabel)} 추천 품목 바로 등록</span>
+                ${starterList.map((it) => `
+                  <div class="wish-starter-row">
+                    <div class="wish-starter-info" data-wish-open="${escapeHtml(it.id)}">
+                      <strong>${escapeHtml(it.name)}</strong>
+                      <span>${escapeHtml(it.category || '')} · ${escapeHtml(it.priceTier || '')}</span>
+                    </div>
+                    <button type="button" class="wish-quick-add-btn" data-wish-quick-add="${escapeHtml(it.id)}">+ 담기</button>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          })()}
         </div>
       `}
     ` : `
@@ -7086,6 +7193,17 @@ function renderAccountSheet(tab = activeAccountTab) {
       switchTab('scanner');
     });
   }
+
+  accountSheetPanel.querySelectorAll('[data-wish-quick-add]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = ITEMS_DB.find((x) => x.id === btn.dataset.wishQuickAdd);
+      if (target) {
+        toggleWishlistItem(target);
+        trackEvent('wishlist_quick_add', { id: target.id });
+        renderAccountSheet('wishlist');
+      }
+    });
+  });
 
   const requireAuthConsent = () => {
     const reqEl = document.getElementById('auth-consent-required');
@@ -7338,6 +7456,15 @@ function renderMyPage(subView = 'main') {
 
     <div class="my-sec-title">내 활동</div>
     <div class="seed-list">
+      ${(!hasExplicitInterestDomain() || wishlist.length === 0) ? `
+        <button type="button" class="seed-list-item" id="my-nav-interest-onboard">
+          <div class="seed-list-main">
+            <span class="seed-list-title">관심 분야 · 품목 등록하기</span>
+            <span class="seed-list-sub">${!hasExplicitInterestDomain() && wishlist.length === 0 ? '분야 1개·품목 1개만 담아두면 신제품 소식과 조합 점검이 바로 켜져요' : (!hasExplicitInterestDomain() ? '관심 분야를 고르면 신제품·주의 이슈를 먼저 띄워드려요' : '고민 중인 품목을 담으면 예상 예산·보완템을 계산해 드려요')}</span>
+          </div>
+          <span class="my-row-chevron">›</span>
+        </button>
+      ` : ''}
       <button type="button" class="seed-list-item" id="my-nav-report">
         <div class="seed-list-main">
           <span class="seed-list-title">${saved ? '내 방 진단 리포트' : '40초 내 방 진단 시작하기'}</span>
@@ -7443,6 +7570,19 @@ function renderMyPage(subView = 'main') {
 
   document.getElementById('my-auth-action-btn').addEventListener('click', () => openAccountSheet('auth'));
   document.getElementById('my-wish-action-btn').addEventListener('click', () => openAccountSheet('wishlist'));
+  const myOnboardBtn = document.getElementById('my-nav-interest-onboard');
+  if (myOnboardBtn) {
+    myOnboardBtn.addEventListener('click', () => {
+      if (!hasExplicitInterestDomain()) {
+        switchTab('home');
+        const targetEl = document.getElementById('saved-interest-chips') || document.getElementById('guest-interest-chips');
+        if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast('관심 분야를 1개 눌러 등록해 보세요');
+      } else {
+        openAccountSheet('wishlist');
+      }
+    });
+  }
   document.getElementById('my-nav-report').addEventListener('click', openSavedProfileReportFromMy);
 
   const toggleNickBtn = document.getElementById('my-toggle-nick-edit');
@@ -7839,6 +7979,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope98').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope99').catch(() => {});
   }
 }
