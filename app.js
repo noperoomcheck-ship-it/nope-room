@@ -22,12 +22,12 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope101';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope101';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope101';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope101';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope101';
-import { BRAND_TRENDS } from './data/brand-trends.js?v=nope101';
+} from './data/app-data.js?v=nope102';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope102';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope102';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope102';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope102';
+import { BRAND_TRENDS } from './data/brand-trends.js?v=nope102';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -76,7 +76,7 @@ const state = {
   scannerResultTitle: '',
   scannerVisibleCount: 24,
   excludedTraits: new Set(),
-  excludeResultsExpanded: false,
+  excludeResultsExpanded: true,
   lastExcludedCount: 0,
   matcherStyle: 'ALL',
   matcherTone: 'white-minimal',
@@ -273,6 +273,35 @@ function itemMatchesTraitRule(item, rule) {
   return false;
 }
 
+function syncReportTraitButtons() {
+  const reportList = document.getElementById('report-trait-list');
+  if (!reportList) return;
+  reportList.querySelectorAll('[data-report-trait]').forEach((btn) => {
+    const tid = btn.dataset.reportTrait;
+    const isOn = state.excludedTraits.has(tid);
+    btn.classList.toggle('is-on', isOn);
+    btn.classList.toggle('is-off', !isOn);
+    const pill = btn.querySelector('.trait-state-pill');
+    if (pill) pill.textContent = isOn ? '제외 ON' : '제외 OFF';
+  });
+}
+
+function applyTraitExcludeStateChange() {
+  saveExcludedTraits();
+  syncReportTraitButtons();
+  renderExcludeTraitsBars();
+  updateSavedProfileBadge();
+  if (scannerResults && !scannerResults.classList.contains('hidden')) {
+    renderItems();
+  }
+  if (scannerCompare && !scannerCompare.classList.contains('hidden')) {
+    renderCompareView();
+  }
+  if (scannerMatcher && !scannerMatcher.classList.contains('hidden')) {
+    renderToneMatcher();
+  }
+}
+
 function toggleExcludeTrait(traitId) {
   let enabled = false;
   if (state.excludedTraits.has(traitId)) {
@@ -282,15 +311,7 @@ function toggleExcludeTrait(traitId) {
     enabled = true;
   }
   trackEvent('exclude_filter_toggle', { trait: traitId, enabled });
-  saveExcludedTraits();
-  renderExcludeTraitsBars();
-  updateSavedProfileBadge();
-  if (scannerResults && !scannerResults.classList.contains('hidden')) {
-    renderItems();
-  }
-  if (scannerCompare && !scannerCompare.classList.contains('hidden')) {
-    renderCompareView();
-  }
+  applyTraitExcludeStateChange();
 }
 
 function renderExcludeTraitsBars() {
@@ -298,31 +319,37 @@ function renderExcludeTraitsBars() {
   const activeCount = state.excludedTraits.size;
   const targets = [
     document.getElementById('scanner-gate-exclude-bar'),
-    document.getElementById('exclude-traits-bar')
+    document.getElementById('exclude-traits-bar'),
+    document.getElementById('matcher-exclude-bar')
   ].filter(Boolean);
 
   targets.forEach((el) => {
     const isResultsBar = el.id === 'exclude-traits-bar';
+    const isCollapsible = isResultsBar || el.id === 'matcher-exclude-bar';
     if (!rules.length) {
       el.classList.add('hidden');
       return;
     }
     el.classList.remove('hidden');
-    const isCompact = isResultsBar && !state.excludeResultsExpanded;
+    const isCompact = isCollapsible && !state.excludeResultsExpanded;
     el.classList.toggle('is-compact', isCompact);
 
     let statusText = '';
     if (isResultsBar) {
       if (activeCount > 0) {
         statusText = state.lastExcludedCount > 0
-          ? `🚫 제외 필터 ${activeCount}개 ON · 이 목록에서 ${state.lastExcludedCount}건 가려짐`
-          : `🚫 제외 필터 ${activeCount}개 ON (이 목록 해당 없음)`;
+          ? `제외 필터 ${activeCount}개 ON · ${state.lastExcludedCount}건 가려짐`
+          : `제외 필터 ${activeCount}개 ON`;
       } else {
-        statusText = '피할 특징 제외 필터 OFF (눌러서 켜기)';
+        statusText = '피할 특징 제외 필터 OFF (눌러서 바로 켜기)';
       }
+    } else if (el.id === 'matcher-exclude-bar') {
+      statusText = activeCount
+        ? `내 방 피할 특징 제외 (${activeCount}개 ON · 추천에 반영 중)`
+        : '내 방 피할 특징 제외 필터 OFF';
     } else {
       statusText = activeCount
-        ? `내 방 피할 조건 제외 (${activeCount}개 켜짐 · 검색 시 자동 제외)`
+        ? `내 방 피할 조건 제외 (${activeCount}개 ON · 검색 시 자동 제외)`
         : '내 방 피할 조건 제외 필터 (검색 시 자동 제외)';
     }
 
@@ -330,15 +357,18 @@ function renderExcludeTraitsBars() {
       <div class="exclude-bar-head">
         <span class="exclude-bar-title">${statusText}</span>
         <div class="exclude-bar-actions">
-          ${activeCount ? `<button type="button" class="exclude-bar-clear">전체 끄기</button>` : ''}
-          ${isResultsBar ? `<button type="button" class="exclude-bar-toggle">${state.excludeResultsExpanded ? '접기 ▲' : '조절 ▾'}</button>` : ''}
+          ${activeCount
+            ? `<button type="button" class="exclude-bar-clear">전체 끄기</button>`
+            : `<button type="button" class="exclude-bar-restore">추천 켜기</button>`}
+          ${isCollapsible ? `<button type="button" class="exclude-bar-toggle">${state.excludeResultsExpanded ? '접기 ▲' : '조절 ▾'}</button>` : ''}
         </div>
       </div>
       ${isCompact ? '' : `
         <div class="exclude-chips-wrap">
           ${rules.map((r) => {
             const isOn = state.excludedTraits.has(r.id);
-            return `<button type="button" class="exclude-chip-btn ${isOn ? 'is-on' : ''}" data-ex-trait="${escapeHtml(r.id)}">${isOn ? '🚫 ' : ''}${escapeHtml(r.shortChip)}</button>`;
+            const chipLabel = escapeHtml(r.shortChip.replace(/\s*제외$/, ''));
+            return `<button type="button" class="exclude-chip-btn ${isOn ? 'is-on' : ''}" data-ex-trait="${escapeHtml(r.id)}">${chipLabel} · ${isOn ? '제외 ON' : 'OFF'}</button>`;
           }).join('')}
         </div>
       `}
@@ -357,15 +387,18 @@ function renderExcludeTraitsBars() {
     if (clearBtn) {
       clearBtn.addEventListener('click', () => {
         state.excludedTraits.clear();
-        saveExcludedTraits();
-        renderExcludeTraitsBars();
-        updateSavedProfileBadge();
-        if (scannerResults && !scannerResults.classList.contains('hidden')) {
-          renderItems();
-        }
-        if (scannerCompare && !scannerCompare.classList.contains('hidden')) {
-          renderCompareView();
-        }
+        applyTraitExcludeStateChange();
+      });
+    }
+    const restoreBtn = el.querySelector('.exclude-bar-restore');
+    if (restoreBtn) {
+      restoreBtn.addEventListener('click', () => {
+        const saved = loadSavedRoomProfile();
+        const recs = (saved && Array.isArray(saved.recommendedTraitIds) && saved.recommendedTraitIds.length)
+          ? saved.recommendedTraitIds
+          : NOPE_TRAIT_RULES.slice(0, 5).map((r) => r.id);
+        state.excludedTraits = new Set(recs);
+        applyTraitExcludeStateChange();
       });
     }
   });
@@ -3861,9 +3894,7 @@ function renderItems() {
   if (emptyClearBtn) {
     emptyClearBtn.addEventListener('click', () => {
       state.excludedTraits.clear();
-      saveExcludedTraits();
-      renderExcludeTraitsBars();
-      renderItems();
+      applyTraitExcludeStateChange();
     });
   }
   bindCardClicks(itemsListEl, [...shownDirect, ...similar]);
@@ -5150,18 +5181,23 @@ function renderToneMatcher() {
     return surveyFitBonus(b, savedProfile) - surveyFitBonus(a, savedProfile);
   };
 
+  const activeExcludeRules = [...state.excludedTraits]
+    .map((id) => NOPE_TRAIT_RULES.find((r) => r.id === id))
+    .filter(Boolean);
+  const notExcluded = (it) => !activeExcludeRules.some((rule) => itemMatchesTraitRule(it, rule));
+
   let primaryMatches = ITEMS_DB.filter((it) => {
     if (it.verdict === 'NOPE') return false;
     if (it.category !== state.matcherCat) return false;
     if (!(it.tones || []).includes(activeTone.id)) return false;
     if (state.matcherStyle !== 'ALL' && !(it.styles || []).includes(state.matcherStyle)) return false;
-    return true;
+    return notExcluded(it);
   }).sort(sortWithSurvey);
 
   if (primaryMatches.length === 0) {
     primaryMatches = ITEMS_DB.filter((it) => {
       if (it.verdict === 'NOPE') return false;
-      return it.category === state.matcherCat && (it.tones || []).includes(activeTone.id);
+      return it.category === state.matcherCat && (it.tones || []).includes(activeTone.id) && notExcluded(it);
     }).sort(sortWithSurvey);
   }
   primaryMatches = primaryMatches.slice(0, 4);
@@ -5170,7 +5206,7 @@ function renderToneMatcher() {
   let companionMatches = ITEMS_DB.filter((it) => {
     if (it.verdict === 'NOPE') return false;
     if (it.category === state.matcherCat) return false;
-    return (it.tones || []).includes(activeTone.id);
+    return (it.tones || []).includes(activeTone.id) && notExcluded(it);
   }).sort(sortWithSurvey);
 
   const pickedCompanions = [];
@@ -7558,9 +7594,7 @@ function renderMyPage(subView = 'main') {
         state.excludedTraits.clear();
         showToast('피할 특징 자동 제외를 껐어요');
       }
-      saveExcludedTraits();
-      renderExcludeTraitsBars();
-      updateSavedProfileBadge();
+      applyTraitExcludeStateChange();
       renderMyPage('main');
     });
   }
@@ -7884,6 +7918,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope101').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope102').catch(() => {});
   }
 }

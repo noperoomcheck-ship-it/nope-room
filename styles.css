@@ -2981,17 +2981,18 @@ input[type="range"] { width: 100%; accent-color: var(--ink); cursor: pointer; }
   flex-shrink: 0;
 }
 .exclude-bar-title {
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 800;
   color: var(--ink);
   word-break: keep-all;
 }
 .exclude-bar-clear,
+.exclude-bar-restore,
 .exclude-bar-toggle {
   background: none;
   border: 0;
-  padding: 2px 4px;
-  font-size: 11px;
+  padding: 2px 5px;
+  font-size: 12px;
   font-weight: 800;
   color: var(--ink-secondary);
   cursor: pointer;
@@ -2999,6 +3000,9 @@ input[type="range"] { width: 100%; accent-color: var(--ink); cursor: pointer; }
 }
 .exclude-bar-clear {
   color: var(--ink-tertiary);
+}
+.exclude-bar-restore {
+  color: var(--safe);
 }
 .exclude-chips-wrap {
   display: flex;
@@ -3291,8 +3295,8 @@ input[type="range"] { width: 100%; accent-color: var(--ink); cursor: pointer; }
 }
 .exclude-chip-btn {
   border-radius: 999px;
-  padding: 5px 10px;
-  font-size: 11.5px;
+  padding: 6px 11px;
+  font-size: 12.5px;
   font-weight: 800;
   cursor: pointer;
   font-family: inherit;
