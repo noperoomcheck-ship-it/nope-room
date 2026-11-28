@@ -1982,14 +1982,16 @@ input[type="range"] { width: 100%; accent-color: var(--ink); cursor: pointer; }
   flex-wrap: wrap;
 }
 .scan-attach-btn {
+  width: 100%;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 7px 12px;
+  padding: 9px 12px;
   border-radius: var(--radius-sm);
   background: var(--surface);
   border: 1px dashed rgba(20, 27, 41, 0.24);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--ink);
   cursor: pointer;
@@ -1998,11 +2000,6 @@ input[type="range"] { width: 100%; accent-color: var(--ink); cursor: pointer; }
 .scan-attach-btn:hover {
   border-color: var(--ink);
   background: var(--surface-muted);
-}
-.scan-paste-tip {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ink-tertiary);
 }
 .scan-img-preview {
   display: flex;
