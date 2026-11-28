@@ -3,7 +3,7 @@
 // 카카오 · 구글 로그인 + 기기 간 내 방 스펙/찜 목록/입주 점검표 동기화가 활성화됩니다.
 
 export const SUPABASE_CONFIG = {
-  url: '',      // 예: 'https://xxxxxxxxxxxx.supabase.co'
-  anonKey: '',  // 예: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+  url: 'https://qlsqsfhqblvaodgehzna.supabase.co',
+  anonKey: 'sb_publishable_vvqrcwN8zskRsfHd9irI0w_gDxNdTFZ',
   enabledProviders: ['kakao', 'google', 'email']
 };
