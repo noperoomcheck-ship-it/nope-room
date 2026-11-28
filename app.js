@@ -22,12 +22,12 @@ import {
   getRoomBaseRescue,
   ALT_ITEM_MAP,
   RESCUE_PATCH_RULES
-} from './data/app-data.js?v=nope100';
-import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope100';
-import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope100';
-import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope100';
-import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope100';
-import { BRAND_TRENDS } from './data/brand-trends.js?v=nope100';
+} from './data/app-data.js?v=nope101';
+import { QUIZ_VISUAL_PHOTOS } from './data/quiz-visuals.js?v=nope101';
+import { AFFILIATE_CONFIG } from './data/affiliate-links.js?v=nope101';
+import { SUPABASE_CONFIG } from './data/supabase-config.js?v=nope101';
+import { ANALYTICS_CONFIG } from './data/analytics-config.js?v=nope101';
+import { BRAND_TRENDS } from './data/brand-trends.js?v=nope101';
 
 const KAKAO_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.85 5.31 4.63 6.72l-1.08 3.96a.45.45 0 0 0 .67.5l4.6-3.04c.38.04.78.06 1.18.06 5.52 0 10-3.58 10-8s-4.48-8-10-8Z"/></svg>`;
 const INSTA_LOGO_SVG = `<svg class="share-brand-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>`;
@@ -770,7 +770,7 @@ function buildHomeInterestCtaHtml(activeDomainObj, wishlistCount) {
   if (!hasDomain && wishlistCount === 0) {
     return `
       <button type="button" class="home-interest-cta-btn is-nudge" data-open-wish-picker="1">
-        <span>📌 관심 분야 · 품목 등록하고 내 소식만 모아보기</span>
+        <span>관심 분야 · 품목 등록하고 내 소식만 모아보기</span>
         <strong>등록하기 ›</strong>
       </button>
     `;
@@ -3382,7 +3382,7 @@ function openDetailSheet(item) {
         </div>
         ${altCompareItem ? `
           <button type="button" id="sheet-alt-compare-btn" class="btn-alt-compare">
-            ⚖️ '${escapeHtml(altCompareItem.name)}'과 A vs B 비교 →
+            '${escapeHtml(altCompareItem.name)}'과 A vs B 비교 →
           </button>
         ` : ''}
         ${urls.hasCoupangAffiliate ? `<p class="ftc-affiliate-note">${escapeHtml(AFFILIATE_CONFIG.disclosureText)}</p>` : ''}
@@ -4730,7 +4730,7 @@ function renderCompareView() {
       <div class="compare-winner-banner">
         ${winner
           ? `<strong class="compare-reco-title">✓ 추천 제품: ${escapeHtml(winner.name)}</strong><p class="compare-reco-desc">${escapeHtml(loser.name)} 대비 내 방 조건과 유지관리·내구성 부담이 더 낮습니다.</p>`
-          : `<strong class="compare-reco-title">⚖️ 두 제품 스펙이 비슷해요</strong><p class="compare-reco-desc">위 가격대와 핵심 사양·아쉬운 점을 보고 용도에 맞게 골라보세요.</p>`}
+          : `<strong class="compare-reco-title">두 제품 스펙이 비슷해요</strong><p class="compare-reco-desc">위 가격대와 핵심 사양·아쉬운 점을 보고 용도에 맞게 골라보세요.</p>`}
         <div class="compare-winner-actions">
           ${(() => {
             const shortName = (n) => {
@@ -7884,6 +7884,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
     }
   } else {
-    navigator.serviceWorker.register('./sw.js?v=nope100').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=nope101').catch(() => {});
   }
 }

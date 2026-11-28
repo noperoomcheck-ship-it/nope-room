@@ -12,23 +12,23 @@
   <meta property="og:url" content="https://nope-room.vercel.app/" />
   <meta property="og:title" content="NOPE! | 내 방에 들이기 전, 딱 한 번만 의심해 보기" />
   <meta property="og:description" content="월세·좁은방·반려동물 조건으로 가구 스펙 판독, 피할 특징 자동 제외 필터, A vs B 비교까지 40초 진단." />
-  <meta property="og:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope100" />
+  <meta property="og:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope101" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="NOPE! | 실상품 자취 스펙 판독" />
   <meta name="twitter:description" content="예쁜 사진 빼고, 실제 판매 중인 가구의 단점·원상복구·치수 근거를 판독하는 앱" />
-  <meta name="twitter:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope100" />
+  <meta name="twitter:image" content="https://nope-room.vercel.app/icons/og-share.png?v=nope101" />
   <meta name="theme-color" content="#F4F6F9" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="NOPE!" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=nope100" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=nope101" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css" />
-  <link rel="manifest" href="./manifest.json?v=nope100" />
-  <link rel="stylesheet" href="./styles.css?v=nope100" />
+  <link rel="manifest" href="./manifest.json?v=nope101" />
+  <link rel="stylesheet" href="./styles.css?v=nope101" />
 </head>
 <body>
   <div id="app-splash" class="app-splash" aria-hidden="true">
@@ -55,13 +55,13 @@
         <div id="home-stage-cover" class="home-stage-shell stage-animate">
           <div id="shared-arrival-banner" class="shared-arrival-banner hidden"></div>
 
-          <!-- 3핵심 홈 화면: ① 제품 검색·비교 ② 브랜드 신제품·이슈(2줄) ③ 내 방 진단 -->
+          <!-- 3핵심 홈 화면: 제품 검색·비교 / 브랜드 신제품·이슈 / 내 방 진단 -->
           <div id="home-guest-gate" class="home-guest-gate">
             <h1 id="home-headline" class="gate-headline">사기 전에 딱 한 번,<br /><span style="color:var(--accent)">실후기와 스펙부터 확인해 보세요.</span></h1>
 
             <div class="home-scan-card">
               <div class="home-weapon-head">
-                <span class="home-weapon-pill">① 제품 검색 · 분석</span>
+                <span class="home-weapon-pill">제품 검색 · 분석</span>
                 <span class="home-weapon-sub">제품 이름이나 쇼핑몰 링크를 넣으면 유튜브·실사용 후기를 바로 모아드려요</span>
               </div>
               <div class="search-row" style="margin-top:8px;">
@@ -69,14 +69,14 @@
                 <button id="guest-analyze-btn" class="btn-primary" type="button">분석</button>
               </div>
               <div class="home-quick-actions">
-                <button id="guest-compare-btn" class="home-sub-action-btn" type="button">⚖️ 두 제품 A vs B 비교</button>
-                <button id="guest-photo-btn" class="home-sub-action-btn" type="button">📷 상세 캡처 분석</button>
+                <button id="guest-compare-btn" class="home-sub-action-btn" type="button">두 제품 A vs B 비교</button>
+                <button id="guest-photo-btn" class="home-sub-action-btn" type="button">상세 캡처 분석</button>
               </div>
             </div>
 
             <div class="home-interest-box">
               <div class="home-rot-head" style="margin:0 2px 8px;">
-                <strong>② 브랜드 신제품 · 주의 이슈</strong>
+                <strong>브랜드 신제품 · 주의 이슈</strong>
                 <button id="home-all-trends-btn" class="home-rot-refresh-btn" type="button">전체 보기 ›</button>
               </div>
               <div id="guest-interest-feed" class="home-interest-feed"></div>
@@ -84,7 +84,7 @@
 
             <div id="home-room-hero-card" class="home-room-hero-card">
               <div class="home-room-hero-head">
-                <span class="home-room-hero-pill">③ 내 방 스펙 진단 · 40초</span>
+                <span class="home-room-hero-pill">내 방 스펙 진단 · 40초</span>
                 <strong class="home-room-hero-title">우리 집 크기·월세 조건에 딱 맞는 기준 잡기</strong>
                 <p class="home-room-hero-sub">좁은 방 동선·문 열림부터 전월세 원상복구까지 미리 걸러드려요.</p>
               </div>
@@ -113,13 +113,13 @@
             </div>
           </div>
 
-          <!-- 진단 완료 후: ① 제품 검색 ② 브랜드 소식(2줄) ③ 내 방 진단 리포트 -->
+          <!-- 진단 완료 후: 제품 검색 / 브랜드 소식(2줄) / 내 방 진단 리포트 -->
           <div id="home-saved-dashboard" class="home-saved-dashboard hidden">
             <h1 class="gate-headline" style="font-size:1.4rem;">지금 고민 중인 제품,<br />후기와 내 방 기준까지 바로 확인하세요.</h1>
 
             <div class="home-scan-card">
               <div class="home-weapon-head">
-                <span class="home-weapon-pill">① 제품 검색 · 분석</span>
+                <span class="home-weapon-pill">제품 검색 · 분석</span>
                 <span class="home-weapon-sub">목록에 없는 상품도 링크·이름만 넣으면 유튜브·실사용 후기를 바로 찾아드려요</span>
               </div>
               <div class="search-row" style="margin-top:8px;">
@@ -127,21 +127,21 @@
                 <button id="home-analyze-btn" class="btn-primary" type="button">분석</button>
               </div>
               <div class="home-quick-actions">
-                <button id="home-photo-scan-btn" class="home-sub-action-btn" type="button">📷 상세 캡처 첨부</button>
-                <button id="home-compare-btn" class="home-sub-action-btn" type="button">⚖️ A vs B 비교</button>
+                <button id="home-photo-scan-btn" class="home-sub-action-btn" type="button">상세 캡처 첨부</button>
+                <button id="home-compare-btn" class="home-sub-action-btn" type="button">A vs B 비교</button>
               </div>
             </div>
 
             <div class="home-interest-box">
               <div class="home-rot-head" style="margin:0 2px 8px;">
-                <strong>② 브랜드 신제품 · 주의 이슈</strong>
+                <strong>브랜드 신제품 · 주의 이슈</strong>
                 <button id="saved-all-trends-btn" class="home-rot-refresh-btn" type="button">전체 보기 ›</button>
               </div>
               <div id="saved-interest-feed" class="home-interest-feed"></div>
             </div>
 
             <div class="home-room-hero-card is-saved">
-              <span class="home-room-hero-pill">③ 내 방 진단 리포트</span>
+              <span class="home-room-hero-pill">내 방 진단 리포트</span>
               <button id="saved-profile-btn" class="home-profile-banner" type="button" style="margin-top:8px;"></button>
               <div class="home-retake-wrap" style="padding:8px 0 0;">
                 <button id="home-retake-btn" class="home-text-sub-btn" type="button">방 조건 다시 테스트하기 ↺</button>
@@ -259,7 +259,7 @@
 
             <div class="scan-attach-bar">
               <label for="item-image-input" class="scan-attach-btn">
-                <span>📷 상세 캡처 · 제품 사진 첨부</span>
+                <span>상세 캡처 · 제품 사진 첨부</span>
               </label>
               <input id="item-image-input" type="file" accept="image/*" class="hidden" />
               <span class="scan-paste-tip">Ctrl+V 붙여넣기 가능</span>
@@ -572,6 +572,6 @@
   <canvas id="share-canvas" width="1080" height="1920" class="hidden"></canvas>
   <div id="toast" class="toast hidden"></div>
 
-  <script type="module" src="./app.js?v=nope100"></script>
+  <script type="module" src="./app.js?v=nope101"></script>
 </body>
 </html>
